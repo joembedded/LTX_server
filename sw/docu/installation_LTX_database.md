@@ -17,8 +17,7 @@ The input script 'sw\ltu_trigger.php' will automatically remove older data.
  1. Create or use a standard SQL/MYSQL Database, as included with many Hosting Packages
  2. Set Access Parameters in "sw\conf\config.inc.php"
  3. Run "sw\setup_db.php"- This script can be run ONLY once and will install an Administrator
-    This Script will ONLY run, if the database is COMPLETELY empty!
-	_Remark: By default: the Database's Username and Password will be used for ADMIN_ 
+    This Script will ONLY run, if the database is COMPLETELY empty! _Remark: By default: the Database's Username and Password will be used for ADMIN_ 
 	
 ***
 
