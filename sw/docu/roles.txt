@@ -1,0 +1,38 @@
+// Empfehlung: Demo-User:'demo' Passwort-Empfehlung: 123456 -> 
+
+Default fuer **Users**
+1
+2
+4
+8
+16
+32
+64
+128
+256
+512
+1024
+2048
+4096
+8192
+16384
+32768	: Darf was aendern (sonst DEMO) manuell setzen in DB)
+65536	: ADMIN (manuell setzen in DB)
+
+Default fuer **Devices** (= owner_role AND guest_role)
+1		: Reset Alarms
+2		: Reset Warnings
+4		: Reset Errors
+8		
+16
+32
+64
+128
+256		: Info Access
+512		: Hardware-Access
+1024	: Server-Access
+2048
+4096
+8192
+16384
+32768	

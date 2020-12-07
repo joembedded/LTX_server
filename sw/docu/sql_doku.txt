@@ -1,0 +1,127 @@
+* Anmerkungen zu den SQL Rows *
+
+*************** Table Users **************************
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int unsigned AUTO_INCREMENT,						Startet mit 1001
+  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL, 	Mail im Klartext (muss nicht mehr unique sein)
+  `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,	Passwort einfach verschluesselt
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL, 	Username
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,		Wann wurde Datensatz angelegt
+  `confirmed`  smallint unsigned DEFAULT 0,				Zaehlt fuer jedes Mal confirmed/forgot hoch
+  `rem`  tinyint unsigned,								Remember-Me-Flag fuer Conformation
+  `last_seen` timestamp NULL DEFAULT NULL,				
+  `loggedin`  tinyint DEFAULT 0,						Zustands-Flag
+  `remark` varchar(255) COLLATE utf8_unicode_ci,		Noch unbelegt
+  `user_role` int unsigned DEFAULT 65535,			    Flags Owner Default (z.B. Demo manual)
+  `ticket` varchar(16) COLLATE utf8_unicode_ci,			Ticket als Plain-Text
+  
+  PRIMARY KEY (`id`), INDEX(`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Start with ID 1001 !!! Run only once! (Check SELECT MAX(id) FROM users)
+ALTER TABLE `users` AUTO_INCREMENT = 1001;
+
+
+*************** Table DEVICES ******************
+CREATE TABLE IF NOT EXISTS `devices` (
+  `id` int unsigned AUTO_INCREMENT,						Durchgezaehlt 1-x
+  `mac` varchar(16) COLLATE utf8_unicode_ci NOT NULL,  	16 Stellen
+  `first_seen` timestamp DEFAULT CURRENT_TIMESTAMP, 	Wann angelegt als Device (AUTO)
+  `last_seen` timestamp NULL DEFAULT NULL, 				Zuletzt Device gesehn 
+  `last_change` timestamp DEFAULT CURRENT_TIMESTAMP,	Letzte Aenderung an der Tabelle
+
+  `name` varchar(255) COLLATE utf8_unicode_ci,			Aktueller Name Eingetragen von TRIGGER
+  `units` varchar(255) COLLATE utf8_unicode_ci,			Einheitenfeld als Zeile 0 (letzte Einheiten)
+  `vals` varchar(255) COLLATE utf8_unicode_ci,			Wertefeld (letzte Werte, inkl HK)
+  `cookie` int unsigned DEFAULT NULL,					Aktueller Cookie der Parameter (entnommen aus edt-File)
+
+  `utc_offset` int DEFAULT 3600,						Offset in H zu UTC (= Winterzeit). Evtl. nur nach Bedarf an User
+  
+  `lat` float,											Letzte GPS
+  `lng` float,											dto
+  `rad` float,											Genauigkiet GPS in m
+  `last_gps` timestamp NULL DEFAULT NULL,				Letzter GPS-Zeitpung (Normal alle >= 24h)
+  `posflags` tinyint unsigned DEFAULT 0, 				Wie oft Auto-Pos-Update (0:Never - 3:Each Hour)
+
+  
+  `transfer_cnt` int unsigned DEFAULT 0,				Zahelt jeden Transfer hoch
+  `lines_cnt` int unsigned DEFAULT 0,					Zaehlt jede zeile hoch
+  `warnings_cnt` int unsigned DEFAULT 0,				Aktuell anstehende Warnings
+  `alarms_cnt` int unsigned DEFAULT 0,					Aktuell anstehende CNTs
+  `err_cnt` int unsigned DEFAULT 0,						Aktuell abstehende Fehler
+  `anz_lines` int unsigned DEFAULT 0,					Aktuell Anzahl Daten in m$mac
+  `flags`  smallint unsigned DEFAULT 0, 				1,2,4: 3 Bits fuer Battery-Setup, 8 fuer Humidty
+
+  `owner_id` int unsigned DEFAULT NULL,					ID des Owners (Datenank ID USER)
+  `fw_key` varchar(32) COLLATE utf8_unicode_ci,			FW-Key ist Authentifizierung des Users, erste 16 Stellen: Owner-Token UPPERCASE
+  `ow_role` int unsigned DEFAULT 65535,					Flags User Default
+  
+  `quota_cnt` int unsigned DEFAULT 0,					? Zaehler
+  `quota_flags` int unsigned DEFAULT 0,					? Zaehler
+  `timeout_warn` int unsigned DEFAULT 0,				Timeout in sec fuer Warning
+  `timeout_alarm` int unsigned DEFAULT 0,				Timeout in sec fuer (Alarm) Error, da mit Hardware verbunden
+  
+  `vbat0` float,										BatterieVoltage 0% Full V
+  `vbat100` float,										BatterieVoltage 100% Full V
+  `cbat` float,											BatterieCapacity FULL mAh
+ 
+  
+  `role0` int unsigned DEFAULT 0,						Flags User0
+  `token0` varchar(16) COLLATE utf8_unicode_ci,			Token Berechtigung User0 UPPERCASE
+  `role1` int unsigned DEFAULT 0,
+  `token1` varchar(16) COLLATE utf8_unicode_ci,			UPPERCASE
+  `role2` int unsigned DEFAULT 0,
+  `token2` varchar(16) COLLATE utf8_unicode_ci,			UPPERCASE
+  `role3` int unsigned DEFAULT 0,						
+  `token3` varchar(16) COLLATE utf8_unicode_ci,			UPPERCASE ... bis 3
+  
+  `email0` varchar(255) COLLATE utf8_unicode_ci,		Mail-Kontakt 1 (oder auch SMS oder Whatsapp)
+  `cond0` varchar(255) COLLATE utf8_unicode_ci,			Bedingung fuer Mail
+  `em_date0` timestamp NULL DEFAULT NULL,				Mail geschickt wann?
+  `em_cnt0` int unsigned DEFAULT 0,						Zaehler Mails
+
+  `email1` varchar(255) COLLATE utf8_unicode_ci,
+  `cond1` varchar(255) COLLATE utf8_unicode_ci,
+  `em_date1` timestamp NULL DEFAULT NULL,
+  `em_cnt1` int unsigned DEFAULT 0,
+
+  `email2` varchar(255) COLLATE utf8_unicode_ci,
+  `cond2` varchar(255) COLLATE utf8_unicode_ci,
+  `em_date2` timestamp NULL DEFAULT NULL,
+  `em_cnt2` int unsigned DEFAULT 0,
+
+  `email3` varchar(255) COLLATE utf8_unicode_ci,
+  `cond3` varchar(255) COLLATE utf8_unicode_ci,
+  `em_date3` timestamp NULL DEFAULT NULL,
+  `em_cnt3` int unsigned DEFAULT 0,						... bis 3
+
+  PRIMARY KEY (`id`), UNIQUE (`mac`), INDEX(`mac`), INDEX(`owner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+****** Guest-Devices ****
+CREATE TABLE IF NOT EXISTS `guest_devices` (
+  `id` int unsigned AUTO_INCREMENT,						Durchgezaehlt 1-x
+  `guest_id` int unsigned DEFAULT 0,					ID des Guerst (Datenbank ID USER)
+  `mac` varchar(16) COLLATE utf8_unicode_ci NOT NULL,  	16 Stellen
+  `token` varchar(16) COLLATE utf8_unicode_ci,			UPPERCASE ... bis 3
+  PRIMARY KEY (`id`), INDEX(`guest_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+
+************* Table mMAC , ACHTUNG: Wird pro MAC AUTO-generiert von USER oder TRIGGER! *****************
+-- Table fuer die Devices (autogenerated! by Scipt with correct mMAC in trigger.php)
+CREATE TABLE IF NOT EXISTS mMAC (
+  `id` int unsigned AUTO_INCREMENT,						== Zeilennummer absolut zaehlt immer hoeher
+  `line_ts` timestamp DEFAULT CURRENT_TIMESTAMP,		Einfuegzeitstempel in DB
+  `calc_ts` timestamp DEFAULT NULL,						Kalkulierter Zeitstempel (wie LINE), kann 0 sein wenn fehlend
+  `dataline` varchar(255) COLLATE utf8_unicode_ci NOT NULL, Originalline mit expandiertem Zeitstempel
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+
+**************** DB Zeiten ********************
+//$pdo->exec("SET @@session.time_zone = '+00:00'"); -todo- Set Database to Timezone of Browser
+Test: SELECT TIMEDIFF(NOW(), UTC_TIMESTAMP); -> Ergibt 2:00:00 fuer Sommerzeit
+
