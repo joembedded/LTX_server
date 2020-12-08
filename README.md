@@ -13,10 +13,21 @@ In case of "LTX_server" all new data will be written to the database. There is a
 will automatically be written for each new logger, 1.st line are days (here 90), 2.nd line is lines (in the database).
 The input script 'sw\ltu_trigger.php' will automatically remove older data.
 
-Details: see 'sw\docu\installation_LTX_database.md'
+![LTX Gdraw tool](./docs/G-Draw.jpg "LTX Gdraw tool")
+
+Details, see: ['sw\docu\installation_LTX_database.md'](./sw/docu/installation_LTX_database.md "Details...")
+
+Live demo LTX: ['https://joembedded.de...' (User: 'demo', Password: '123456')](https://joembedded.de/ltx/sw/login.php)
+
+More docus in the Medi-Browser:
+
+LTX Cloud Overview: ['LTX Overview'](./docs/LTX_Cloud_V1.pdf "LTX Overview")
+
+LTX Alarme (only DE): ['LTX Alarme (DE)'](./docs/LTX_AlarmeDE_V1.pdf "LTX Alarme (DE)")
 
 ---
 
 ## Changelog ##
 - V1.00 04.12.2020 Initial
 - V1.01 06.12.2020 Checked for PHP8 compatibility
+- V1.02 08.12.2020 Docs added
