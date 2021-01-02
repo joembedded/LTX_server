@@ -4,7 +4,7 @@
 if($_SERVER['SERVER_NAME'] =="192.168.1.252" || $_SERVER['SERVER_NAME'] =="localhost"){
 	// Test-Server (local, e.g. XAMPP)
 	define ("DB_HOST","localhost");
-	define ("DB_NAME","ltx_1u1");
+	define ("DB_NAME","ltx_local");
 	define ("DB_USER","root");
 	define ("DB_PASSWORD","");
 	define ("HTTPS_SERVER",null);
