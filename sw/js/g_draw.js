@@ -4,10 +4,13 @@
 *
 * Call either raw or with param s and k(opt) and f(opt)
 *******************************************/
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+
 'use strict'
 
 // ------------------ Globals ----------------------
-var prgVersion = 'V1.12 (20.11.2020)'
+var prgVersion = 'V1.15 (02.01.2021)'
 var prgName = 'G-Draw EDT-Viewer ' + prgVersion
 var prgShortName = 'G-Draw'
 
@@ -33,7 +36,6 @@ var displayHeight = 1080	// Assume
 var displayWidth = 1920
 
 var gDraw	// Canvas element
-var gbound	// Bounding Flexbox (for resize)
 var gBody	// For Cursor
 
 var clickCnt = 0
@@ -60,7 +62,7 @@ var colTab = [ // Contains. 16+x Colors (Standard Colors)
   '#9AFF32', // 15: yellowgreen
 
   '#F0F0F0', // 16: lightgray (deactivated Events)
-	  'orange' // 17: Event (active)
+	'orange' // 17: Event (active)
 ]
 
 /** * Im- Export *********/
@@ -110,6 +112,7 @@ var msgVisible = 0
 var legMenuVisible = false	// For small Display
 
 // --------------------------- Functions ----------------------------------
+
 // Find min/max in Range with opt. disabled channels
 function scan_autozoom () {
   var fMin = 1e10; var fMax = -1e10
@@ -199,8 +202,8 @@ function drawInnerGraph (ctx) {
   ctx.fillStyle = 'black'	// For font
   lanz += 2
   for (var i = 0; i < lanz; i++) {
-    var fy = lbase + i * lrange
-    var dy = Math.floor(sMultiY * fy - sOffsetY)
+    fy = lbase + i * lrange
+    dy = Math.floor(sMultiY * fy - sOffsetY)
     if (dy > graphHeight) continue
     if (dy < graphTop) break
     dy += graphTop
@@ -271,14 +274,14 @@ function drawInnerGraph (ctx) {
       xtstr = gds
       xdstr = 'Unknown'
     } else {
-		 if (gmtOffset !== null) {	// Using UTC
-        xtstr = gds.toTimeString()
-        xdstr = gds.toDateString()
-		 } else {			// Local Time
-        xtstr = gds.toLocaleTimeString()
-        xdstr = gds.toLocaleDateString()
-		 }
-		 xtstr = xtstr.substr(0, 8)	// Should be enough for time
+      if (gmtOffset !== null) {	// Using UTC
+          xtstr = gds.toTimeString()
+          xdstr = gds.toDateString()
+      } else {			// Local Time
+          xtstr = gds.toLocaleTimeString()
+          xdstr = gds.toLocaleDateString()
+      }
+      xtstr = xtstr.substr(0, 8)	// Should be enough for time
     }
 
     // Draw new Date only for new Day
@@ -307,7 +310,7 @@ function drawInnerGraph (ctx) {
     if (fy < lty) continue	// max. alle 50 pixel Datum
 
     var mtstr = ctx.measureText(xtstr).width
-    var px = -mtstr - 8
+    px = -mtstr - 8
     if (px <= -graphBottom) px = -graphBottom
     ctx.fillText(xtstr, px + 2, fy + 4)
     lty = fy + 24	// Not to full
@@ -324,8 +327,8 @@ function drawInnerGraph (ctx) {
 
   /* Alarms and Dots Layer */
   xanz += 1
-  for (var ix = -1; ix < xanz; ix++) {
-    var cidx = ix + inIdx0
+  for (ix = -1; ix < xanz; ix++) {
+    cidx = ix + inIdx0
     if (cidx < 0 || cidx >= inIdxMax) continue
     var av = timeVals[cidx]
     var avl = av.length
@@ -340,7 +343,7 @@ function drawInnerGraph (ctx) {
       if (isNaN(y)) {
         continue
       }
-      var fy = y * sMultiY - sOffsetY + graphTop
+      fy = y * sMultiY - sOffsetY + graphTop
 
       ctx.fillStyle = '#FFC0FF'	// LightMagenta
       ctx.beginPath()
@@ -360,12 +363,12 @@ function drawInnerGraph (ctx) {
   xanz += 9	// Scan +/- 10 (1+9) Values for complete lines
 
   /* Normal values */
-  for (var ix = -10; ix < xanz; ix++) {
-    var cidx = ix + inIdx0
+  for (ix = -10; ix < xanz; ix++) {
+    cidx = ix + inIdx0
     if (cidx < 0 || cidx >= inIdxMax) continue
-    var av = timeVals[cidx]
-    var avl = av.length
-    var fx = Math.floor(graphLeft + sMultiX * ix) + 0.5
+    av = timeVals[cidx]
+    avl = av.length
+    fx = Math.floor(graphLeft + sMultiX * ix) + 0.5
 
     if (av[1] !== undefined && channelVisible[1]) {	// Event
       var evtxt = av[1]
@@ -383,7 +386,7 @@ function drawInnerGraph (ctx) {
       ctx.fillRect(fx - 3.5, gby + 5 + evh, 6, 30 - evh)
 
       if (sMultiX > 16) { // Only for large Zoom Text or Events Event
-        var evtxt = av[1]
+        evtxt = av[1]
         ctx.save()
         ctx.translate(fx, gby)
         ctx.rotate(Math.PI * 1.5)
@@ -392,8 +395,8 @@ function drawInnerGraph (ctx) {
         ctx.restore()
       }
     }
-    for (var ki = 2; ki < avl; ki++) {
-      var y = av[ki]
+    for (ki = 2; ki < avl; ki++) {
+      y = av[ki]
       if (y === undefined) continue
       if (y.charAt(0) == '*') {	// Alarm!
         y = parseFloat(y.substr(1))
@@ -405,7 +408,7 @@ function drawInnerGraph (ctx) {
       }
       var style = colTab[(ki - 2) % 16]
       ctx.strokeStyle = style
-      var fy = y * sMultiY - sOffsetY + graphTop
+      fy = y * sMultiY - sOffsetY + graphTop
       /* Dots */
       if (showDots) {
         ctx.fillStyle = style
@@ -476,10 +479,12 @@ function g_zoomout () {
   inMin = inMin0
   inMax = inMax0
   zoomLevel = 0
+  document.getElementById('spinner').style.display = 'block'
   if (autoZoom) {
     scan_autozoom()
   }
   drawOuterGraph()
+  document.getElementById('spinner').style.display = 'none'
 }
 
 function g_zoomin () { // Full Zoom
@@ -489,10 +494,12 @@ function g_zoomin () { // Full Zoom
   inMin = inMin0
   inMax = inMax0
   zoomLevel = 1
+  document.getElementById('spinner').style.display = 'block'
   if (autoZoom) {
     scan_autozoom()
   }
   drawOuterGraph()
+  document.getElementById('spinner').style.display = 'none'
 }
 
 function g_start () {
@@ -615,9 +622,8 @@ function getDateForIdx (xidx) { // Index in timeVals
     return
   }
   if (xts < 86400000000) { // 1000T
-	  return '+' + xts / 1000
+    return '+' + xts / 1000
   }
-  var xtstr
   var tzo, dt
   if (gmtOffset !== null) {	// if '<GMT: +/-xxx seconds set>'
     tzo = gmtOffset * 1000	// Offset defined: use it (in miliseconds)
@@ -638,22 +644,22 @@ function gi_mousemove (e) {
 
   var info = document.getElementById('gInfo')
   if (gsx >= 0 && gsx <= bnd.width && gsy >= 0 && gsy <= bnd.height && clickCnt <= 0 && displayWidth > 499) {	// see Meda Query)
-	  // Get Date near Mouse
-	  var xidx = gsx2Idx(gsx)
-	  if (isNaN(xidx)) return
-	  var tv = timeVals[xidx]
-	  if (tv === undefined) return
-	  var gds = getDateForIdx(xidx)
-	  var xtstr
-	  if (gds !== undefined) {
+    // Get Date near Mouse
+    var xidx = gsx2Idx(gsx)
+    if (isNaN(xidx)) return
+    var tv = timeVals[xidx]
+    if (tv === undefined) return
+    var gds = getDateForIdx(xidx)
+    var xtstr
+    if (gds !== undefined) {
       if (gmtOffset !== null) {
         xtstr = '<u>' + gds.toUTCString() // Error on +-Times
         if (gmtOffset >= 0) xtstr += '+'
         xtstr += (gmtOffset / 3600) + '</u>'
       } else xtstr = '<u>' + gds.toLocaleString() + '</u>'
-	  } else xtstr = ''
+    } else xtstr = ''
 
-	  if (tv[1] !== undefined) { // Info found
+    if (tv[1] !== undefined) { // Info found
       var evtxt = tv[1]
       if (evtxt != 'VALUE') {
         var evs = gevent_style(evtxt)
@@ -661,14 +667,14 @@ function gi_mousemove (e) {
         if (xtstr.length) xtstr += '<br>'
         xtstr += "<span style='background: " + style + "'>" + evtxt + '</span>'
       }
-	  }
-	  // Y-Value under the mouse
-	  var ym = gsy2MinMax(gsy) // Value at Mouse pos
-	  var ni = -1
-	  var ndist = (inMaxA - inMinA) / 5	// Must be at least 20% of h in range
+    }
+    // Y-Value under the mouse
+    var ym = gsy2MinMax(gsy) // Value at Mouse pos
+    var ni = -1
+    var ndist = (inMaxA - inMinA) / 5	// Must be at least 20% of h in range
 
-	  // Find nearest channel
-	  for (var ki = 2; ki < tv.length; ki++) {
+    // Find nearest channel
+    for (var ki = 2; ki < tv.length; ki++) {
       if (!channelVisible[ki]) continue
       var yk = tv[ki]
       var adist
@@ -681,9 +687,9 @@ function gi_mousemove (e) {
         ni = ki
         ndist = adist
       }
-	  }
+    }
 
-	  for (var ki = 2; ki < tv.length; ki++) {
+    for (ki = 2; ki < tv.length; ki++) {
       var y = tv[ki]
       if (y === undefined) continue
       var colix = (ki - 2) % 16
@@ -699,16 +705,16 @@ function gi_mousemove (e) {
         xtstr += y + ' &nbsp; ' + channelUnits[ki] + '(' + (ki - 2) + ')'
       }
       if (ki == ni) xtstr += '</u></b>'
-	  }
+    }
 
-	  info.style.left = e.clientX + 16 + 'px'
-	  info.style.top = e.clientY - 10 + 'px'
+    info.style.left = e.clientX + 16 + 'px'
+    info.style.top = e.clientY - 10 + 'px'
 
-	  info.innerHTML = xtstr
+    info.innerHTML = xtstr
 
-	  info.style.display = 'block'
+    info.style.display = 'block'
   } else {
-	  info.style.display = 'none'
+    info.style.display = 'none'
   }
   if (clickCnt == 0) return
 
@@ -794,10 +800,12 @@ function g_logrect (txt, rc) {
 }
 /* Fit Canvas to Parent. Little gap for better Flow Calle after resize */
 function gi_fitcanvas () {
+  document.getElementById('spinner').style.display = 'block'
+  // Achtung: Hier kann es es ein Problem geben, wenn das mehrfach aufgerufen wird!
+  // Zeichnen komplett auslagern als Async!!!
   displayWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
   displayHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
-
-  // console.log("Display: WxH:"+displayWidth+"x"+displayHeight);
+  console.log("Display: WxH:"+displayWidth+"x"+displayHeight);
 
   if (clickCnt) {	// Hide Zoombox
     document.getElementById('zoomBox').style.display = 'none'
@@ -819,6 +827,7 @@ function gi_fitcanvas () {
 
   if (displayWidth <= 499) graphWidth -= graphAddSmall	// Add. on small schreens
   drawOuterGraph()
+  document.getElementById('spinner').style.display = 'none'
 }
 
 /* -------- Hide/Show Mobile Menue ----------- */
@@ -864,8 +873,10 @@ function autoZoomClick () {
 
   /* Find Minvals */
   if (autoZoom) {
+    document.getElementById('spinner').style.display = 'block'
     scan_autozoom()
     drawOuterGraph()
+    document.getElementById('spinner').style.display = 'none'
   }
 }
 
@@ -879,15 +890,18 @@ function allClick () {
   document.getElementById('chan1').style.color = colTab[newcolix]
 
   for (var i = 2; i < totalUsedChannels; i++) {
-    var newcolix = 16	// 16: Color for Disabled
+    newcolix = 16	// 16: Color for Disabled
     if (allState == true) newcolix = (i - 2) % 16
     document.getElementById('chan' + i).style.background = colTab[newcolix]
     channelVisible[i] = allState
     document.getElementById('check' + i).checked = allState
   }
-  if (allState && autoZoom) scan_autozoom()
-
+  document.getElementById('spinner').style.display = 'block'
+  if (allState && autoZoom) {
+    scan_autozoom()
+  }
   drawOuterGraph()
+  document.getElementById('spinner').style.display = 'none'
 }
 
 /* Click on Legend Check/uncheck */
@@ -904,9 +918,10 @@ function legendClick (chan) {
   if (chan == 1) celem.style.color = colTab[newcolix]
   else celem.style.background = colTab[newcolix]
 
+  document.getElementById('spinner').style.display = 'block'
   if (autoZoom) scan_autozoom()
-
   drawOuterGraph()
+  document.getElementById('spinner').style.display = 'none'
 }
 
 /* Generate Legend after Load */
@@ -948,9 +963,9 @@ function generateCSV (flags) {
   if (!(flags & 2)) ltxt = 'MAC: ' + sMac + ' Name: ' + sName + ' Lines:' + anzl + ' Channels:' + (totalUsedChannels - 2) + '\n'
 
   if (gmtOffset !== null){
-	txt += 'Times: GMT'
-	if (gmtOffset >= 0) txt += '+'
-	txt += (gmtOffset / 3600) + '\n'
+	ltxt += 'Times: GMT'
+	if (gmtOffset >= 0) ltxt += '+'
+	ltxt += (gmtOffset / 3600) + '\n'
   }
 	
   for (var i = 0; i < totalUsedChannels; i++) {
@@ -984,7 +999,7 @@ function generateCSV (flags) {
 
     ltxt += xtstr	// TIME
 
-    for (var i = 1; i < anzz; i++) {
+    for (i = 1; i < anzz; i++) {
       if (flags & 4) ltxt += '; ' // Semicolon for Decimal COMMA
       else ltxt += ', '
       var y = linval[i]
@@ -1104,10 +1119,10 @@ function scanRawDataToVisibleData () {
             physChanUnits[kvn] = kv[1]	// Save last used units
           }
         } else {
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          for (ii = 1; ii < valn; ii++) {	// Without !U
             // Split in Index:Value UNITS
-            var kv = vals[ii].split(':')
-            var kvn = parseInt(kv[0])
+            kv = vals[ii].split(':')
+            kvn = parseInt(kv[0])
             if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
               if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " ChannelNo:'" + ldata + "'\n"
               break
@@ -1144,7 +1159,7 @@ function scanRawDataToVisibleData () {
 
   /** * PASS 2: Fill data Errors always: 'ERROR: Line:xxx ...' xxx Sourceline */
   var lux_sec = 0	// last UNIX seconds
-  for (var i = 0; i < dataAnzRaw; i++) {
+  for (i = 0; i < dataAnzRaw; i++) {
     var linevals = []
     loc = dataLinesRaw[i]
     loclen = loc.length
@@ -1156,7 +1171,7 @@ function scanRawDataToVisibleData () {
       // if(errmsg.length<500) errmsg+="ERROR: Line:"+i+" Too long:'"+(loc.substr(0,80))+"...'\n";
       continue
     }
-    var c0 = loc.charAt(0)
+    c0 = loc.charAt(0)
     if (c0 == '<' || c0 == '!') {	// EDT-Fomrat either ! or <
       lno = i
       ldata = loc
@@ -1207,14 +1222,14 @@ function scanRawDataToVisibleData () {
         }
         break
       case '!':
-        var vals = ldata.split(' ') // Split in Components
-        var valn = vals.length // At least 1
+        vals = ldata.split(' ') // Split in Components
+        valn = vals.length // At least 1
 
         if (ldata.charAt(1) == 'U') {
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          for (ii = 1; ii < valn; ii++) {	// Without !U
             // Split in Index:Value UNITS
-            var kv = vals[ii].split(':')
-            var kvn = parseInt(kv[0])
+            kv = vals[ii].split(':')
+            kvn = parseInt(kv[0])
             if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
               // if(errmsg.length<500) errmsg+="ERROR"+mlid+" Units:'"+ldata+"'\n";
               linevals[1] = 'ERROR' + mlid + ' Units'
@@ -1252,10 +1267,10 @@ function scanRawDataToVisibleData () {
             strangeTimesCnt++	// Error later
           }
           linevals[0] = unixsec * 1000	// Time in msec
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          for (ii = 1; ii < valn; ii++) {	// Without !U
             // Split in Index:Value UNITS
-            var kv = vals[ii].split(':')
-            var kvn = parseInt(kv[0])
+            kv = vals[ii].split(':')
+            kvn = parseInt(kv[0])
             if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
               // if(errmsg.length<500) errmsg+="ERROR"+mlid+" ChannelNo:'"+ldata+"'\n";
               linevals[0] = 'ERROR' + mlid + ' ChannelNo'
@@ -1353,7 +1368,7 @@ function saveRawData (data, status, clip = false) {
   var loc	// Local Line
   /* Check first Lines with '#' */
   for (var i = 0; i < dataAnzRaw; i++) {
-    var loc = dataLinesRaw[i]
+    loc = dataLinesRaw[i]
     if (loc.charAt(0) !== '#') break
     if (loc.startsWith('#MDATE: ')) {
       modDateNew = parseInt(loc.substr(8))
@@ -1455,9 +1470,9 @@ function dropfile (evt) {
   document.getElementById('spinner').style.display = 'block'
   var reader = new FileReader()
   reader.onload = function (event) {
-	   var res = "<NAME: '" + selectedFile.name + "'>\n" + event.target.result // typeof res ist STRING
+	var res = "<NAME: '" + selectedFile.name + "'>\n" + event.target.result // typeof res ist STRING
 
-	   saveRawData(res, 'success')
+	saveRawData(res, 'success')
   }
   reader.onerror = function (event) {
     ownAlert('ERROR: Import Data! (' + selectedFile + ')', 15)
@@ -1508,7 +1523,7 @@ function secTickTimer () {	// Alle 5 Sekunden aufgerufen
     lstxt += 'Age: '
     if (delta >= 86400) {
       h = Math.floor(delta / 86400)
-	  delta -= 86400 * h
+      delta -= 86400 * h
       lstxt += h + 'd'
     }
     h = Math.floor(delta / 3600)
@@ -1523,14 +1538,14 @@ function secTickTimer () {	// Alle 5 Sekunden aufgerufen
     lstxt += delta + 's<br>'
   }
   if (autoTimerLastSyncRec !== undefined) {
-    var delta = Math.floor((justNow - autoTimerLastSyncRec) / 1000 + 1)
+    delta = Math.floor((justNow - autoTimerLastSyncRec) / 1000 + 1)
     lstxt += 'Sync: ' + delta + 's<br>'
   }
   lastSeen.innerHTML = lstxt
 
   // Only with Auto Refresh
   if (autoRefresh && (navigator.onLine || gdrawAjaxCmd === gGetStore)) {
-    var delta = justNow - autoTimerLastSyncSent
+    delta = justNow - autoTimerLastSyncSent
     if (delta >= autoTimerResync) {
 		var spinnerVisible = 0	// Normal not Visible
 		// if(delta>=(autoTimerResync*3)) spinnerVisible=1; // Show Spinner after 3 missed Intervals
