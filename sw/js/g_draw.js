@@ -10,7 +10,7 @@
 'use strict'
 
 // ------------------ Globals ----------------------
-var prgVersion = 'V1.15 (02.01.2021)'
+var prgVersion = 'V1.16 (03.01.2021)'
 var prgName = 'G-Draw EDT-Viewer ' + prgVersion
 var prgShortName = 'G-Draw'
 
@@ -117,6 +117,7 @@ var legMenuVisible = false	// For small Display
 function scan_autozoom () {
   var fMin = 1e10; var fMax = -1e10
   var fnd = 0
+  console.log("START scan_utozoom()")
   for (var ix = inIdx0; ix < inIdx1; ix++) {
     var av = timeVals[ix]
     if (av === undefined) continue
@@ -145,6 +146,7 @@ function scan_autozoom () {
     inMax = fMax
     zoomLevel = 0
   }
+  console.log("END scan_utozoom()")
 }
 
 // Color Style for an Event, returns an array: color, height
@@ -435,7 +437,8 @@ function drawInnerGraph (ctx) {
 function drawOuterGraph () {
   var bnd = gDraw.getBoundingClientRect() // BOUNDS max change dynamically
   var ctx = gDraw.getContext('2d')
-
+  console.log("START drawOuterGraph()")
+  
   ctx.fillStyle = 'WhiteSmoke' // White Background
   ctx.fillRect(0, 0, bnd.width, bnd.height)
 
@@ -458,22 +461,28 @@ function drawOuterGraph () {
   ctx.strokeStyle = 'black'
   ctx.lineWidth = 1
   ctx.strokeRect(graphLeft, graphTop, graphWidth, graphHeight) // Black Frame on Border
+  console.log("END drawOuterGraph()")
 }
 
 // Arrow Buttons
 function g_moveup () {
+  console.log("START g_moveup()")
   var dy3 = (inMax - inMin) / 3
   inMin += dy3
   inMax += dy3
   drawOuterGraph()
+  console.log("END g_moveup()")
 }
 function g_movedown () {
+  console.log("START g_movedown()")
   var dy3 = (inMax - inMin) / 3
   inMin -= dy3
   inMax -= dy3
   drawOuterGraph()
+  console.log("END g_movedown()")
 }
 function g_zoomout () {
+  console.log("START g_zoomout()")
   inIdx0 = -1
   inIdx1 = inIdxMax
   inMin = inMin0
@@ -485,9 +494,11 @@ function g_zoomout () {
   }
   drawOuterGraph()
   document.getElementById('spinner').style.display = 'none'
+  console.log("END g_zoomout()")
 }
 
 function g_zoomin () { // Full Zoom
+  console.log("START g_zoomin()")
   inIdx1 = inIdxMax
   inIdx0 = inIdx1 - 50
   if (inIdx0 < -1) inIdx0 = -1
@@ -500,44 +511,53 @@ function g_zoomin () { // Full Zoom
   }
   drawOuterGraph()
   document.getElementById('spinner').style.display = 'none'
+  console.log("START g_zoomin()")
 }
 
 function g_start () {
+  console.log("START g_start()")
   var dIdx = inIdx1 - inIdx0
   inIdx0 = -1
   inIdx1 = dIdx - 1
   drawOuterGraph()
+  console.log("END g_start()")
 }
 function g_left () {
+  console.log("START g_left()")
   var dIdx3 = Math.round((inIdx1 - inIdx0) / 4)
   if (!dIdx3) dIdx3 = 1	// Minimum Step
   if (dIdx3 > inIdx0 + 1) dIdx3 = inIdx0 + 1
   inIdx0 -= dIdx3
   inIdx1 -= dIdx3
   drawOuterGraph()
+  console.log("END g_left()")
 }
 
 function g_right () {
+  console.log("START g_right()")
   var dIdx3 = Math.round((inIdx1 - inIdx0) / 4)
   if (!dIdx3) dIdx3 = 1	// Minimum Step
   if (inIdx1 + dIdx3 > inIdxMax) dIdx3 = inIdxMax - inIdx1
   inIdx1 += dIdx3
   inIdx0 += dIdx3
-
   drawOuterGraph()
+  console.log("END g_right()")
 }
 
 function g_end () {
+  console.log("START g_end()")
   var dIdx = inIdx1 - inIdx0
   inIdx1 = inIdxMax
   inIdx0 = inIdx1 - dIdx
   drawOuterGraph()
+  console.log("END g_end()")
 }
 
 function gi_keydown (event) {
   event = event || window.event
   // event.key: e.g. 'Escape'
 
+  console.log("START gi_keydown('"+event.key+"')")
   if (event.key == 'Escape') {
     if (clickCnt) {	// Hide Zoombox
       document.getElementById('zoomBox').style.display = 'none'
@@ -561,11 +581,11 @@ function gi_keydown (event) {
   else if (event.key == 'ArrowDown') g_movedown()
   else if (event.key == 'Home') g_start()
   else if (event.key == 'End') g_end()
-
-  // else alert(event.key); // Show Key
+  console.log("END gi_keydown('"+event.key+"')")
 }
 
 function g_export () { // 1:RemoveAlarm* 2:WithoutInfoLines 4;DecimalCOMMA
+  console.log("START g_export()")
   var flags = 1
   if (!timeVals.length) {
     ownAlert('ERROR: No Data for Export!', 15)
@@ -584,18 +604,21 @@ function g_export () { // 1:RemoveAlarm* 2:WithoutInfoLines 4;DecimalCOMMA
     ownAlert('ERROR: Export failed!', 15)
   }
   document.getElementById('spinner').style.display = 'none'
+  console.log("END g_export()")
 }
 
 // Function disabled in Shell
 function g_refresh () {
   if (gdrawAjaxCmd === undefined) return
+  console.log("START g_refresh()")
   modDateKnown = 0	// Get Full Data in ANY case
   msgVisible = 1
   if(gdrawAjaxCmd !== gGetStore){
-	ajaxLoad(gdrawAjaxCmd, 1)
+    ajaxLoad(gdrawAjaxCmd, 1)
   } else {
-	storeLoader(getFileName, 1)
+    storeLoader(getFileName, 1)
   }
+  console.log("END g_refresh()")
 }
 
 // Convert drawing_gsx into Index in tempVals (0..(inIdx1-1))

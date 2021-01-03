@@ -1,5 +1,5 @@
 <?php
-// --- setup_db.php - Database Setup ---
+// --- setup_db.php - Database Setup 02.01.2021 (C) joembedded.de ---
 
 error_reporting(E_ALL);
 
@@ -14,7 +14,7 @@ echo "================================<br>";
 echo "LTX Database Setup...<br>";
 echo "================================<br>";
 
-
+$now = time();						// one timestamp for complete run
 $xlog= "";
 check_dirs();
 db_init();
