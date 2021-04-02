@@ -1,7 +1,7 @@
 <?php
   /*****************************************************
   * Jo's Micro Cloud Login Script (C)JoEmbedded.de 
-  * Last modified: 05.12.2020
+  * Last modified: 25.03.2021
   *
   * LOGIN.PHP
   * see database-SQL description for use. 
@@ -356,7 +356,7 @@
         </div>
 
         <div class="form-item">
-          <label for="uticket">Enter Registration Ticket</label><br>
+          <label for="uticket">Server Ticket</label><br>
           <input type="text" placeholder="16 Characters" name="uticket" id="uticket"
             required minlength="16" maxlength="16" >
         </div>
