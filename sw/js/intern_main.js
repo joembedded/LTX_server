@@ -1,10 +1,12 @@
 /***************************************
 * intern_main.js Scripts (C) JoEmbedded.de 
+* Tipp: Debug: add ?xxx as param to script
+* include for reload.
 *****************************************/
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.45 (24.11.2020)";
+var prgVersion = "V0.46 (03.09.2021)";
 var prgName="LTX - MicroCloud"+ prgVersion; 
 var prgShortName="LTX1";
 
@@ -484,7 +486,8 @@ function user_poll(jcmd){
 					else hstr+=" (Owner: (none))";
 				}
 				var gpsinfo="";
-				if(adev.units.includes(":Lat") && adev.units.includes(":Lng")){
+
+				if(adev.units !== null && adev.units.includes(":Lat") && adev.units.includes(":Lng")){
 					if(isguest){ // Access with token
 						gpsinfo="<br><a class='jo-mac' href='gps_view.html?s="+adev.mac+"&lim=1000&k="+ adev.token+
 							"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; GPS Position View</b></a>"; 
