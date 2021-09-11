@@ -1,6 +1,6 @@
 ### Installation of LTX Database (File: './sw/docu/installation_LTX_database') ###
 
-### 09.01.2021 Jo ###
+### 09.09.2021 Jo ###
 
 LTX can be installed WITH (named as "LTX_server") Database and WITHOUT (named as "LTX_legacy").
 
@@ -28,13 +28,16 @@ The file 'quota_days.dat' my be set to individual values per logger at any time.
 
  4. Set Access Parameters in './sw/conf/config.inc.php' as in comments
 
- 5. Run './sw/setup_db.php'- This script can be run ONLY once and will install an Administrator
+ 5. Run './sw/setup.php'- This script can be run ONLY once and will install an Administrator
     This Script will ONLY run, if the database is COMPLETELY empty! 
+	(optionally clear existing database w.g. with PHPAdmin)
 ... _Remark: By default: the Database's Username and Password will be used for ADMIN_ 
 
  6. Set your Server name and path in the 'sys_param.lxp' file on the device. 
 
  7. Make a test transmition
+ 
+ 8. Peridocally (e.g. each day) call './sw/service/service.php' to clean up Database!
 	
 ***
 

@@ -3,10 +3,14 @@
 * Tipp: Debug: add ?xxx as param to script
 * include for reload.
 *****************************************/
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-mixed-spaces-and-tabs */
+
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.46 (03.09.2021)";
+var prgVersion = "V0.47 (10.09.2021)";
 var prgName="LTX - MicroCloud"+ prgVersion; 
 var prgShortName="LTX1";
 
@@ -459,10 +463,12 @@ function user_poll(jcmd){
 			$("#aOwnerToken").val("");
 			$("#noOfDevices").text("("+userAnzDevices+")");
 			//if(anzW) console.log("---- "+anzW+": Devices----"); // <- DEBUG
+			var adev;
+			var idx;
 			for(var i=0;i<anzW;i++){
 				//console.log(data.devices[i]);
-				var adev=data.devices[i];
-				var idx=adev.idx;
+				adev=data.devices[i];
+				idx=adev.idx;
 				//console.log(adev.mac); // <- DEBUG
 
 				var hstr="<li class='w3-display-container w3-white'>";
@@ -520,10 +526,10 @@ function user_poll(jcmd){
 		var alarm_cnt=0;
 
 		//if(anzW) console.log("---- "+anzW+": Changes----"); // <- DEBUG
-		for(var i=0;i<anzW;i++){
-			var adev=data.devices[i];
-			var idx=adev.idx;
-			//console.log(adev.mac); // <- DEBUG
+		for(i=0;i<anzW;i++){
+			adev=data.devices[i];
+			idx=adev.idx;
+		//console.log(adev.mac); // <- DEBUG
 			//console.log(adev);
 			// Cast Data to faster formats
 			adev.warnings_cnt=parseInt(adev.warnings_cnt);
@@ -672,12 +678,12 @@ function generateDetails(idx){
 				errorflag++;
 			}else{
 				var fval=parseFloat(valstr);
+				var proc
 				// Spezialwerte Batterie/Feuchte
 				if(kvn==90){	// **Battery Voltage**
 					var ulow=adev.vbat0
 					var uhigh=adev.vbat100
 					if(ulow>0 && uhigh>ulow){
-						var proc
 						proc=(fval-ulow)/(uhigh-ulow)*100;
 						if(proc>100) proc=100;
 						// else if(proc<0) proc=0;	// Nega zeigen
@@ -688,7 +694,6 @@ function generateDetails(idx){
 				}else if(kvn==93){	// **Battery Capacity**
 					var cbat=adev.cbat
 					if(cbat>0){
-						var proc
 						proc=(cbat-fval)/(cbat)*100;
 						// if(proc<0) proc=0;	// Nega zeigen
 						valstr+="("+proc.toFixed(0)+"%)";

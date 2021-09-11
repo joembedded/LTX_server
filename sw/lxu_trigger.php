@@ -2,14 +2,15 @@
 
 /*************************************************************
  * trigger for LTrax V1.16
- * 06.12.2020
+ * 11.09.2021
  * This is one version for a trigger that sortes all incomming data
  * in the default database. 
  * Can be triggered externally, see docu..
  * Last used Err: 106
  * 8/2020: With Quota-Limit
-	 ToDo:
- * CRON
+ *	 ToDo:  
+ *	 -> ***todo: 9/21: Besser mit $pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0 ???
+ *   -> p_CRON
  ***************************************************************/
 
 error_reporting(E_ALL);
@@ -115,7 +116,7 @@ db_init();
 
 // --- Save incomming data in database devices ---
 $qres = $pdo->query("SELECT 1 FROM m$mac WHERE 1");
-if ($qres === false) {	// No Table for this Device 
+if ($qres === false) {	// No Table for this Device ***todo: 9/21: Duerfte eigtl. nicht funktionieren ??? ***
 	// Will Fail if already exists
 	$qres = $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
 	$new_id = $pdo->lastInsertId();
