@@ -1,5 +1,4 @@
 <?php
-
 /*************************************************************
  * db_service for LTrax V1.xx
  * 10.09.2021
@@ -26,12 +25,42 @@ set_time_limit(240); // 4 Min runtime
 include("../conf/api_key.inc.php");
 include("../conf/config.inc.php");	// DB Access Param
 include("../inc/db_funcs.inc.php"); // Init DB
-include("../lxu_loglib.php");
 
 // ----------------Functions----------------
+function exit_error($err){
+	global $xlog;
+	echo "ERROR: '$err'\n";
+	$xlog .= "(ERROR:'$err')";
+	add_logfile();
+	exit();
+}
+
+function add_logfile(){
+	global $xlog, $dbg,  $now;
+
+	$sdata = "../".S_DATA;
+	$logpath = $sdata . "/log/";
+	if (@filesize($logpath . "log.txt") > 100000) {	// Main LOG
+		@unlink($logpath . "_log_old.txt");
+		rename($logpath . "log.txt", $logpath . "_log_old.txt");
+		$xlog .= " (Main 'log.txt' -> '_log_old.txt')";
+	}
+
+	if ($dbg) $xlog .= "(DBG:$dbg)";
+
+	$log = @fopen($sdata . "/log/log.txt", 'a');
+	if ($log) {
+		while (!flock($log, LOCK_EX)) usleep(10000);  // Lock File - Is a MUST
+		//fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC " . $_SERVER['REMOTE_ADDR'] . ' ' . $_SERVER['PHP_SELF']);        // Write file
+		fputs($log, " $xlog\n");        // evt. add extras
+		flock($log, LOCK_UN);
+		fclose($log);
+	}
+}
+
 // Check Mac Tables - Show Empty / Overaged Devices
 function check_macs($rep){ 	
-	global $pdo,$now;
+	global $pdo,$now,$qday;
 	global $vis,$xlog;
 	$statement = $pdo->prepare("SHOW TABLES");
 	$statement->execute(); // Get ALL Tables!
@@ -70,12 +99,12 @@ function check_macs($rep){
 				$xlog.="(RefInt:Del. devices.MAC:$mac)";
 			}
 		}else{
-			$age_d = intval(($now - $res['x'])/86400);
+			$age_d = round(($now - $res['x'])/86400,2);
 			$quota = @file("../".S_DATA ."/$mac/quota_days.dat");
 			$quota_days = intval(@$quota[0]);
-			if ($quota_days < 1) $quota_days = 366;	// 1 Day minimum, if unknown assume 1 year
+			if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown assume 1 year
 			if($age_d>$quota_days){
-				$mark.="(OverAge:".$quota_days-$age_d.")"; // <-- Remove this Device
+				$mark.="(OverAge:".($quota_days-$age_d).")"; // <-- Remove this Device
 				if($rep){
 					$pdo->query("DELETE FROM devices WHERE mac = '$mac'");
 					$pdo->query("DELETE FROM guest_devices WHERE mac = '$mac'");
@@ -121,12 +150,12 @@ function check_users($rep){
 		$statement2->execute();  
 		$guestcnt = $statement2->fetch()['x'];
 
-		$age_d = intval(($now - $row['x'])/86400);
+		$age_d = round(($now - $row['x'])/86400,2);
 		if($owncnt==0 && $guestcnt == 0 && $age_d>1 && !($role&65536)){ // Only keep ADMIN
 			$mark.="(NoDevs/Timeout)"; // <-- Remove this User
 			if($rep){
 				$pdo->query("DELETE FROM users WHERE id = '$uid'");
-				$xlog.="(To:Del. MAC:$uid)";
+				$xlog.="(To:Del. User:$uid)";
 			}
 		}
 
@@ -139,7 +168,7 @@ function check_users($rep){
 
 // Check Devices
 function check_devices($rep){ 	
-	global $pdo,$now;
+	global $pdo,$now,$qday;
 	global $vis,$xlog;
 	$statement = $pdo->prepare("SELECT *,UNIX_TIMESTAMP(last_change) as x  FROM devices");
 	$statement->execute(); // Get ALL entries
@@ -163,12 +192,12 @@ function check_devices($rep){
 			$lines = $pdo->query("SELECT COUNT(*) AS x FROM m$mac")->fetch()['x'];
 		}
 
-		$age_d = intval(($now - $row['x'])/86400);
+		$age_d = round(($now - $row['x'])/86400,2);
 		$quota = @file("../".S_DATA ."/$mac/quota_days.dat");
 		$quota_days = intval(@$quota[0]);
-		if ($quota_days < 1) $quota_days = 366;	// 1 Day minimum, if unknown assume 1 year
+		if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown assume 1 year
 		if($age_d>$quota_days){
-			$mark.="(OverAge:".$quota_days-$age_d.")"; // <--- Delete Entry, Remove Table
+			$mark.="(OverAge:".($quota_days-$age_d).")"; // <--- Delete Entry, Remove Table
 			if($rep){
 				$pdo->query("DELETE FROM devices WHERE mac = '$mac'");
 				$pdo->query("DELETE FROM guest_devices WHERE mac = '$mac'");
@@ -230,7 +259,7 @@ function rmrf($dir) {
 }
 // Check legacy - independant from Database!
 function check_legacy($rep){
-	global $now;
+	global $now,$qday;
 	global $vis,$xlog;
 	$dir = "../".S_DATA;
 	if($vis) echo "---Legacy Info---<br>\n";
@@ -246,12 +275,12 @@ function check_legacy($rep){
 		$anz++;
 		if (@file_exists("$dir/$file/device_info.dat")) {
 			$dt = $now - filemtime("$dir/$file/device_info.dat");
-			$age_d = intval($dt/86400);
+			$age_d = round($dt/86400,2);
 			$quota = @file("$dir/$mac/quota_days.dat");
 			$quota_days = intval(@$quota[0]);
-			if ($quota_days < 1) $quota_days = 366;	// 1 Day minimum, if unknown assume 1 year
+			if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown assume 1 year
 			if($age_d>$quota_days){
-				$mark.="(OverAge:".$quota_days-$age_d.")"; // <-- Remove this Device
+				$mark.="(OverAge:".($quota_days-$age_d).")"; // <-- Remove this Device
 				if($rep){	// Remove DIR
 					$xlog.="(Del.Legacy MAC:$mac)";
 					rmrf("$dir/$mac");
@@ -267,7 +296,6 @@ function check_legacy($rep){
 	$status = "0 Legacy Devices:$anz";
 	if($vis) echo "=> $status<br>\n<br>\n";
 	return $status;
-	
 }
 
 // ----------------MAIN----------------
@@ -291,6 +319,9 @@ if (@file_exists(S_DATA . "/$mac/cmd/dbg.cmd")) $dbg = 1; // Allow Individual De
 if ($vis && !$dbg && strcmp($api_key, L_KEY)) {
 	exit_error("Option 'v' only with API Key");
 }
+
+$qday = intval(DB_QUOTA);	// Use Default
+//$qday=5;	// Only latest! For TESTS
 
 db_init(); // --- Connect to DB ---
 switch ($cmd) {
@@ -336,13 +367,15 @@ case 'service_legacy':
 
 
 case 'service':
-default:
 	$status = check_macs(true);
 	$status .= " * ".check_users(true);
 	$status .= " * ".check_devices(true);
 	$status .= " * ".check_guest_devices(true);
 	$status .= " * ".check_legacy(true);
 	break;
+
+default:
+	$status = "ERROR: CMD '$cmd'";
 }
 
 $mtrun = round((microtime(true) - $mttr_t0) * 1000, 4);
