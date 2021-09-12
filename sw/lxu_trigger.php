@@ -2,14 +2,12 @@
 
 /*************************************************************
  * trigger for LTrax V1.16
- * 11.09.2021
+ * 12.09.2021
  * This is one version for a trigger that sortes all incomming data
  * in the default database. 
  * Can be triggered externally, see docu..
  * Last used Err: 106
- * 8/2020: With Quota-Limit
  *	 ToDo:  
- *	 -> ***todo: 9/21: Besser mit $pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0 ???
  *   -> p_CRON
  ***************************************************************/
 
@@ -115,11 +113,15 @@ if ($dbg) echo "*$cnt Files in '$dpath'*\n";
 db_init();
 
 // --- Save incomming data in database devices ---
-$qres = $pdo->query("SELECT 1 FROM m$mac WHERE 1");
-if ($qres === false) {	// No Table for this Device ***todo: 9/21: Duerfte eigtl. nicht funktionieren ??? ***
-	// Will Fail if already exists
-	$qres = $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
-	$new_id = $pdo->lastInsertId();
+if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for this Device 
+	$qres = $pdo->query("SELECT 1 FROM devices WHERE mac='$mac'")->rowCount();
+	if ($qres == 0) {
+		$pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
+		$new_id = $pdo->lastInsertId();
+		$xlog .= "(AddTable '$mac' (ID:$new_id))";
+	}else{
+		$xlog .= "(ERROR: No Table 'm$mac', but in 'devices'?)";
+	}
 	// Generate new table SQL direct
 	$qres = $pdo->query("
 			CREATE TABLE IF NOT EXISTS m$mac (
@@ -130,7 +132,7 @@ if ($qres === false) {	// No Table for this Device ***todo: 9/21: Duerfte eigtl.
 			PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 	if ($qres === false) exit_error("(ERROR 104:" . $pdo->errorInfo()[2] . ")"); // Can not Create Table
-	$xlog .= "(Add '$mac' (ID:$new_id in 'devices'))";
+
 } else {	// Table exists, Check Entry in decices
 	$qres = $pdo->query("SELECT 1 FROM devices WHERE mac='$mac'")->rowCount();
 	if ($qres == 0) {	// Table but no entry in devices?

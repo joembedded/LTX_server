@@ -38,6 +38,7 @@ The file 'quota_days.dat' my be set to individual values per logger at any time.
  7. Make a test transmition
  
  8. Peridocally (e.g. each day) call './sw/service/service.php?cmd=service' to clean/check up Database!
+    A Mail will be sent to the (Admin) with a short summary.
 	
 ***
 

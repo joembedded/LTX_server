@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * db_service for LTrax V1.xx
- * 10.09.2021
+ * 12.09.2021
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -58,6 +58,27 @@ function add_logfile(){
 	}
 }
 
+function send_mail($mail, $cont, $subj, $from)
+{
+	global $dbg;
+	$host = $_SERVER['SERVER_NAME'];
+	$mail_text = "Notification via '$host':\n";
+	$mail_text .= "$subj\n$cont\n";
+	//$mail_text .= "(This Email was sent automatically. If received unintentionally, please ignore it. Contact Service: " . SERVICEMAIL . ")";
+	$header = "From: $from <" . AUTOMAIL . ">\r\n" .
+		// 'Reply-To: webmaster@example.com' . "\r\n" .
+		'X-Mailer: PHP/' . phpversion();
+
+	if ($dbg) {
+		echo "(DEBUG)<pre>MAIL: =$mail=\nSUBJ: =$subj=\nHEADER: =$header=\nTEXT:\n=$mail_text=\n</pre>";
+		$res = true;	// Patch
+	} else {
+		$res = @mail($mail, $subj, $mail_text, $header);
+	}
+	return $res; // OK: true
+}
+
+
 // Check Mac Tables - Show Empty / Overaged Devices
 function check_macs($rep){ 	
 	global $pdo,$now,$qday;
@@ -74,6 +95,7 @@ function check_macs($rep){
 		}
 		if($row[0]!=='m') {
 			if($vis) echo "(IllegalTable)  Table:$row<br>\n";
+			$xlog.="(IllegalTable:$row)";
 			continue;
 		}
 		// All Devices start with 'm'
@@ -124,7 +146,7 @@ function check_macs($rep){
 // Check Users 
 function check_users($rep){ 	
 	global $pdo,$now;
-	global $vis,$xlog;
+	global $vis,$xlog,$admin_mail;
 	$statement = $pdo->prepare("SELECT *,UNIX_TIMESTAMP(last_seen) as x  FROM users");
 	$statement->execute(); // Get ALL Entries!
 	if($vis) echo "---Users Info---<br>\n";
@@ -135,6 +157,7 @@ function check_users($rep){
 		$role=$row['user_role'];
 		if($role&65536){
 			$mark="(Admin)";
+			$admin_mail=$row['email'];	// Save (LAST) Admin as Mail-Contact
 		}
 		if(!($role&32768)){
 			$mark.="(Demo)";
@@ -155,7 +178,7 @@ function check_users($rep){
 			$mark.="(NoDevs/Timeout)"; // <-- Remove this User
 			if($rep){
 				$pdo->query("DELETE FROM users WHERE id = '$uid'");
-				$xlog.="(To:Del. User:$uid)";
+				$xlog.="(Del.User:Id:$uid mail:".$row['email'].")";
 			}
 		}
 
@@ -309,6 +332,7 @@ $vis = @$_GET['v'];					// Visibility
 $now = time();						// one timestamp for complete run
 $mttr_t0 = microtime(true);           // Benchmark trigger
 $xlog = "(Service:'$cmd')";
+$admin_mail = SERVICEMAIL;	// Default
 
 if($dbg) echo "*** DBG:$dbg ***<br>";
 
@@ -382,6 +406,12 @@ $mtrun = round((microtime(true) - $mttr_t0) * 1000, 4);
 $xlog .= "(Run:$mtrun msec)"; // Script Runtime
 if (!isset($status)) $status = "0 OK";
 
-echo "*Service: '$status'*<br>\n"; // Always
-echo "*Log: '$xlog'*<br>\n";
+$cont = str_replace(")(",")\n(",$xlog);
+echo "*** Result: ***<pre>",$cont,"</pre>";
+echo "*** Mailed to: '$admin_mail' **<br>";
+echo "*** Service: '$status' ***<br>\n"; // Always
 add_logfile();
+
+send_mail($admin_mail, $cont."\n\n".$status,"LTX Service", "LTX Service (PHP)");
+
+//***
