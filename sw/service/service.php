@@ -51,7 +51,7 @@ function add_logfile(){
 	$log = @fopen($sdata . "/log/log.txt", 'a');
 	if ($log) {
 		while (!flock($log, LOCK_EX)) usleep(10000);  // Lock File - Is a MUST
-		//fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC " . $_SERVER['REMOTE_ADDR'] . ' ' . $_SERVER['PHP_SELF']);        // Write file
+		fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC " . $_SERVER['REMOTE_ADDR'] . ' ' . $_SERVER['PHP_SELF']);        // Write file
 		fputs($log, " $xlog\n");        // evt. add extras
 		flock($log, LOCK_UN);
 		fclose($log);
