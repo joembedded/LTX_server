@@ -20,7 +20,11 @@
 error_reporting(E_ALL);
 
 ignore_user_abort(true);
-set_time_limit(240); // 4 Min runtime
+set_time_limit(600); // 10 Min runtime
+
+// For Local access: 
+if (!isset($_SERVER['SERVER_NAME'])) $_SERVER['SERVER_NAME'] ="joembedded.de";
+if (!isset($_SERVER['REMOTE_ADDR'])) $_SERVER['REMOTE_ADDR'] ="joembedded.de";
 
 include("../conf/api_key.inc.php");
 include("../conf/config.inc.php");	// DB Access Param
@@ -334,6 +338,8 @@ $mttr_t0 = microtime(true);           // Benchmark trigger
 $xlog = "(Service:'$cmd')";
 $admin_mail = SERVICEMAIL;	// Default
 
+echo $xlog;
+
 if($dbg) echo "*** DBG:$dbg ***<br>";
 
 if (@file_exists(S_DATA . "/$mac/cmd/dbg.cmd")) $dbg = 1; // Allow Individual Debug
@@ -389,7 +395,7 @@ case 'service_legacy':
 	$status = check_legacy(true);
 	break;
 
-
+case '':	// Nothing
 case 'service':
 	$status = check_macs(true);
 	$status .= " * ".check_users(true);
