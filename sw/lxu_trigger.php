@@ -146,6 +146,7 @@ if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for thi
 		$lvalstr=$qres['vals']; 
 	}
 }
+
 $units = ""; // Units for ALL entries
 $lvala = array();	// Last Values as array;
 if(isset($lvalstr)){ // Inject old vals
@@ -156,7 +157,9 @@ if(isset($lvalstr)){ // Inject old vals
 	$val = @$ds[1];
     $lvala[$key]=$val;
   }
+  ksort($lvala);
 }
+
 // Add files to mac-table
 $line_cnt = 0;
 
