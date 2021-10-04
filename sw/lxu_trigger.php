@@ -296,6 +296,7 @@ foreach ($flist as $fname) {
 
 // Synthesize last values line
 $laval = "";
+ksort($lvala);
 foreach ($lvala as $key => $val) {
 	if (strlen($laval)) $laval .= " ";
 	$laval .= "$key:$val";
