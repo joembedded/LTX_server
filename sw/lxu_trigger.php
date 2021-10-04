@@ -1,14 +1,13 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.16
- * 12.09.2021
+ * trigger for LTrax V1.17
+ * 04.10.2021
  * This is one version for a trigger that sortes all incomming data
  * in the default database. 
  * Can be triggered externally, see docu..
  * Last used Err: 106
  *	 ToDo:  
- *   -> p_CRON
  ***************************************************************/
 
 error_reporting(E_ALL);
@@ -114,13 +113,16 @@ db_init();
 
 // --- Save incomming data in database devices ---
 if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for this Device 
-	$qres = $pdo->query("SELECT 1 FROM devices WHERE mac='$mac'")->rowCount();
-	if ($qres == 0) {
+	$statement = $pdo->prepare("SELECT vals FROM devices WHERE mac='$mac'");
+	$statement->execute(); // Fail->Exeption
+	$qres = $statement->fetch();
+	if ($qres == false) {
 		$pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
 		$new_id = $pdo->lastInsertId();
 		$xlog .= "(AddTable '$mac' (ID:$new_id))";
 	}else{
 		$xlog .= "(ERROR: No Table 'm$mac', but in 'devices'?)";
+		$lvalstr=$qres['vals'];
 	}
 	// Generate new table SQL direct
 	$qres = $pdo->query("
@@ -132,16 +134,29 @@ if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for thi
 			PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 	if ($qres === false) exit_error("(ERROR 104:" . $pdo->errorInfo()[2] . ")"); // Can not Create Table
-
 } else {	// Table exists, Check Entry in decices
-	$qres = $pdo->query("SELECT 1 FROM devices WHERE mac='$mac'")->rowCount();
-	if ($qres == 0) {	// Table but no entry in devices?
+	$statement = $pdo->prepare("SELECT vals FROM devices WHERE mac='$mac'");
+	$statement->execute(); // Fail->Exeption
+	$qres = $statement->fetch();
+	if ($qres == false) {	// Table but no entry in devices?
 		$qres = $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
 		$new_id = $pdo->lastInsertId();
 		$xlog .= "(ERROR: 'm$mac' exists, but not in 'devices'? (Re-)Added (ID:$new_id))";
+	}else{
+		$lvalstr=$qres['vals']; 
 	}
 }
-
+$units = ""; // Units for ALL entries
+$lvala = array();	// Last Values as array;
+if(isset($lvalstr)){ // Inject old vals
+  $tmpa = explode(' ', $lvalstr);
+  foreach( $tmpa as $tmp){
+	$ds = explode(':', $tmp); // As Key/Val
+	$key = $ds[0];
+	$val = @$ds[1];
+    $lvala[$key]=$val;
+  }
+}
 // Add files to mac-table
 $line_cnt = 0;
 
@@ -149,9 +164,6 @@ $warn_new = 0;	// See Text for explanation
 $err_new = 0;
 $alarm_new = 0;
 $info_wea = array();
-
-$units = ""; // Units for ALL entries
-$lvala = array();	// Last Values as array;
 
 $ign_cnt = 0;
 $file_cnt = 0;
@@ -196,6 +208,7 @@ foreach ($flist as $fname) {
 					if (strlen($xlog) < 128) $xlog .= "(WARNING: '!U'-Format)";
 					if (count($info_wea) < 20) $info_wea[] = "WARNING: '!U'-Format";
 				}
+				$lvala = array();	// New lvalas
 			} else {					// Line contains VALUES
 				$lina = array();	// Create an empty Output Array for Mapping Channels to Units
 
@@ -289,6 +302,7 @@ $laval = strtr($laval, "'\"<>", "____");
 // Remove '!U ' from units if found
 if (strlen($units)) $units = strtr(substr($units, 3), "'\"<>", "____");	// Remove strange chars
 
+// Get old Vals
 // prepare String for Db Update
 $insert_sql = "UPDATE devices SET last_seen=NOW(), last_change=NOW(),";
 if (strlen($units)) $insert_sql .= "units='$units',";
@@ -542,6 +556,7 @@ $insert_sql .= "transfer_cnt = transfer_cnt + $file_cnt,
 		anz_lines = $gesanz 
 		WHERE mac ='$mac'";
 
+
 $qres = $pdo->exec($insert_sql); // return 0 for no match
 if ($qres === false) {
 	if ($dbg) echo ("(ERROR 105:" . $pdo->errorInfo()[2] . ")"); // Can not Update Table?
@@ -551,6 +566,7 @@ if ($qres === false) {
 }
 
 if ($dbg) {
+	echo "InsertSQL: '$insert_sql'\n";
 	echo "Wo:$warn_old Ao:$alarm_old Eo:$err_old\n";
 	echo "Wn:$warn_new An:$alarm_new En:$err_new\n";
 	echo "Wt:$warn_tot At:$alarm_tot Et:$err_tot\n";
