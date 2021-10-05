@@ -121,8 +121,7 @@ if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for thi
 		$new_id = $pdo->lastInsertId();
 		$xlog .= "(AddTable '$mac' (ID:$new_id))";
 	}else{
-		$xlog .= "(ERROR: No Table 'm$mac', but in 'devices'?)";
-		$lvalstr=$qres['vals'];
+		$xlog .= "(ERROR: No Table 'm$mac', but in 'devices')"; // Cleared
 	}
 	// Generate new table SQL direct
 	$qres = $pdo->query("
