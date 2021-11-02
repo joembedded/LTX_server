@@ -1,7 +1,7 @@
 <?php
 /*****************************************************
  * Database Toolbox (C)JoEmbedded.de 
- * Last modified: 21.10.2020
+ * Last modified: 25.10.2021
  * ****************************************************/
 
 // ------------- Functions --------------
@@ -17,7 +17,6 @@ function db_init()
 	} catch (PDOException $e) {
 		exit("ERROR: '" . $e->getMessage() . "'<br>");
 	}
-	//$pdo->exec("SET @@session.time_zone = '+00:00'"); -todo- Set Database to Timezon of Browser
 }
 
 // Simple and fast String de/en-cryption 
