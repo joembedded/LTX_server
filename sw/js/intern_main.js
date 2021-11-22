@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.47 (10.09.2021)";
+var prgVersion = "V0.48 (18.11.2021)";
 var prgName="LTX - MicroCloud"+ prgVersion; 
 var prgShortName="LTX1";
 
@@ -750,7 +750,7 @@ function generateDetails(idx){
 	if(adev.role&1024) footer+="<div><button onclick='editDeviceDetails("+idx+")' class='w3-button w3-padding-small'><i class='fas fa-globe fa-fw w3-text-green'></i>Server</button>";
 	if(adev.role&512) footer+="<button onclick='editDeviceParameter("+idx+")' class='w3-button w3-padding-small'><i class='fas fa-cog fa-fw w3-text-blue'></i>Hardware</button>";
 	if(adev.role&256) footer+="<button onclick='editDeviceInfo("+idx+")' class='w3-button w3-padding-small'><i class='fas fa-info-circle w3-text-teal'></i> Details</button>";
-	if(adev.role&7) footer+="<button onclick='showDeviceWEA("+idx+")' class='w3-button w3-padding-small'><i class='fas fa-bell fa-fw w3-text-red'></i> Notes</button>";
+	if(adev.role&(7+256)) footer+="<button onclick='showDeviceWEA("+idx+")' class='w3-button w3-padding-small'><i class='fas fa-bell fa-fw w3-text-red'></i> Notes</button>";
 	if(adev.role&8) footer+="<button onclick='clearDeviceData("+idx+")' class='w3-button w3-padding-small'><i class='fas fa-trash-alt fa-fw'></i> Clear</button>";
 	
 	footer+="</div>";

@@ -16,19 +16,19 @@ Default fuer **Users**
 4096
 8192
 16384
-32768	: Darf was aendern (sonst DEMO) manuell setzen in DB)
+32768	: Darf was aendern (sonst DEMO) Um Demo-Access zu generieren: manuell setzen in DB)
 65536	: ADMIN (manuell setzen in DB)
 
 Default fuer **Devices** (= owner_role AND guest_role)
-1		: Reset Alarms
-2		: Reset Warnings
-4		: Reset Errors
+1		: Reset Alarms and Details
+2		: Reset Warnings and Details
+4		: Reset Errors and Details
 8		
 16
 32
 64
 128
-256		: Info Access
+256		: Info Access and Details
 512		: Hardware-Access
 1024	: Server-Access
 2048
