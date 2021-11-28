@@ -1,5 +1,5 @@
 <?php
-// --- setup.php - Database Setup 02.01.2021 (C) joembedded.de ---
+// --- setup.php - Database Setup 27.11.2021 (C) joembedded.de ---
 
 error_reporting(E_ALL);
 
@@ -63,10 +63,11 @@ if ($qres !== false) {
 	if(strlen($admin_pw) <= 6) $admin_pw = $admin_un;
 
 	echo "<br><br>Create ADMIN:<br>";
-	echo "ADMIN User: '".$admin_un."'<br>";
-	echo "ADMIN User: '".$admin_pw."'<br>";
-	echo "ADMIN Servicemail: '".SERVICEMAIL."'<br>";
-
+	echo "ADMIN User    : '".$admin_un."'<br>";
+	echo "ADMIN Password: '".$admin_pw."'<br>";
+	echo "ADMIN Servicemail: '".SERVICEMAIL."'<br><br>";
+	echo "<i>(Legacy Login and Data-Directory see './conf/api_key.inc.php',<br>";
+	echo "DB Credentials: './conf/config.inc.php')</i><br>";
 	
   	$statement = $pdo->prepare("INSERT INTO users (name, email, password, confirmed, rem, ticket, user_role) VALUES ( ? , ?, ? , ?, ?, ?, ?)");
   	$psw_enc=simple_crypt($admin_pw,0);	// use encrypted PW ind DB
@@ -84,6 +85,6 @@ if ($qres !== false) {
 	$xlog.= "(ERROR: Failed to Create Initial Tables)";
 	echo "ERROR: Failed to Create Initial Tables!!!<br>";
 }
-echo "<a href='../login.php'>Login to LTX...</a><br>";
+echo "<a href='login.php'>Login to LTX...</a><br>";
 add_logfile();
 ?>
