@@ -56,7 +56,7 @@ The file 'quota_days.dat' my be set to individual values per logger at any time.
     A Mail will be sent to the (Admin) with a short summary.
 	(Note: optionally $_SERVER['SERVER_NAME'] and $_SERVER['REMOTE_ADDR'] must be set in 'service.php' 
 	be set for CRON).
-	(Hint: often the CRON command is s system call like "/bin/php ./JoEmbedded_WordPress/ltx/sw/service/service.php")
+	(Hint: often the CRON command is a system call like "/bin/php ./JoEmbedded_WordPress/ltx/sw/service/service.php")
 	
 ***
 
