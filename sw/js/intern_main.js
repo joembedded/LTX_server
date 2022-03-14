@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.48 (18.11.2021)";
+var prgVersion = "V0.49 (14.03.2022)";
 var prgName="LTX - MicroCloud"+ prgVersion; 
 var prgShortName="LTX1";
 
@@ -95,6 +95,7 @@ var cklHKFlags=[
 	{typ:"HK Temperature"},
 	{typ:"HK Humidity"},
 	{typ:"HK Percent"},
+	{typ:"HK Baro"},
 ];
 
 var cklActionFlags=[
