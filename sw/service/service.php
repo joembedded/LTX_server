@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
- * db_service for LTrax V1.xx
- * 12.09.2021
+ * SERVICE.PHP db_service for LTrax V1.xx
+ * 16.03.2022
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -15,6 +15,7 @@
  * All Logger Tables start with 'm'
  * Other Tables: devices, guest_devices, users
  * Assume Basic DB structure is OK
+ * Service can be started manually extern, see "@_GET[].."
  ***************************************************************/
 
 error_reporting(E_ALL);
@@ -33,7 +34,7 @@ include("../inc/db_funcs.inc.php"); // Init DB
 // ----------------Functions----------------
 function exit_error($err){
 	global $xlog;
-	echo "ERROR: '$err'\n";
+	echo "<br>ERROR: '$err'\n";
 	$xlog .= "(ERROR:'$err')";
 	add_logfile();
 	exit();
@@ -85,7 +86,7 @@ function send_mail($mail, $cont, $subj, $from)
 
 // Check Mac Tables - Show Empty / Overaged Devices
 function check_macs($rep){ 	
-	global $pdo,$now,$qday;
+	global $pdo,$now,$qday,$fmaxd;
 	global $vis,$xlog;
 	$statement = $pdo->prepare("SHOW TABLES");
 	$statement->execute(); // Get ALL Tables!
@@ -128,7 +129,8 @@ function check_macs($rep){
 			$age_d = round(($now - $res['x'])/86400,2);
 			$quota = @file("../".S_DATA ."/$mac/quota_days.dat");
 			$quota_days = intval(@$quota[0]);
-			if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown assume 1 year
+			if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown use def.
+			if($fmaxd>0) $quota_days=$fmaxd; // Force remove
 			if($age_d>$quota_days){
 				$mark.="(OverAge:".($quota_days-$age_d).")"; // <-- Remove this Device
 				if($rep){
@@ -140,7 +142,7 @@ function check_macs($rep){
 					$xlog.="(OAge:Del. MAC:$mac)";
 				}
 			}
-			if($vis) echo "$mark  Mac:$mac - Lines:$lines - AgeDays:$age_d<br>\n";
+			if($vis) echo "$mark  Mac:$mac - Lines:$lines - AgeDays:$age_d/$quota_days<br>\n";
 		}
 	}
 	$status = "0 Devices:$anz_devices TotalLines:$total_lines";
@@ -195,7 +197,7 @@ function check_users($rep){
 
 // Check Devices
 function check_devices($rep){ 	
-	global $pdo,$now,$qday;
+	global $pdo,$now,$qday,$fmaxd;
 	global $vis,$xlog;
 	$statement = $pdo->prepare("SELECT *,UNIX_TIMESTAMP(last_change) as x  FROM devices");
 	$statement->execute(); // Get ALL entries
@@ -222,7 +224,8 @@ function check_devices($rep){
 		$age_d = round(($now - $row['x'])/86400,2);
 		$quota = @file("../".S_DATA ."/$mac/quota_days.dat");
 		$quota_days = intval(@$quota[0]);
-		if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown assume 1 year
+		if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum
+		if($fmaxd>0) $quota_days=$fmaxd; // Force remove
 		if($age_d>$quota_days){
 			$mark.="(OverAge:".($quota_days-$age_d).")"; // <--- Delete Entry, Remove Table
 			if($rep){
@@ -235,7 +238,7 @@ function check_devices($rep){
 			}
 		}
 
-		if($vis) echo "$mark  Mac:$mac - Lines:$lines - AgeDays:$age_d<br>\n";
+		if($vis) echo "$mark  Mac:$mac - Lines:$lines - AgeDays:$age_d/$quota_days<br>\n";
 	}
 	$status = "0 Devices:$anz_devices";
 	if($vis) echo "=> $status<br>\n<br>\n";
@@ -286,7 +289,7 @@ function rmrf($dir) {
 }
 // Check legacy - independant from Database!
 function check_legacy($rep){
-	global $now,$qday;
+	global $now,$qday,$fmaxd;
 	global $vis,$xlog;
 	$dir = "../".S_DATA;
 	if($vis) echo "---Legacy Info---<br>\n";
@@ -306,6 +309,8 @@ function check_legacy($rep){
 			$quota = @file("$dir/$mac/quota_days.dat");
 			$quota_days = intval(@$quota[0]);
 			if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum, if unknown assume 1 year
+			if($fmaxd>0) $quota_days=$fmaxd; // Force remove
+
 			if($age_d>$quota_days){
 				$mark.="(OverAge:".($quota_days-$age_d).")"; // <-- Remove this Device
 				if($rep){	// Remove DIR
@@ -316,9 +321,11 @@ function check_legacy($rep){
 		}else{
 			$mark="(UnknownAge)";
 			$xlog.="(UnknownAge MAC:$mac)";
+			$age_d="(?)";
+			$quota_days="(?)";
 		}
 
-		if($vis) echo "$mark  MAC:$mac AgeDays:$age_d<br>\n";		
+		if($vis) echo "$mark - Dir:'$dir' File:'$file': 'MAC:$mac' AgeDays:$age_d/$quota_days<br>\n";		
 	}
 	$status = "0 Legacy Devices:$anz";
 	if($vis) echo "=> $status<br>\n<br>\n";
@@ -332,30 +339,41 @@ $dbg = 0;	// Debug-Level if >0, see docu
 $api_key = @$_GET['k'];				// max. 41 Chars KEY
 $cmd = @$_GET['cmd'];				// Command
 $vis = @$_GET['v'];					// Visibility
+$qmaxd = @$_GET['d']; 				// Limit days extern (!!For explicit DB clenup!!) alles aeltere mit Gewalt entfernen!
 
 $now = time();						// one timestamp for complete run
 $mttr_t0 = microtime(true);           // Benchmark trigger
-$xlog = "(Service:'$cmd')";
+
 $admin_mail = SERVICEMAIL;	// Default
 
-echo $xlog;
+echo "*** SERVICE.PHP ***<br>";
+
+$xlog = "(Service:'$cmd')"; 
+if($vis) $xlog .= "(v:'$vis')";
 
 if($dbg) echo "*** DBG:$dbg ***<br>";
 
 if (@file_exists(S_DATA . "/$mac/cmd/dbg.cmd")) $dbg = 1; // Allow Individual Debug
 
+$qday = intval(DB_QUOTA);	// Use Default if unknown/notset
+
 // Check Key before loading data
 //echo "API-KEY: '$api_key'<br>\n"; // TEST
-if ($vis && !$dbg && strcmp($api_key, L_KEY)) {
-	exit_error("Option 'v' only with API Key");
+
+if (!$dbg && strcmp($api_key, L_KEY)) { // Kein API-Key
+	if($vis || $qdayx) exit_error("Commands only with Option 'v' and with API Key");
+}else{
+	$xlog .= "(api_key:OK')";
+	if($qmaxd>1) {
+		$fmaxd=$qmaxd;
+		$xlog .= "(d:'$fmaxd')";
+	}
 }
 
-$qday = intval(DB_QUOTA);	// Use Default
-//$qday=5;	// Only latest! For TESTS
 
 db_init(); // --- Connect to DB ---
 switch ($cmd) {
-case 'scan_macs':
+case 'scan_macs': // All SCAN commands only report, no action!
 	$status = check_macs(false);
 	break;
 case 'scan_users':
@@ -379,7 +397,7 @@ case 'scan':
 	$status .= " * ".check_legacy(false);
 	break;
 
-case 'service_macs':
+case 'service_macs':	// All SERVICE commands with action.
 	$status = check_macs(true);
 	break;
 case 'service_users':
@@ -395,7 +413,7 @@ case 'service_legacy':
 	$status = check_legacy(true);
 	break;
 
-case '':	// Nothing
+case '':	// Nothing - full service with action
 case 'service':
 	$status = check_macs(true);
 	$status .= " * ".check_users(true);
