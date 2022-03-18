@@ -24,7 +24,7 @@ The input script 'sw\ltu_trigger.php' will automatically remove older data.
 Change e.g. to "90\n1000" to allow only the last 90 days or max. 1000 lines per device (so even a small DB can hold thousands of devices).
 The file 'quota_days.dat' my be set to individual values per logger at any time.
 
-**Important: This repository ('ltx_server') is automatically generated/mainatined by scripts! No Feedback to Request/Comments**
+## Important: This repository ('ltx_server') is automatically generated/maintained by scripts! No Feedback to Issues/Request/Comments ##
 
 
 ***Installation:*** 
