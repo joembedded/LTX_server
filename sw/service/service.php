@@ -1,11 +1,12 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 16.03.2022
+ * 12.04.2022
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
  * - Checks Ref. Integrity of Database
+ *
  *
  * Help: 
  * CMD: mysql -uroot   -> use ltx_1u1 ->
@@ -16,6 +17,8 @@
  * Other Tables: devices, guest_devices, users
  * Assume Basic DB structure is OK
  * Service can be started manually extern, see "@_GET[].."
+ * Bsp: https://server.xxx/.../sw/service/service.php?k=APIKEY&v=1&d=2
+ * Removes all devices with age > 2days (maybe in n turns)
  ***************************************************************/
 
 error_reporting(E_ALL);

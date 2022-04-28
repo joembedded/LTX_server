@@ -1,6 +1,6 @@
 ### Installation of LTX Database (File: './sw/docu/installation_LTX_database') ###
 
-### 12.04.2022 Jo ###
+### 20.11.2021 Jo ###
 
 LTX can be installed WITH (named as "LTX_server") Database and WITHOUT (named as "LTX_legacy").
 
@@ -39,7 +39,7 @@ The file 'quota_days.dat' my be set to individual values per logger at any time.
  3. Modify './sw/conf/api_key.inc.php' as in comments:
 ... Most important is (rest can be changed later):
 ... - Set "S_DATA" to an own directory to something like "../xxx_secret_dir"
-... - "L_KEY" is your Login Key for the legacy part of the software. Set to own Key!
+... - "L_KEY" is your Login Key for the legacy part of the software. Set to own Key 
 
  4. Set Access Parameters in './sw/conf/config.inc.php' as in comments:
 ... - First entry "192.168.."/"localhost" is for local use (e.g. with XAMPP dev kit)
@@ -58,8 +58,7 @@ The file 'quota_days.dat' my be set to individual values per logger at any time.
  8. Peridocally (e.g. each day) call './sw/service/service.php' to clean/check up Database!
     A Mail will be sent to the (Admin) with a short summary.
 	(Note: optionally $_SERVER['SERVER_NAME'] and $_SERVER['REMOTE_ADDR'] must be set in 'service.php' for CRON).
-	(Hint: often the CRON or CRON-LIGHT, etc.. command is a system call like "/bin/php ./JoEmbedded_WordPress/ltx/sw/service/service.php",
-	also it is possible tp provide commands to service.php, e.g. option -d=DAYS or -v=1 (verbose), see sourcecode)
+	(Hint: often the CRON command is a system call like "/bin/php ./JoEmbedded_WordPress/ltx/sw/service/service.php")
 	
 ***
 
