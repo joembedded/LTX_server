@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.49 (14.03.2022)";
+var prgVersion = "V0.50 (07.06.2022)";
 var prgName="LTX - MicroCloud"+ prgVersion; 
 var prgShortName="LTX1";
 

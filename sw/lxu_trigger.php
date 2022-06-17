@@ -1,8 +1,7 @@
 <?php
-
 /*************************************************************
- * trigger for LTrax V1.17
- * 04.10.2021
+ * trigger for LTrax V1.18
+ * 06.06.2022
  * This is one version for a trigger that sortes all incomming data
  * in the default database. 
  * Can be triggered externally, see docu..
@@ -383,7 +382,7 @@ if ($qres == false) {
 
 
 	// Check if Position Update is necessary
-	$deltap = @array(-1, 604700, 86300, 3500)[$deva['posflags']];
+	$deltap = @array(-1, 604700, 86300, 3500, 60)[$deva['posflags']];
 	if ($deltap > 0 && $deva['lpos'] + $deltap < $now) {
 		$devi = array();
 		$lines = file(S_DATA . "/$mac/device_info.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -413,6 +412,7 @@ if ($qres == false) {
 				$nrad = $obj->accuracy;
 				$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
 				$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
+				$sqlps->execute(array(0, "<CELLOC $nlat $nlon $nrad>"));
 			}
 		}
 	}

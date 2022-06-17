@@ -23,7 +23,7 @@ echo "#NOW: $now\n";
 if (isset($_REQUEST['mk'])) {
 	echo "#MK: " . MAPKEY . "\n";	// APIKey MAP
 
-	// If current GPS-Position is unknown: Use latest Cell Position
+	// If current GPS-Position is unknown: Use latest Cell Position 
 	if (strpos($device['vals'], "NoGPSValue") > 0 || strpos($device['vals'], "Lat") == false) {
 		$gps_age =  strtotime($device['last_gps']) - strtotime($device['last_seen']); // OK for NULL
 		if ($gps_age < 9 || strlen($device['lat']) < 1 || strlen($device['lng']) < 1) {	// Update GPS-Data required
@@ -72,6 +72,7 @@ if (isset($_REQUEST['mk'])) {
 		echo "#LNG: " . $device['lng'] . "\n";
 		echo "#RAD: " . $device['rad'] . "\n";
 	}
+	
 }
 
 $anz = 0;	// Assume no Change

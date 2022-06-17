@@ -5,7 +5,7 @@
 'use strict'
 
 // ------------------ Globals ----------------------
-var prgVersion = 'V1.03 (14.10.2020)'
+var prgVersion = 'V1.04 (14.06.2022)'
 var prgName = 'GPS View ' + prgVersion
 var prgShortName = 'GPS View'
 
@@ -22,10 +22,6 @@ var reqLim
 // Ajax-Vars
 var autoID = 0				// Increments each CALL
 var ajaxActiveFlag = 0
-var autoRefresh = false
-var autoTimerResync = 60000 		// 60k Alle Minute 
-var autoTimerLastSyncSent = Date.now()
-var autoTimerLastSyncRec	// Last Sync Received
 
 var modDateKnown		// Servertimes in UnixSec
 var serverNow
@@ -134,6 +130,7 @@ function showMap(){
 		else if(channelUnits[i]==="Lng")  idx_lng=i;
 		else if(channelUnits[i]==="mcnt")  idx_mcnt=i;
 	}
+
 	if(idx_lat === undefined ||	idx_lng === undefined){
 		ownAlert("ERROR: No Entries 'Lat' and 'Lng' in Data",60);
 
@@ -148,25 +145,36 @@ function showMap(){
 			L.marker(coc, {opacity: 1, title:'Finish (Pos. of Cell Tower)', icon: raceIconUK}, ).addTo(myMap);
 
 		}
-
-		return;
+		//return;
 	}
 
 	showCompact = document.getElementById("checkCompact").checked;
 
 	GPS_points=[]
 	// sanz: summierbare Koordinaten, anz: ALLE fuer diesen Punkt
-	var GPS_spoint={anz:0, lat:'?', lng:'?', sanz:0, slat:0, slng:0, mcnt:0, t0:0, te:0}
+	var GPS_spoint={anz:0, lat:'?', lng:'?', sanz:0, slat:0, slng:0, mcnt:0, t0:0, te:0, rad:0}
 	for(var i=0;i<totalTimeVals;i++){
 		var timeVal = timeVals[i];
-		var ts=timeVal[0]	// UnixZeit*1k
-		if(timeVal[idx_lat]=== undefined || timeVal[idx_lng]===undefined) continue;
 		//console.log(timeVals[i]);
-		var llat = parseFloat(timeVal[idx_lat]);
-		var llng = parseFloat(timeVal[idx_lng]);
-		var lmcnt = -1;
-		if(idx_mcnt) lmcnt=parseFloat(timeVal[idx_mcnt]);
+		var ts=timeVal[0]	// UnixZeit*1k
 
+		var th1 = timeVal[1];
+		if(showCompact == false && th1!=undefined && th1.startsWith('CELLOC ')){	 // Zellen-Koordinaten
+
+			var cka = th1.split(' ')
+			var llat = parseFloat(cka[1])
+			var llng = parseFloat(cka[2])
+			var crad = parseFloat(cka[3])
+			var lmcnt = -1;
+		}else if(timeVal[idx_lat]=== undefined || timeVal[idx_lng]===undefined){
+			continue;
+		}else{
+			var llat = parseFloat(timeVal[idx_lat])
+			var llng = parseFloat(timeVal[idx_lng])
+			var lmcnt = -1;
+			var crad = 3; // Small dot
+			if(idx_mcnt) lmcnt=parseFloat(timeVal[idx_mcnt]);
+		}
 		if(showCompact===true && GPS_spoint.anz > 0 && lmcnt=== 0){	// Punkt zum existierenden dazu falls Kompakt
 
 			if(!isNaN(llat) && !isNaN(llng)){	// Gueltige neue Koordinaten zum Mitteln merken
@@ -191,7 +199,7 @@ function showMap(){
 		if(isNaN(llat) || isNaN(llng)){	// Ungueltige neue Koordinaten
 			GPS_spoint={anz:1, lat:timeVal[idx_lat], lng:timeVal[idx_lng], sanz:0, slat:0, slng:0, mcnt:lmcnt, t0:ts, te:0}
 		}else{	// Gueltige neue Koordinaten
-			GPS_spoint={anz:1, lat:'?', lng:'?', sanz:1, slat:llat, slng:llng, mcnt:lmcnt, t0:ts, te:0}
+			GPS_spoint={anz:1, lat:'?', lng:'?', sanz:1, slat:llat, slng:llng, mcnt:lmcnt, t0:ts, te:0, rad:crad}
 		}
 	} // for
 
@@ -203,29 +211,35 @@ function showMap(){
 		GPS_points.unshift(GPS_spoint);
 	}
 	totalGPS_points = GPS_points.length;
+	
 
 	var pos0UK=false;
 	var aco=[];	// Hilfsfeld, nur gesammelte, gueltige Koordinaten
 	for(var i=0;i<totalGPS_points; i++){
 		var gpsp =GPS_points[i];	// Ein GPS Punkt, Gueltig oder Ungeultig
+
 		//console.log(gpsp) // Ueberblick Liste
 		
 		if(gpsp.sanz>0){	// Gueltige Koordinaten gefunden
 			var co=L.latLng(gpsp.lat,gpsp.lng);
 			aco.push(co);
+			var rad = gpsp.rad;
+			var fop =  (rad>10)?0.01:0.7
+			var rop =  (rad>10)?0.02:0.2
+			
 			if(gpsp.sanz==1 && gpsp.mcnt){	// RED: Single Moves
-				L.circle(co, 3, {
+				L.circle(co, rad, {
 					color: 'red',
-					opacity: 0.2,
+					opacity: rop,
 					fillColor: 'red',
-					fillOpacity: 0.7		
+					fillOpacity: fop		
 				}).addTo(myMap); 
 			}else{			// GREEN: Kumulierte Punkte
-				L.circle(co, 3, {
+				L.circle(co, rad, {
 					color: 'green',
-					opacity: 0.2,
+					opacity: rop,
 					fillColor: 'green',
-					fillOpacity: 0.7		
+					fillOpacity: fop		
 				}).addTo(myMap);
 			}
 		}else if(i==0){	// Kein GPS fuer Akt. Pos.: Take CellPos
@@ -280,7 +294,9 @@ function slider(){
 	if(idx >= totalGPS_points){	// Bei Aenderungen?
 		idx=totalGPS_points-1
 	}
+	console.log("idx:"+idx)
 	var gpsp=GPS_points[idx]
+	if(gpsp==undefined) return; // ignore
 	var coord;
 	if(gpsp.sanz>0){	// Gueltige Koordinaten gefunden, evtl. undef.
 		var co=L.latLng(gpsp.lat,gpsp.lng);
@@ -330,7 +346,6 @@ function ajaxLoad (fname, showspinner) {
   if (ajaxActiveFlag) return
 
   ajaxActiveFlag = 1
-  autoTimerLastSyncSent = Date.now()
   autoID++
 
   $(document).ajaxError(function () {
@@ -345,8 +360,6 @@ function ajaxLoad (fname, showspinner) {
   var callurl = fname + '?s=' + reqMac
   if (reqToken !== undefined) callurl += '&k=' + reqToken
   if (getFileName !== undefined) callurl += '&file=' + getFileName	// Could be ""
-
-  // callurl+="&ajt="+autoTimerLastSyncSent+"&aid="+autoID; // Optioal Info fro Debugging
 
   if (modDateKnown !== undefined) callurl += '&m=' + modDateKnown
   callurl += '&lim=' + refreshLimit
@@ -396,8 +409,7 @@ function saveRawData (data, status) {
       ownAlert('MESSAGE from Server:\n' + loc.substr(1), 30)
     }
   }
-
-  autoTimerLastSyncRec = Date.now()	// Last Sync Received
+  
   if (modDateKnown != modDateNew) {
     /* Scan raw NEW Data to Lines, but keep raw Data */
     modDateKnown = modDateNew
@@ -716,8 +728,6 @@ function scanRawDataToVisibleData () {
   if (errmsg.length) return errmsg
 }
 
-
-
 // ------- secTickTimer ------ Runs with ca. 1 sec ---
 function secTickTimer () {	// Alle 5 Sekunden aufgerufen
 	; 
@@ -725,17 +735,27 @@ function secTickTimer () {	// Alle 5 Sekunden aufgerufen
 
 // ------------Alert---------------
 var msgVisible = 0
-
-function ownAlertClose () {
+var alerttxt = undefined
+var alertcnt = 0
+function ownAlertClose (allclose = false) {
+  alerttxt = undefined	
+  if(allclose == false &&  alertcnt-- >0) {
+	  return 
+  }
+  alertcnt = 0
   document.getElementById('msgBox').style.display = 'none'
   msgVisible = 0
   ajaxActiveFlag = 0
 }
 
-// Own Alert, Always with spinner disabled
+// Own Alert, Always with spinner disabled. Add Text and Time
 function ownAlert (txt, timeout) {
   msgVisible = 1
   document.getElementById('spinner').style.display = 'none'
+  alertcnt++;
+  console.log('Alert['+alertcnt+']: '+txt)
+  if(alerttxt !== undefined	) txt = alerttxt + '\n' + txt
+  alerttxt = txt
   document.getElementById('msgText').innerText = txt
   document.getElementById('msgBox').style.display = 'block'
   setTimeout(ownAlertClose, timeout * 1000)	// AutClose for Info

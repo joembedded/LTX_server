@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `lng` float,											dto
   `rad` float,											Genauigkiet GPS in m
   `last_gps` timestamp NULL DEFAULT NULL,				Letzter GPS-Zeitpung (Normal alle >= 24h)
-  `posflags` tinyint unsigned DEFAULT 0, 				Wie oft Auto-Pos-Update (0:Never - 3:Each Hour)
+  `posflags` tinyint unsigned DEFAULT 0, 				Wie oft Auto-Pos-Update (0:Never - 4:Immer)
 
   
   `transfer_cnt` int unsigned DEFAULT 0,				Zahelt jeden Transfer hoch
