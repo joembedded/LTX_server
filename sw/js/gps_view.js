@@ -1,51 +1,54 @@
 /*******************************************
-* GPS View Scripts (C) JoEmbedded.de
-* lim noch fix und keine Refresh
-*******************************************/
+ * GPS View Scripts (C) JoEmbedded.de
+ * lim noch fix und keine Refresh
+ * Noch sehr provisorische Darstellung!!!
+ *******************************************/
 'use strict'
+
+/*global L, $*/
 
 // ------------------ Globals ----------------------
 var prgVersion = 'V1.04 (14.06.2022)'
 var prgName = 'GPS View ' + prgVersion
 var prgShortName = 'GPS View'
 
-var gGetFile = 'w_php/w_gdraw_file.php'	// Default Server from FILE
-var gGetDB = 'w_php/w_gdraw_db.php'	// Default Server from Database
+var gGetFile = 'w_php/w_gdraw_file.php' // Default Server from FILE
+var gGetDB = 'w_php/w_gdraw_db.php' // Default Server from Database
 
 var gdrawAjaxCmd
 
-var reqMac 	// => s=00124B001574DCC8 MAC
-var reqToken 	// => k=ToKeN (optional)
+var reqMac // => s=00124B001574DCC8 MAC
+var reqToken // => k=ToKeN (optional)
 var getFileName
 var reqLim
 
 // Ajax-Vars
-var autoID = 0				// Increments each CALL
+var autoID = 0 // Increments each CALL
 var ajaxActiveFlag = 0
 
-var modDateKnown		// Servertimes in UnixSec
+var modDateKnown // Servertimes in UnixSec
 var serverNow
-var clientNow			// DATE
-var refreshLimit = -1	// Data Size in Lines 1-xx (-1: Maximum)
+var clientNow // DATE
+var refreshLimit = -1 // Data Size in Lines 1-xx (-1: Maximum)
 
 /* Here the RAW Data */
 var dataLinesRaw = [] // Raw Data as lines
-var dataAnzRaw = 0		// Number of raw lines (if OK: >0)
+var dataAnzRaw = 0 // Number of raw lines (if OK: >0)
 
-var sMac = '(undefined)'	// MAC as String
+var sMac = '(undefined)' // MAC as String
 var sName = '(undefined)' // Name as String
-var gmtOffset = null			// if null: use local time settings
+var gmtOffset = null // if null: use local time settings
 
 /* Here Scanned Data */
 var totalUsedChannels = 0 /* By Design max. 199 */
 var channelUnits = []
 var totalTimeVals = 0;
-var timeVals = []	// Holds an array[values] for each timestamp (tv[[1]]: Events)
-var channelVisible = []	// Mask-Array - false/true: Channel visibility (For Time: d.c)
+var timeVals = [] // Holds an array[values] for each timestamp (tv[[1]]: Events)
+var channelVisible = [] // Mask-Array - false/true: Channel visibility (For Time: d.c)
 
-var mapApiKey	// from Server
+var mapApiKey // from Server
 
-var myMap 
+var myMap
 
 var idx_lat
 var idx_lng
@@ -53,10 +56,10 @@ var idx_mcnt
 var showCompact
 
 var totalGPS_points
-var GPS_points=[]
+var GPS_points = []
 var GPS_track
-var	GPS_lastPosMarker
-var	GPS_varMarker
+var GPS_lastPosMarker
+var GPS_varMarker
 
 var cell_lat
 var cell_lng
@@ -64,292 +67,395 @@ var cell_rad
 
 // Creating a custom icon
 var raceIconOptions = {
-	iconUrl: 'icons/raceflag.png',
-	iconSize: [48, 48],	// Size des Icons auf BS. Zentrum des Icons ist an Koord.
-	iconAnchor:   [22, 46], // Jetzt zeigt die Spitze genau auf die Position
-	popupAnchor:  [0, -40],	// Ueber Fahne
+  iconUrl: 'icons/raceflag.png',
+  iconSize: [48, 48], // Size des Icons auf BS. Zentrum des Icons ist an Koord.
+  iconAnchor: [22, 46], // Jetzt zeigt die Spitze genau auf die Position
+  popupAnchor: [0, -40], // Ueber Fahne
 }
 var raceIconUKOptions = {
-	iconUrl: 'icons/raceflag_uk.png',
-	iconSize: [48, 48],	// Size des Icons auf BS. Zentrum des Icons ist an Koord.
-	iconAnchor:   [22, 46], // Jetzt zeigt die Spitze genau auf die Position
-	popupAnchor:  [0, -40],	// Ueber Fahne
+  iconUrl: 'icons/raceflag_uk.png',
+  iconSize: [48, 48], // Size des Icons auf BS. Zentrum des Icons ist an Koord.
+  iconAnchor: [22, 46], // Jetzt zeigt die Spitze genau auf die Position
+  popupAnchor: [0, -40], // Ueber Fahne
 }
 var hereIconOptions = {
-	iconUrl: 'icons/here_arrow.png',
-	iconSize: [48, 48],	// Size des Icons auf BS. Zentrum des Icons ist an Koord.
-	iconAnchor:   [22, 46], // Jetzt zeigt die Spitze genau auf die Position
-	popupAnchor:  [0, -40],	// Ueber Fahne
+  iconUrl: 'icons/here_arrow.png',
+  iconSize: [48, 48], // Size des Icons auf BS. Zentrum des Icons ist an Koord.
+  iconAnchor: [22, 46], // Jetzt zeigt die Spitze genau auf die Position
+  popupAnchor: [0, -40], // Ueber Fahne
 }
 var hereUkIconOptions = {
-	iconUrl: 'icons/here_arrow_uk.png',
-	iconSize: [48, 48],	// Size des Icons auf BS. Zentrum des Icons ist an Koord.
-	iconAnchor:   [22, 46], // Jetzt zeigt die Spitze genau auf die Position
-	popupAnchor:  [0, -40],	// Ueber Fahne
+  iconUrl: 'icons/here_arrow_uk.png',
+  iconSize: [48, 48], // Size des Icons auf BS. Zentrum des Icons ist an Koord.
+  iconAnchor: [22, 46], // Jetzt zeigt die Spitze genau auf die Position
+  popupAnchor: [0, -40], // Ueber Fahne
 }
 var raceIcon
 var raceIconUK
 var hereIcon
 var hereUkIcon
 
-function showMap(){
-	if(myMap !== undefined){
-		myMap.remove()
-		myMap=undefined
-	}
-		
-	if(myMap === undefined){
-		document.getElementById('infoBox').innerText = "MAC: "+sMac+" Name: '"+sName+"'"
-		document.title = prgShortName + " '" + sName + "' MAC:" + sMac
-		// Map mit allem neu erzeugen
-		myMap=L.map('map').setView(L.latLng(48.9463, 8.4079), 5);
+// Zellen Map bauen
+var Cells = []
 
-		L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-			maxZoom: 20,
-			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-				'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-				'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-			id: 'mapbox/streets-v11',
-			accessToken: mapApiKey
-		}).addTo(myMap);
+function addCell(xlat, xlng, xrad) {
+  for (var i = 0; i < Cells.length; i++) {
+    if (Cells[i].lat === xlat && Cells[i].lng === xlng && Cells[i].rad === xrad) {
+      Cells[i].use++
+      return i;
+    }
+  }
+  var nCell = {
+    use: 1, // einmal verwendet
+    lat: xlat,
+    lng: xlng,
+    rad: xrad
+  }
+  Cells.push(nCell)
+  return Cells.length - 1
+}
 
-		raceIcon = L.icon(raceIconOptions);
-		raceIconUK = L.icon(raceIconUKOptions);
-		hereIcon = L.icon(hereIconOptions);
-		hereUkIcon = L.icon(hereUkIconOptions);
 
-	}
-	// Add Lines
+function showMap() {
+  if (myMap !== undefined) {
+    myMap.remove()
+    myMap = undefined
+  }
 
-	// Feste Namen suchen!
-	idx_lat = undefined
-	idx_lng = undefined
-	idx_mcnt  = undefined	// Darf undefined bleiben
-	for(var i=0;i<totalUsedChannels;i++){
-		if(channelUnits[i]==="Lat")  idx_lat=i;
-		else if(channelUnits[i]==="Lng")  idx_lng=i;
-		else if(channelUnits[i]==="mcnt")  idx_mcnt=i;
-	}
+  if (myMap === undefined) {
+    document.getElementById('infoBox').innerText = "MAC: " + sMac + " Name: '" + sName + "'"
+    document.title = prgShortName + " '" + sName + "' MAC:" + sMac
+    // Map mit allem neu erzeugen
+    myMap = L.map('map').setView(L.latLng(48.9463, 8.4079), 5);
 
-	if(idx_lat === undefined ||	idx_lng === undefined){
-		ownAlert("ERROR: No Entries 'Lat' and 'Lng' in Data",60);
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+      maxZoom: 20,
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+        '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+        'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+      id: 'mapbox/streets-v11',
+      accessToken: mapApiKey
+    }).addTo(myMap);
 
-		if(cell_lat!==undefined){ // Opt. show Cell
-			var coc=L.latLng(cell_lat,cell_lng);
-			L.circle(coc, cell_rad, {
-				color: 'red',
-				opacity: 0.1,
-				fillColor: 'red',
-				fillOpacity: 0.2
-			}).addTo(myMap); 
-			L.marker(coc, {opacity: 1, title:'Finish (Pos. of Cell Tower)', icon: raceIconUK}, ).addTo(myMap);
+    raceIcon = L.icon(raceIconOptions);
+    raceIconUK = L.icon(raceIconUKOptions);
+    hereIcon = L.icon(hereIconOptions);
+    hereUkIcon = L.icon(hereUkIconOptions);
 
-		}
-		//return;
-	}
+  }
+  // Add Lines
 
-	showCompact = document.getElementById("checkCompact").checked;
+  // Feste Namen suchen!
+  idx_lat = undefined
+  idx_lng = undefined
+  idx_mcnt = undefined // Darf undefined bleiben
+  for (var i = 0; i < totalUsedChannels; i++) {
+    if (channelUnits[i] === "Lat") idx_lat = i;
+    else if (channelUnits[i] === "Lng") idx_lng = i;
+    else if (channelUnits[i] === "mcnt") idx_mcnt = i;
+  }
 
-	GPS_points=[]
-	// sanz: summierbare Koordinaten, anz: ALLE fuer diesen Punkt
-	var GPS_spoint={anz:0, lat:'?', lng:'?', sanz:0, slat:0, slng:0, mcnt:0, t0:0, te:0, rad:0}
-	for(var i=0;i<totalTimeVals;i++){
-		var timeVal = timeVals[i];
-		//console.log(timeVals[i]);
-		var ts=timeVal[0]	// UnixZeit*1k
+  if (idx_lat === undefined || idx_lng === undefined) {
+    ownAlert("ERROR: No Entries 'Lat' and 'Lng' in Data", 60);
 
-		var th1 = timeVal[1];
-		if(showCompact == false && th1!=undefined && th1.startsWith('CELLOC ')){	 // Zellen-Koordinaten
+    if (cell_lat !== undefined) { // Opt. show Cell
+      coc = L.latLng(cell_lat, cell_lng);
+      L.circle(coc, cell_rad, {
+        color: 'red',
+        opacity: 0.1,
+        fillColor: 'red',
+        fillOpacity: 0.2
+      }).addTo(myMap);
+      L.marker(coc, {
+        opacity: 1,
+        title: 'Finish (Pos. of Cell Tower)',
+        icon: raceIconUK
+      }, ).addTo(myMap);
 
-			var cka = th1.split(' ')
-			var llat = parseFloat(cka[1])
-			var llng = parseFloat(cka[2])
-			var crad = parseFloat(cka[3])
-			var lmcnt = -1;
-		}else if(timeVal[idx_lat]=== undefined || timeVal[idx_lng]===undefined){
-			continue;
-		}else{
-			var llat = parseFloat(timeVal[idx_lat])
-			var llng = parseFloat(timeVal[idx_lng])
-			var lmcnt = -1;
-			var crad = 3; // Small dot
-			if(idx_mcnt) lmcnt=parseFloat(timeVal[idx_mcnt]);
-		}
-		if(showCompact===true && GPS_spoint.anz > 0 && lmcnt=== 0){	// Punkt zum existierenden dazu falls Kompakt
+    }
+    //return;
+  }
 
-			if(!isNaN(llat) && !isNaN(llng)){	// Gueltige neue Koordinaten zum Mitteln merken
-				GPS_spoint.slat+=llat			
-				GPS_spoint.slng+=llng
-				GPS_spoint.sanz++
-			}
-			GPS_spoint.anz++	// Count aber in jedem Fall dazu
-			GPS_spoint.mcnt+=lmcnt
-			GPS_spoint.te=ts	// Letzter Timestamp merken
-			continue;
-		}
+  showCompact = document.getElementById("checkCompact").checked;
 
-		if(GPS_spoint.anz){
-			if(GPS_spoint.sanz>0){	// ggfs. Mitteln
-				GPS_spoint.lat=GPS_spoint.slat/GPS_spoint.sanz
-				GPS_spoint.lng=GPS_spoint.slng/GPS_spoint.sanz
-			}
-			GPS_points.unshift(GPS_spoint);	
-		}
-		// Neuen Punkt erzeugen
-		if(isNaN(llat) || isNaN(llng)){	// Ungueltige neue Koordinaten
-			GPS_spoint={anz:1, lat:timeVal[idx_lat], lng:timeVal[idx_lng], sanz:0, slat:0, slng:0, mcnt:lmcnt, t0:ts, te:0}
-		}else{	// Gueltige neue Koordinaten
-			GPS_spoint={anz:1, lat:'?', lng:'?', sanz:1, slat:llat, slng:llng, mcnt:lmcnt, t0:ts, te:0, rad:crad}
-		}
-	} // for
+  Cells = []
+  GPS_points = []
+  // sanz: summierbare Koordinaten, anz: ALLE fuer diesen Punkt
+  var GPS_spoint = {
+    anz: 0,
+    lat: '?',
+    lng: '?',
+    sanz: 0,
+    slat: 0,
+    slng: 0,
+    mcnt: 0,
+    t0: 0,
+    te: 0,
+    cellidx: -1
+  }
+  var ts
+  var tvl
+  var llat
+  var llng
+  var lmcnt
+  var crad
+  var coc
+  var cidx
+  for (i = 0; i < totalTimeVals; i++) {
+    var timeVal = timeVals[i];
+    //console.log(timeVals[i]);
+    var th1 = timeVal[1];
+    if (timeVal[0] !== undefined) {
+      ts = timeVal[0] // Save UnixZeit*1k
+      tvl = timeVal // Letzt Zeile merken
+    }
+    if (showCompact == false && th1 != undefined && th1.startsWith('CELLOC ')) { // Zellen-Koordinaten
+      var cka = th1.split(' ')
+      llat = parseFloat(cka[1])
+      llng = parseFloat(cka[2])
+      crad = parseFloat(cka[3])
+      cidx = addCell(llat,llng,crad) // Zellenindex merken
+      lmcnt = -1;
+      timeVals[i] = timeVal = tvl // Letzte Werte einpatchen
+    } else if (timeVal[idx_lat] === undefined || timeVal[idx_lng] === undefined) {
+      continue;
+    } else {
+      llat = parseFloat(timeVal[idx_lat])
+      llng = parseFloat(timeVal[idx_lng])
+      lmcnt = -1
+      cidx = -1 // Echte Wert
+      if (idx_mcnt) lmcnt = parseFloat(timeVal[idx_mcnt]);
+    }
+    if (showCompact === true && GPS_spoint.anz > 0 && lmcnt === 0) { // Punkt zum existierenden dazu falls Kompakt
 
-	if(GPS_spoint.anz) {
-		if(GPS_spoint.sanz>0){	// ggfs. Mitteln
-			GPS_spoint.lat=GPS_spoint.slat/GPS_spoint.sanz;
-			GPS_spoint.lng=GPS_spoint.slng/GPS_spoint.sanz;
-		}
-		GPS_points.unshift(GPS_spoint);
-	}
-	totalGPS_points = GPS_points.length;
-	
+      if (!isNaN(llat) && !isNaN(llng)) { // Gueltige neue Koordinaten zum Mitteln merken
+        GPS_spoint.slat += llat
+        GPS_spoint.slng += llng
+        GPS_spoint.sanz++
+      }
+      GPS_spoint.anz++ // Count aber in jedem Fall dazu
+      GPS_spoint.mcnt += lmcnt
+      GPS_spoint.te = ts // Letzter Timestamp merken
+      continue;
+    }
 
-	var pos0UK=false;
-	var aco=[];	// Hilfsfeld, nur gesammelte, gueltige Koordinaten
-	for(var i=0;i<totalGPS_points; i++){
-		var gpsp =GPS_points[i];	// Ein GPS Punkt, Gueltig oder Ungeultig
+    if (GPS_spoint.anz) {
+      if (GPS_spoint.sanz > 0) { // ggfs. Mitteln
+        GPS_spoint.lat = GPS_spoint.slat / GPS_spoint.sanz
+        GPS_spoint.lng = GPS_spoint.slng / GPS_spoint.sanz
+      }
+      GPS_points.unshift(GPS_spoint);
+    }
+    // Neuen Punkt erzeugen
+    if (isNaN(llat) || isNaN(llng)) { // Ungueltige neue Koordinaten
+      GPS_spoint = {
+        anz: 1,
+        lat: timeVal[idx_lat],
+        lng: timeVal[idx_lng],
+        sanz: 0,
+        slat: 0,
+        slng: 0,
+        mcnt: lmcnt,
+        t0: ts,
+        te: 0,
+        cellidx: -1
+      }
+    } else { // Gueltige neue Koordinaten
+      GPS_spoint = {
+        anz: 1,
+        lat: '?',
+        lng: '?',
+        sanz: 1,
+        slat: llat,
+        slng: llng,
+        mcnt: lmcnt,
+        t0: ts,
+        te: 0,
+        cellidx: cidx
+      }
+    }
+  } // for
 
-		//console.log(gpsp) // Ueberblick Liste
-		
-		if(gpsp.sanz>0){	// Gueltige Koordinaten gefunden
-			var co=L.latLng(gpsp.lat,gpsp.lng);
-			aco.push(co);
-			var rad = gpsp.rad;
-			var fop =  (rad>10)?0.01:0.7
-			var rop =  (rad>10)?0.02:0.2
-			
-			if(gpsp.sanz==1 && gpsp.mcnt){	// RED: Single Moves
-				L.circle(co, rad, {
-					color: 'red',
-					opacity: rop,
-					fillColor: 'red',
-					fillOpacity: fop		
-				}).addTo(myMap); 
-			}else{			// GREEN: Kumulierte Punkte
-				L.circle(co, rad, {
-					color: 'green',
-					opacity: rop,
-					fillColor: 'green',
-					fillOpacity: fop		
-				}).addTo(myMap);
-			}
-		}else if(i==0){	// Kein GPS fuer Akt. Pos.: Take CellPos
-			//console.log(cell_lat,cell_lng,cell_rad);
-			pos0UK=true
-			var coc=L.latLng(cell_lat,cell_lng);
-			aco.push(coc);
-			L.circle(coc, cell_rad, {
-				color: 'red',
-				opacity: 0.1,
-				fillColor: 'red',
-				fillOpacity: 0.2
-			}).addTo(myMap); 
-		}
-	}
+  if (GPS_spoint.anz) {
+    if (GPS_spoint.sanz > 0) { // ggfs. Mitteln
+      GPS_spoint.lat = GPS_spoint.slat / GPS_spoint.sanz;
+      GPS_spoint.lng = GPS_spoint.slng / GPS_spoint.sanz;
+    }
+    GPS_points.unshift(GPS_spoint);
+  }
+  totalGPS_points = GPS_points.length;
 
-	GPS_track = undefined
-	GPS_lastPosMarker =  undefined
-	GPS_varMarker =  undefined
-	if(aco.length){
-		GPS_track = L.polyline(aco, {color: 'red', opacity: 0.3}).addTo(myMap);
-		if(pos0UK){
-			GPS_lastPosMarker = L.marker(aco[0], {opacity: 1, title:'Finish (Pos. of Cell Tower)', icon: raceIconUK}, ).addTo(myMap);
-		}else{
-			GPS_lastPosMarker = L.marker(aco[0], {opacity: 1, title:'Finish', icon: raceIcon}, ).addTo(myMap);
-		}
-		GPS_varMarker = L.marker(aco[0], {icon: hereIcon}).addTo(myMap);
-		myMap.fitBounds(GPS_track.getBounds());
-	}else{
-		ownAlert("ERROR: No valid GPS Positions in Data",60);
+  // Zellen zeichnen (jede nur einfach)
+  for(i=0;i<Cells.length;i++){
+    var tc = Cells[i]
+    var tco = L.latLng(tc.lat, tc.lng)
+    var cop = 0.07
+    var cco = 'blue'
+    L.circle(tco, tc.rad, {
+      color: cco,
+      opacity: 0,
+      fillColor: cco,
+      fillOpacity: cop
+    }).addTo(myMap);
+  }
 
-		if(cell_lat!==undefined){ // Opt. show Cell
-			var coc=L.latLng(cell_lat,cell_lng);
-			L.circle(coc, cell_rad, {
-				color: 'red',
-				opacity: 0.1,
-				fillColor: 'red',
-				fillOpacity: 0.2
-			}).addTo(myMap); 
-			L.marker(coc, {opacity: 1, title:'Finish (Pos. of Cell Tower)', icon: raceIconUK}, ).addTo(myMap);
-		}
 
-	}
+  var pos0UK = false;
+  var aco = []; // Hilfsfeld, nur gesammelte, gueltige Koordinaten
+  for (i = 0; i < totalGPS_points; i++) {
+    var gpsp = GPS_points[i]; // Ein GPS Punkt, Gueltig oder Ungeultig
 
-	document.getElementById("posidx").max=totalGPS_points-1;
-	slider();
+    //console.log(gpsp) // Ueberblick Liste
+
+    if (gpsp.sanz > 0) { // Gueltige Koordinaten gefunden
+      var co = L.latLng(gpsp.lat, gpsp.lng);
+      aco.push(co);
+      var rad = 3 // Small Dot
+      var fop = 0.2
+      var rop = 0.7
+      var icol = 'green' // GREEN: Kumulierte Punkte
+      if (gpsp.sanz == 1 && gpsp.mcnt) { // RED: Single Moves
+        icol = 'red'
+      }
+      if (gpsp.cellidx>=0) { // Zelltower-Dot (mehrfach = intensiv)
+        rad = 100
+        icol = 'blue'
+        rop = 0.1
+        fop = 0.1
+      }
+      L.circle(co, rad, {
+        color: icol,
+        opacity: rop,
+        fillColor: icol,
+        fillOpacity: fop
+      }).addTo(myMap);
+
+    } else if (i == 0) { // Kein GPS fuer Akt. Pos.: Take CellPos
+      //console.log(cell_lat,cell_lng,cell_rad);
+      pos0UK = true
+      coc = L.latLng(cell_lat, cell_lng);
+      aco.push(coc);
+      L.circle(coc, cell_rad, {
+        color: 'red',
+        opacity: 0.1,
+        fillColor: 'red',
+        fillOpacity: 0.2
+      }).addTo(myMap);
+    }
+  }
+
+  GPS_track = undefined
+  GPS_lastPosMarker = undefined
+  GPS_varMarker = undefined
+  if (aco.length) {
+    GPS_track = L.polyline(aco, {
+      color: 'red',
+      opacity: 0.3
+    }).addTo(myMap);
+    if (pos0UK) {
+      GPS_lastPosMarker = L.marker(aco[0], {
+        opacity: 1,
+        title: 'Finish (Pos. of Cell Tower)',
+        icon: raceIconUK
+      }, ).addTo(myMap);
+    } else {
+      GPS_lastPosMarker = L.marker(aco[0], {
+        opacity: 1,
+        title: 'Finish',
+        icon: raceIcon
+      }, ).addTo(myMap);
+    }
+    GPS_varMarker = L.marker(aco[0], {
+      icon: hereIcon
+    }).addTo(myMap);
+    myMap.fitBounds(GPS_track.getBounds());
+  } else {
+    ownAlert("ERROR: No valid GPS Positions in Data", 60);
+
+    if (cell_lat !== undefined) { // Opt. show Cell
+      coc = L.latLng(cell_lat, cell_lng);
+      L.circle(coc, cell_rad, {
+        color: 'red',
+        opacity: 0.1,
+        fillColor: 'red',
+        fillOpacity: 0.2
+      }).addTo(myMap);
+      L.marker(coc, {
+        opacity: 1,
+        title: 'Finish (Pos. of Cell Tower)',
+        icon: raceIconUK
+      }, ).addTo(myMap);
+    }
+
+  }
+
+  document.getElementById("posidx").max = totalGPS_points - 1;
+  slider();
 }
 
 // Slider Callback
-function slider(){
-	var idx=parseInt(document.getElementById("posidx").value);
-	if(idx >= totalGPS_points){	// Bei Aenderungen?
-		idx=totalGPS_points-1
-	}
-	console.log("idx:"+idx)
-	var gpsp=GPS_points[idx]
-	if(gpsp==undefined) return; // ignore
-	var coord;
-	if(gpsp.sanz>0){	// Gueltige Koordinaten gefunden, evtl. undef.
-		var co=L.latLng(gpsp.lat,gpsp.lng);
-		if(idx){
-			GPS_varMarker.setOpacity(1)
-		}else{
-			GPS_varMarker.setOpacity(0)
-		}
-		GPS_varMarker.setIcon(hereIcon);
-		GPS_varMarker.setLatLng(co);
-		coord=""; // "("+gpsp.lat.toFixed(5)+","+gpsp.lng.toFixed(5)+")"
-	}else{
-		if(!idx){
-			var coc=L.latLng(cell_lat,cell_lng);
-			GPS_varMarker.setOpacity(0)
-			GPS_varMarker.setIcon(hereIcon);
-			GPS_varMarker.setLatLng(coc);
-		}
-		coord="(ERROR: "+gpsp.lat+","+gpsp.lng+")"
-		GPS_varMarker.setIcon(hereUkIcon);
-	}
+function slider() {
+  var idx = parseInt(document.getElementById("posidx").value);
+  if (idx >= totalGPS_points) { // Bei Aenderungen?
+    idx = totalGPS_points - 1
+  }
+  //console.log("idx:" + idx)
+  var gpsp = GPS_points[idx]
+  if (gpsp == undefined) return; // ignore
+  var coord;
+  if (gpsp.sanz > 0) { // Gueltige Koordinaten gefunden, evtl. undef.
+    var co = L.latLng(gpsp.lat, gpsp.lng);
+    if (idx) {
+      GPS_varMarker.setOpacity(1)
+    } else {
+      GPS_varMarker.setOpacity(0)
+    }
+    GPS_varMarker.setIcon(hereIcon);
+    GPS_varMarker.setLatLng(co);
+    coord = ""; // "("+gpsp.lat.toFixed(5)+","+gpsp.lng.toFixed(5)+")"
+  } else {
+    if (!idx) {
+      var coc = L.latLng(cell_lat, cell_lng);
+      GPS_varMarker.setOpacity(0)
+      GPS_varMarker.setIcon(hereIcon);
+      GPS_varMarker.setLatLng(coc);
+    }
+    coord = "(ERROR: " + gpsp.lat + "," + gpsp.lng + ")"
+    GPS_varMarker.setIcon(hereUkIcon);
+  }
 
-	idx++;
-	var tstr=new Date(gpsp.t0)
-	var pstr=tstr.toLocaleString()
-	if(gpsp.te){
-		tstr=new Date(gpsp.te)
-		pstr+=" - "+tstr.toLocaleString()
-	}
-	var istr="Pos "+idx+"/"+totalGPS_points+" ["+pstr+"]: "+coord
-		
-	if(gpsp.sanz>1){
-		istr+=" / Compacted "+gpsp.sanz+" Points"
-	}else if(gpsp.mcnt>0){
-		istr+=" / "+gpsp.mcnt+" Moves"
-	}
-	document.getElementById("infoLine").innerText=istr
+  idx++;
+  var tstr = new Date(gpsp.t0)
+  var pstr = tstr.toLocaleString()
+  if (gpsp.te) {
+    tstr = new Date(gpsp.te)
+    pstr += " - " + tstr.toLocaleString()
+  }
+  var istr = "Pos " + idx + "/" + totalGPS_points + " [" + pstr + "]: " + coord
+
+  if (gpsp.sanz > 1) {
+    istr += " / Compacted " + gpsp.sanz + " Points"
+  } else if (gpsp.mcnt > 0) {
+    istr += " / " + gpsp.mcnt + " Moves"
+  }
+  document.getElementById("infoLine").innerText = istr
 }
 
-function compactClick(){
-	showMap();
+/*global compactClick */
+function compactClick() {
+  showMap();
 }
 
 // --------- Ajax --------------------------------
 // Load File via Ajax (without Modification Date!) Should contani at Minimum: desired MAC
-function ajaxLoad (fname, showspinner) {
+function ajaxLoad(fname, showspinner) {
   if (ajaxActiveFlag) return
 
   ajaxActiveFlag = 1
   autoID++
 
   $(document).ajaxError(function () {
-    if (!showspinner) return	// Handle Errors silently
+    if (!showspinner) return // Handle Errors silently
     document.getElementById('spinner').style.display = 'none'
     if (!navigator.onLine) ownAlert('ERROR: OFFLINE! (' + autoID + ')', 5)
     else ownAlert('ERROR: Load Data! (' + autoID + ')', 15)
@@ -359,17 +465,17 @@ function ajaxLoad (fname, showspinner) {
 
   var callurl = fname + '?s=' + reqMac
   if (reqToken !== undefined) callurl += '&k=' + reqToken
-  if (getFileName !== undefined) callurl += '&file=' + getFileName	// Could be ""
+  if (getFileName !== undefined) callurl += '&file=' + getFileName // Could be ""
 
   if (modDateKnown !== undefined) callurl += '&m=' + modDateKnown
   callurl += '&lim=' + refreshLimit
-  if(mapApiKey==undefined) callurl+="&mk"
+  if (mapApiKey == undefined) callurl += "&mk"
   // console.log("call:'"+callurl+"'");
-  $.post(callurl, saveRawData, 'text') 	// Get Data (if not *.txt) DataType might be necessary + MapKey
+  $.post(callurl, saveRawData, 'text') // Get Data (if not *.txt) DataType might be necessary + MapKey
 }
 
 // ----------------Callback after AJAX Import, stores raw data---------------
-function saveRawData (data, status) {
+function saveRawData(data, status) {
   ajaxActiveFlag = 0
   dataAnzRaw = 0
   if (status !== 'success') {
@@ -387,7 +493,7 @@ function saveRawData (data, status) {
   }
 
   var modDateNew = -1 // force Scan if missing in Reply
-  var loc	// Local Line
+  var loc // Local Line
   /* Check first Lines with '#' */
   for (var i = 0; i < dataAnzRaw; i++) {
     var loc = dataLinesRaw[i]
@@ -398,18 +504,18 @@ function saveRawData (data, status) {
       serverNow = parseInt(loc.substr(6)) // Fuer Age Berechnung im Timer
       clientNow = Date.now()
     } else if (loc.startsWith('#MK: ')) {
-		mapApiKey = loc.substr(5)
+      mapApiKey = loc.substr(5)
     } else if (loc.startsWith('#LAT: ')) {
-		cell_lat = parseFloat(loc.substr(6))
+      cell_lat = parseFloat(loc.substr(6))
     } else if (loc.startsWith('#LNG: ')) {
-		cell_lng = parseFloat(loc.substr(6))
+      cell_lng = parseFloat(loc.substr(6))
     } else if (loc.startsWith('#RAD: ')) {
-		cell_rad = parseFloat(loc.substr(6))
-	} else {
+      cell_rad = parseFloat(loc.substr(6))
+    } else {
       ownAlert('MESSAGE from Server:\n' + loc.substr(1), 30)
     }
   }
-  
+
   if (modDateKnown != modDateNew) {
     /* Scan raw NEW Data to Lines, but keep raw Data */
     modDateKnown = modDateNew
@@ -429,15 +535,15 @@ function saveRawData (data, status) {
   // OK
 }
 
-function scanRawDataToVisibleData () {
+function scanRawDataToVisibleData() {
   var errmsg = '' // Cumullated Error Mesage
-  var txt = ''	// Debug String
+  var txt = '' // Debug String
   var loc // Local line
   var ldata
   var idx, lno
   var physChanUnits = [] // phys. channels 0-199: e.g. pCU[90]="HK-Bat"
   var physChanCnt = [] // counts used physical channels e.g pCC[4]=60 pCC[90]=10
-  var mapPhys2Log = []	// Maps logical channels to available (on screen)
+  var mapPhys2Log = [] // Maps logical channels to available (on screen)
   var strangeTimesCnt = 0
 
   // --Presets--
@@ -452,7 +558,7 @@ function scanRawDataToVisibleData () {
   for (var i = 0; i < dataAnzRaw; i++) {
     loc = dataLinesRaw[i]
     loclen = loc.length
-	//console.log("LineP1 "+i+" '"+loc+"'("+loclen+")");
+    //console.log("LineP1 "+i+" '"+loc+"'("+loclen+")");
     if (loclen < 1) {
       continue
     }
@@ -461,13 +567,13 @@ function scanRawDataToVisibleData () {
       continue
     }
     var c0 = loc.charAt(0)
-    if (c0 == '<' || c0 == '!') {	// EDT-Fomrat either ! or <
+    if (c0 == '<' || c0 == '!') { // EDT-Fomrat either ! or <
       lno = i
       ldata = loc
       mlid = ': Line:' + i + ' ID:' + lno
     } else if (c0 == '#') {
-      continue 	// Info! Reserved
-    } else {	// Database-Format with Line Number
+      continue // Info! Reserved
+    } else { // Database-Format with Line Number
       idx = loc.indexOf(' ')
       if (idx < 1) { // Also Empty
         if (errmsg.length < 500) errmsg += 'ERROR: Line:' + i + " No ID:'" + loc + "'\n"
@@ -491,7 +597,7 @@ function scanRawDataToVisibleData () {
             continue
           }
         } else if (ldata.startsWith('<NAME: ')) {
-          sName = ldata.substr(7, ldata.length - 8) 	// Brackets
+          sName = ldata.substr(7, ldata.length - 8) // Brackets
         } else if (ldata.startsWith('<GMT: ')) {
           gmtOffset = parseInt(ldata.substr(6))
           if (gmtOffset < -43200 || gmtOffset > 43200) {
@@ -505,7 +611,7 @@ function scanRawDataToVisibleData () {
         var valn = vals.length // At least 1
 
         if (ldata.charAt(1) == 'U') {
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          for (var ii = 1; ii < valn; ii++) { // Without !U
             // Split in Index:Value UNITS
             var kv = vals[ii].split(':')
             var kvn = parseInt(kv[0])
@@ -519,10 +625,10 @@ function scanRawDataToVisibleData () {
                 if (errmsg.length < 500) errmsg += 'WARNING' + mlid + "Unit changed '" + physChanUnits[kvn] + "' to '" + kv[1] + "'\n"
               }
             }
-            physChanUnits[kvn] = kv[1]	// Save last used units
+            physChanUnits[kvn] = kv[1] // Save last used units
           }
         } else {
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          for (ii = 1; ii < valn; ii++) { // Without !U
             // Split in Index:Value UNITS
             var kv = vals[ii].split(':')
             var kvn = parseInt(kv[0])
@@ -545,15 +651,15 @@ function scanRawDataToVisibleData () {
   channelUnits[0] = 'Time'
   channelUnits[1] = 'Events'
   if (channelVisible[1] === undefined) channelVisible[1] = true
-  totalUsedChannels = 2	// Channel 0/1 always reserved
+  totalUsedChannels = 2 // Channel 0/1 always reserved
   for (var x = 0; x < physChanCnt.length; x++) {
     if (typeof physChanCnt[x] !== 'undefined') {
-      if (typeof physChanUnits[x] === 'undefined') physChanUnits[x] = '???'	// Unknown Unit
+      if (typeof physChanUnits[x] === 'undefined') physChanUnits[x] = '???' // Unknown Unit
       // txt+=" K("+x+")=>"+totalUsedChannels+":"+ physChanCnt[x] + " " + physChanUnits[x];
       if (channelVisible[totalUsedChannels] === undefined) {
         channelVisible[totalUsedChannels] = true
       }
-      var newunit = physChanUnits[x]	// Save Units
+      var newunit = physChanUnits[x] // Save Units
       channelUnits[totalUsedChannels] = newunit
       mapPhys2Log[x] = totalUsedChannels++
     }
@@ -561,12 +667,12 @@ function scanRawDataToVisibleData () {
   // txt+="\nTotal used: "+totalUsedChannels+"\n";
 
   /** * PASS 2: Fill data Errors always: 'ERROR: Line:xxx ...' xxx Sourceline */
-  var lux_sec = 0	// last UNIX seconds
+  var lux_sec = 0 // last UNIX seconds
   for (var i = 0; i < dataAnzRaw; i++) {
     var linevals = []
     loc = dataLinesRaw[i]
     loclen = loc.length
-	//console.log("LineP2 "+i+" '"+loc+"'("+loclen+")");
+    //console.log("LineP2 "+i+" '"+loc+"'("+loclen+")");
     if (loclen < 1) {
       continue
     }
@@ -575,12 +681,12 @@ function scanRawDataToVisibleData () {
       continue
     }
     var c0 = loc.charAt(0)
-    if (c0 == '<' || c0 == '!') {	// EDT-Fomrat either ! or <
+    if (c0 == '<' || c0 == '!') { // EDT-Fomrat either ! or <
       lno = i
       ldata = loc
       mlid = ': Line:' + i + ' ID:' + lno
     } else if (c0 == '#') {
-      continue 	// Info! Reserved
+      continue // Info! Reserved
     } else {
       idx = loc.indexOf(' ')
       if (idx < 1) { // Also Empty
@@ -629,7 +735,7 @@ function scanRawDataToVisibleData () {
         var valn = vals.length // At least 1
 
         if (ldata.charAt(1) == 'U') {
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          for (var ii = 1; ii < valn; ii++) { // Without !U
             // Split in Index:Value UNITS
             var kv = vals[ii].split(':')
             var kvn = parseInt(kv[0])
@@ -645,7 +751,7 @@ function scanRawDataToVisibleData () {
           continue
         } else {
           var unixsec, lts, lus
-          lts = vals[0].substr(1)	// Local Time String
+          lts = vals[0].substr(1) // Local Time String
           if (lts.charAt(0) == '+') {
             var dt = parseInt(lts)
             unixsec = lux_sec + dt
@@ -655,7 +761,7 @@ function scanRawDataToVisibleData () {
             lus -= unixsec
             if (lus < 0) lus = -lus
             if (lus > 605000) { // >+/- 1w?
-              strangeTimesCnt++	// Error later
+              strangeTimesCnt++ // Error later
               if (linevals[1] === undefined) {
                 linevals[1] = 'TIMEGAP'
               } else {
@@ -667,10 +773,10 @@ function scanRawDataToVisibleData () {
           }
           lux_sec = unixsec
           if (unixsec < 1526030617 || unixsec >= 0x7FFFFFFF) {
-            strangeTimesCnt++	// Error later
+            strangeTimesCnt++ // Error later
           }
-          linevals[0] = unixsec * 1000	// Time in msec
-          for (var ii = 1; ii < valn; ii++) {	// Without !U
+          linevals[0] = unixsec * 1000 // Time in msec
+          for (var ii = 1; ii < valn; ii++) { // Without !U
             // Split in Index:Value UNITS
             var kv = vals[ii].split(':')
             var kvn = parseInt(kv[0])
@@ -724,23 +830,24 @@ function scanRawDataToVisibleData () {
 
   // errmsg be displayed, else return 'undefinde'
   if (strangeTimesCnt && errmsg.length < 500) errmsg += 'WARNING: Unknown Times (' + strangeTimesCnt + ') Lines'
-  if (errmsg.length >= 500) errmsg += '...'	// More errors
+  if (errmsg.length >= 500) errmsg += '...' // More errors
   if (errmsg.length) return errmsg
 }
 
 // ------- secTickTimer ------ Runs with ca. 1 sec ---
-function secTickTimer () {	// Alle 5 Sekunden aufgerufen
-	; 
+function secTickTimer() { // Alle 5 Sekunden aufgerufen
+  ;
 }
 
 // ------------Alert---------------
 var msgVisible = 0
 var alerttxt = undefined
 var alertcnt = 0
-function ownAlertClose (allclose = false) {
-  alerttxt = undefined	
-  if(allclose == false &&  alertcnt-- >0) {
-	  return 
+
+function ownAlertClose(allclose = false) {
+  alerttxt = undefined
+  if (allclose == false && alertcnt-- > 0) {
+    return
   }
   alertcnt = 0
   document.getElementById('msgBox').style.display = 'none'
@@ -749,21 +856,21 @@ function ownAlertClose (allclose = false) {
 }
 
 // Own Alert, Always with spinner disabled. Add Text and Time
-function ownAlert (txt, timeout) {
+function ownAlert(txt, timeout) {
   msgVisible = 1
   document.getElementById('spinner').style.display = 'none'
   alertcnt++;
-  console.log('Alert['+alertcnt+']: '+txt)
-  if(alerttxt !== undefined	) txt = alerttxt + '\n' + txt
+  console.log('Alert[' + alertcnt + ']: ' + txt)
+  if (alerttxt !== undefined) txt = alerttxt + '\n' + txt
   alerttxt = txt
   document.getElementById('msgText').innerText = txt
   document.getElementById('msgBox').style.display = 'block'
-  setTimeout(ownAlertClose, timeout * 1000)	// AutClose for Info
+  setTimeout(ownAlertClose, timeout * 1000) // AutClose for Info
 }
 
 
 // ------------------------------ M A I Ns ------------------------------
-function gps_view_init () {
+function gps_view_init() {
   // Isolate URL Parameters
   var qs = location.search.substr(1).split('&')
   var urlpar = {}
@@ -791,11 +898,14 @@ function gps_view_init () {
   }
 
   if (gdrawAjaxCmd != undefined) {
-    $.ajaxSetup({ type: 'POST',	timeout: 15000 })	// 15 secs Time
+    $.ajaxSetup({
+      type: 'POST',
+      timeout: 15000
+    }) // 15 secs Time
     ajaxLoad(gdrawAjaxCmd, 1)
     setInterval(secTickTimer, 1000)
   } else {
-    ownAlert(prgName + "\n\nGPS-Viewer", 300) 
+    ownAlert(prgName + "\n\nGPS-Viewer", 300)
   }
 
 }
