@@ -1,6 +1,6 @@
 ### Installation of LTX Database (File: './sw/docu/installation_LTX_database') ###
 
-### 20.11.2021 Jo ###
+### 28.06.2022 Jo ###
 
 LTX can be installed WITH (named as "LTX_server") Database and WITHOUT (named as "LTX_legacy").
 
@@ -59,6 +59,7 @@ The file 'quota_days.dat' my be set to individual values per logger at any time.
     A Mail will be sent to the (Admin) with a short summary.
 	(Note: optionally $_SERVER['SERVER_NAME'] and $_SERVER['REMOTE_ADDR'] must be set in 'service.php' for CRON).
 	(Hint: often the CRON command is a system call like "/bin/php ./JoEmbedded_WordPress/ltx/sw/service/service.php")
+    (Hint: Manual call / tests for 'service.php' via './sw/service/index.html')
 	
 ***
 

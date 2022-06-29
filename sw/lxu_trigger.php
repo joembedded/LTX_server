@@ -110,6 +110,8 @@ if ($dbg) echo "*$cnt Files in '$dpath'*\n";
 // --- Connect to DB ---
 db_init();
 
+$trigger_fb="";
+
 // --- Save incomming data in database devices ---
 if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for this Device 
 	$statement = $pdo->prepare("SELECT vals FROM devices WHERE mac='$mac'");
@@ -412,6 +414,7 @@ if ($qres == false) {
 				$nrad = $obj->accuracy;
 				$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
 				$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
+				$trigger_fb.="#C $nlat $nlon $nrad\n"; // For Feedback
 				$sqlps->execute(array(0, "<CELLOC $nlat $nlon $nrad>"));
 			}
 		}
@@ -598,4 +601,6 @@ $mtrun = round((microtime(true) - $mttr_t0) * 1000, 4);
 $xlog .= "(Run:$mtrun msec)"; // Script Runtime
 
 echo "*TRIGGER(DBG:$dbg) RES:$res ('$xlog')*\n"; // Always
+echo $trigger_fb; // Send Feedback
+
 add_logfile();

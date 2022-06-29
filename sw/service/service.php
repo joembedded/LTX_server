@@ -364,7 +364,7 @@ $qday = intval(DB_QUOTA);	// Use Default if unknown/notset
 //echo "API-KEY: '$api_key'<br>\n"; // TEST
 
 if (!$dbg && strcmp($api_key, L_KEY)) { // Kein API-Key
-	if($vis || $qdayx) exit_error("Commands only with Option 'v' and with API Key");
+	if($vis || $qmaxd) exit_error("Commands only with Option 'v' and with API Key");
 }else{
 	$xlog .= "(api_key:OK')";
 	if($qmaxd>1) {
@@ -439,6 +439,6 @@ echo "*** Mailed to: '$admin_mail' **<br>";
 echo "*** Service: '$status' ***<br>\n"; // Always
 add_logfile();
 
-send_mail($admin_mail, $cont."\n\n".$status,"LTX Service", "LTX Service (PHP)");
+if(!$vis) send_mail($admin_mail, $cont."\n\n".$status,"LTX Service", "LTX Service (PHP)");
 
 //***
