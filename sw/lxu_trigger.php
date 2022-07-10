@@ -414,7 +414,7 @@ if ($qres == false) {
 				$nrad = $obj->accuracy;
 				$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
 				$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
-				$trigger_fb.="#C $nlat $nlon $nrad\n"; // For Feedback
+				$trigger_fb.="#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
 				$sqlps->execute(array(0, "<CELLOC $nlat $nlon $nrad>"));
 			}
 		}

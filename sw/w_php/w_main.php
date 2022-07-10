@@ -636,11 +636,11 @@ if (!isset($status)) {
 		$dev['lng'] = $user_row['lng'];
 		$dev['rad'] = $user_row['rad'];
 		$dev['last_gps'] = $user_row['last_gps'];
+		$dev['posflags'] = $user_row['posflags'];
 
 		$dev['vbat0'] = $user_row['vbat0'];
 		$dev['vbat100'] = $user_row['vbat100'];
 		$dev['cbat'] = $user_row['cbat'];
-
 		$devices[] = $dev;
 	}
 
@@ -679,6 +679,7 @@ if (!isset($status)) {
 		$dev['lng'] = $user_row['lng'];
 		$dev['rad'] = $user_row['rad'];
 		$dev['last_gps'] = $user_row['last_gps'];
+		$dev['posflags'] = $user_row['posflags'];
 
 		$dev['vbat0'] = $user_row['vbat0'];
 		$dev['vbat100'] = $user_row['vbat100'];

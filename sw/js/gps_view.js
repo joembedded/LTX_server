@@ -217,6 +217,16 @@ function showMap() {
       cidx = addCell(llat,llng,crad) // Zellenindex merken
       lmcnt = -1;
       timeVals[i] = timeVal = tvl // Letzte Werte einpatchen
+    }else if (showCompact == false && th1 != undefined && th1.startsWith('UCMD:q')) { // Koordinaten q0 q1
+      var kox=th1.indexOf(' 0,')
+      if(kox < 6) continue // Errorcode
+      var qka = th1.substring(kox+3).split(',')
+      llat = parseFloat(qka[0])
+      llng = parseFloat(qka[1])
+      crad = 250;	// Zellenradius geschaetzt
+      cidx = addCell(llat,llng,crad) // Zellenindex merken
+      lmcnt = -1;
+      timeVals[i] = timeVal = tvl // Letzte Werte einpatchen
     } else if (timeVal[idx_lat] === undefined || timeVal[idx_lng] === undefined) {
       continue;
     } else {
@@ -496,7 +506,7 @@ function saveRawData(data, status) {
   var loc // Local Line
   /* Check first Lines with '#' */
   for (var i = 0; i < dataAnzRaw; i++) {
-    var loc = dataLinesRaw[i]
+    loc = dataLinesRaw[i]
     if (loc.charAt(0) !== '#') break
     if (loc.startsWith('#MDATE: ')) {
       modDateNew = parseInt(loc.substr(8))
@@ -630,8 +640,8 @@ function scanRawDataToVisibleData() {
         } else {
           for (ii = 1; ii < valn; ii++) { // Without !U
             // Split in Index:Value UNITS
-            var kv = vals[ii].split(':')
-            var kvn = parseInt(kv[0])
+            kv = vals[ii].split(':')
+            kvn = parseInt(kv[0])
             if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
               if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " ChannelNo:'" + ldata + "'\n"
               break
