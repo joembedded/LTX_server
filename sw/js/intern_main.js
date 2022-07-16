@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.51 (10.07.2022)";
+var prgVersion = "V0.52 (16.07.2022)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX1";
 
@@ -616,6 +616,11 @@ function user_poll(jcmd) {
 							"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; Position View</b></a>";
 					}
 				}
+				if (userRole & 65536) {
+					if (gpsinfo == "") gpsinfo += "<br>"
+					gpsinfo += "<a class='jo-mac' href='w_php/w_gdraw_db.php?s=" + adev.mac + "&lim=10000000&mk" +
+						"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; Raw Data</b></a>";
+				}
 
 				hstr += " Age:&nbsp;<span id='devLiCon" + i + "'></span>" +
 					'<span onclick="macShowDetails(' + i +
@@ -790,11 +795,15 @@ function generateDetails(idx) {
 			} else errorflag = 1;
 			// Unit now known or not found
 
-			var valstr = kv[1];
-			if (valstr == undefined) valstr = "?";
+			var valstr 
+			if(kvn >=90) valstr = "HK"+kvn+": &nbsp;" // Look similar to BlueShell
+			else valstr = "#"+kvn+": &nbsp;"
+			
+			if( kv[1] == undefined ) valstr +="?"
+			else valstr+= kv[1]
 
 			if (valstr.charAt(0) == '*') { // Alarm
-				valstr = valstr.substr(1);
+				valstr = valstr.substring(1);
 				alarmflag++;
 			}
 
@@ -832,7 +841,7 @@ function generateDetails(idx) {
 			else if (alarmflag) icont = "<tr style='background: #FFC0FF'>"; // light magenta
 			else if (warnflag) icont = "<tr style='background: #FFFF00'>"; // yellow
 			else icont = "<tr>";
-			icont += "<td>" + valstr + "</td><td>&nbsp;" + unit + "(" + ii + ")</td></tr>";
+			icont += "<td>" + valstr + "</td><td>&nbsp;" + unit + "</td></tr>";
 
 			cont += icont;
 		}

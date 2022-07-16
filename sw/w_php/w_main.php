@@ -1,10 +1,10 @@
 <?php
 // --- w_main.php - Main worker ---
-// Main Worker for intern_main. State 27.10.2020
+// Main Worker for intern_main. State 15.07.2022
 // Note: json_encode will fail if non-utf8-chars are present
 // ToDo: Optimise Call: with cmd/without per includes..
 // 'status' <= -1000: Fatal Error!
-// Last used ERROR: 145
+// Last used ERROR: 148
 
 require_once("../inc/w_istart.inc.php");
 // ---------- functions ----------------
@@ -135,6 +135,25 @@ switch ($cmd) {
 			$anz = $statement->rowCount();
 			if ($anz) {
 				$status = "-137 ERROR: MAC already added as Guest Device!";
+				break;
+			}
+		}
+
+		$statement = $pdo->prepare("SELECT * FROM devices WHERE mac = ?");
+		$qres = $statement->execute(array($newmac));
+
+		if ($qres == false) {
+			$status = "-146 ERROR: CMD '$cmd'";
+			break;
+		} else {
+			$anz = $statement->rowCount();
+			if ($anz) {
+				$device_row = $statement->fetch();
+				if ($device_row['owner_id'] == $user_id) {
+					$status = "-147 ERROR: Can't add own Device!";
+					break;
+				}
+				$status = "-148 ERROR: MAC already added by other User!";
 				break;
 			}
 		}
@@ -535,6 +554,8 @@ switch ($cmd) {
 		}
 		$pos0 = @$_REQUEST['pos0'];
 		$anz = @$_REQUEST['anz'];
+		if(!isset($pos0)) $pos0=0;
+		if(!isset($anu)) $anz=0;
 
 		$logall = @file($fname, FILE_IGNORE_NEW_LINES);
 
@@ -565,8 +586,10 @@ switch ($cmd) {
 		$fpath = "../" . S_DATA . "/$mac"; // (one extra DIR up)
 		$fname = $fpath . "/info_wea.txt";
 		$fname2 = $fpath . "/_info_wea_old.txt";
-		$pos0 = @$_REQUEST['pos0'];
-		$anz = @$_REQUEST['anz'];
+		$pos0 = @$_REQUEST['pos0']; 
+		$anz = @$_REQUEST['anz']; 
+		if(!isset($pos0)) $pos0=0;
+		if(!isset($anu)) $anz=0;
 
 		$logall = @file($fname, FILE_IGNORE_NEW_LINES);
 
@@ -602,10 +625,13 @@ switch ($cmd) {
 if (!isset($status)) {
 
 	// Quick Check all user's devices for changes OWN first
-	if ($urole & 65536) $statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_change) AS lsc FROM devices"); // Admin
-	else $statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_change) AS lsc FROM devices WHERE owner_id = ?"); // Normal User
-
-	$statement->execute(array($user_id));
+	if ($urole & 65536) {
+		$statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_change) AS lsc FROM devices"); // Admin
+		$statement->execute();
+	}else{
+		$statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_change) AS lsc FROM devices WHERE owner_id = ?"); // Normal User
+		$statement->execute(array($user_id));
+	}
 	$anzo = $statement->rowCount(); // No of matches = Number of User's OWN Devices
 	$devices = array();
 

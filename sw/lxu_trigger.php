@@ -1,4 +1,5 @@
 <?php
+
 /*************************************************************
  * trigger for LTrax V1.18
  * 06.06.2022
@@ -77,7 +78,7 @@ $now = time();						// one timestamp for complete run
 $mttr_t0 = microtime(true);           // Benchmark trigger
 $xlog = "(Import)";
 
-if (strlen($mac) != 16) {
+if (!isset($mac) || strlen($mac) != 16) {
 	if (strlen($mac) > 24) exit();		// URL Attacked?
 	exit_error("MAC Len");
 }
@@ -86,7 +87,7 @@ if (@file_exists(S_DATA . "/$mac/cmd/dbg.cmd")) $dbg = 1; // Allow Individual De
 
 // Check Key before loading data
 //echo "API-KEY: '$api_key'\n"; // TEST
-if (!$dbg && strcmp($api_key, S_API_KEY)) {
+if (!$dbg && (!isset($api_key) || strcmp($api_key, S_API_KEY))) {
 	exit_error("API Key");
 }
 
@@ -110,10 +111,10 @@ if ($dbg) echo "*$cnt Files in '$dpath'*\n";
 // --- Connect to DB ---
 db_init();
 
-$trigger_fb="";
+$trigger_fb = "";
 
 // --- Save incomming data in database devices ---
-if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for this Device 
+if ($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount() === 0) { // No Table for this Device 
 	$statement = $pdo->prepare("SELECT vals FROM devices WHERE mac='$mac'");
 	$statement->execute(); // Fail->Exeption
 	$qres = $statement->fetch();
@@ -121,7 +122,7 @@ if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for thi
 		$pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
 		$new_id = $pdo->lastInsertId();
 		$xlog .= "(AddTable '$mac' (ID:$new_id))";
-	}else{
+	} else {
 		$xlog .= "(ERROR: No Table 'm$mac', but in 'devices')"; // Cleared
 	}
 	// Generate new table SQL direct
@@ -142,22 +143,22 @@ if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()===0){ // No Table for thi
 		$qres = $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
 		$new_id = $pdo->lastInsertId();
 		$xlog .= "(ERROR: 'm$mac' exists, but not in 'devices'? (Re-)Added (ID:$new_id))";
-	}else{
-		$lvalstr=$qres['vals']; 
+	} else {
+		$lvalstr = $qres['vals'];
 	}
 }
 
 $units = ""; // Units for ALL entries
 $lvala = array();	// Last Values as array;
-if(isset($lvalstr)){ // Inject old vals
-  $tmpa = explode(' ', $lvalstr);
-  foreach( $tmpa as $tmp){
-	$ds = explode(':', $tmp); // As Key/Val
-	$key = $ds[0];
-	$val = @$ds[1];
-    $lvala[$key]=$val;
-  }
-  ksort($lvala);
+if (isset($lvalstr)) { // Inject old vals
+	$tmpa = explode(' ', $lvalstr);
+	foreach ($tmpa as $tmp) {
+		$ds = explode(':', $tmp); // As Key/Val
+		$key = $ds[0];
+		$val = @$ds[1];
+		$lvala[$key] = $val;
+	}
+	ksort($lvala);
 }
 
 // Add files to mac-table
@@ -414,7 +415,7 @@ if ($qres == false) {
 				$nrad = $obj->accuracy;
 				$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
 				$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
-				$trigger_fb.="#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
+				$trigger_fb .= "#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
 				$sqlps->execute(array(0, "<CELLOC $nlat $nlon $nrad>"));
 			}
 		}

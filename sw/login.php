@@ -1,7 +1,7 @@
 <?php
   /*****************************************************
   * Jo's Micro Cloud Login Script (C)JoEmbedded.de 
-  * Last modified: 25.03.2021
+  * Last modified: 11.07.2022
   *
   * LOGIN.PHP
   * see database-SQL description for use. 
@@ -96,31 +96,32 @@
   
   //---------------------------------- MAIN PHP ----------------------------------
   // Autocomplete what is known
-  $uname=@$_COOKIE['user'];
-  if(strlen(@$_POST['uname']))$uname=$_POST['uname'];
+  $uname=@$_COOKIE['user']; if(!isset($uname)) $uname="";
+  if(isset($_POST['uname'])) $uname=$_POST['uname'];
   $uname=trim($uname);	// No Spaces
   $len=strlen($uname);
-  if($len<4 || $len>100) unset($uname);
+  if($len<4 || $len>100) $uname="";
   
-  $psw=@$_COOKIE['psw'];
+  $psw=@$_COOKIE['psw']; if(!isset($psw)) $psw="";
   if(strlen($psw)) $psw=simple_crypt($psw,1);	// Decrypt from cookie
   
-  if(strlen(@$_POST['psw'])) $psw=@$_POST['psw'];
+  if(isset($_POST['psw'])) $psw=$_POST['psw'];
   $psw=trim($psw);
   $len=strlen($psw);
-  if($len<6 || $len>100) unset($psw);
+  if($len<6 || $len>100) $psw="";
   
-  $mail=@$_GET['mail'];	// Mail comes always as GET or POST
-  if(strlen(@$_POST['mail'])) $mail=$_POST['mail'];
+  $mail=@$_GET['mail']; if(!isset($mail)) $mail="";	// Mail comes always as GET or POST
+  
+  if(isset($_POST['mail'])) $mail=$_POST['mail'];
   $len=trim(strlen($mail));
-  if($len<6 || $len>100) unset($mail);
+  if($len<6 || $len>100) $mail="";
   
   $uid=@$_SESSION['user_id'];
-  
-  $remember=strlen(@$_POST['rem'])?true:false;
+  $remember=isset($_POST['rem'])?true:false;
   
   $msg="";	// Start with empty Text
-  $action=@$_GET['a'];
+  $action=isset($_GET['a'])?$_GET['a']:"";
+
   if(!strlen($action) && strlen(@$uname) && strlen(@$psw)){
   	$action="autologin";
   	$remember=1;	// logical state without action and user/password set
@@ -132,7 +133,7 @@
   	switch($action){	// User and Mail must be Text (might be displayed)
   	case "logout":
   		set_remember_cookie(0,"","");	// Kill Cookie
-  		if(strlen($uid)){
+  		if(isset($uid)){
   			$statement = $pdo->prepare("UPDATE users SET loggedin = 0 WHERE  id = ?");
   			$statement->execute(array($uid));
   		}

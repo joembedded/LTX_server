@@ -11,13 +11,17 @@ require_once("../conf/api_key.inc.php"); // APIs
 require_once("db_funcs.inc.php"); // Init DB
 
 $mac = @$_REQUEST['s'];	// s always MAC (k: API-Key, r: Reason)
+if(!isset($mac)) $mac="";
 if (strlen($mac) != 16) {
 	echo "#ERROR: MAC len\n";
 	exit();
 }
 
 $cdate = @$_REQUEST['m']; 	// Last known Modification Date
-$token = strtoupper(@$_REQUEST['k']); 	// optionally if not logged IN as owner
+if(!isset($cdate)) $cdate="";
+$token=@$_REQUEST['k']; 	// optionally if not logged IN as owner
+if(!isset($token)) $token="";
+$token = strtoupper($token);
 $limit = intval(@$_REQUEST['lim']);	// Limit of Datasets (if set, else: maximum, MUST be set)
 
 db_init();
