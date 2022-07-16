@@ -795,12 +795,12 @@ function generateDetails(idx) {
 			} else errorflag = 1;
 			// Unit now known or not found
 
-			var valstr 
-			if(kvn >=90) valstr = "HK"+kvn+": &nbsp;" // Look similar to BlueShell
-			else valstr = "#"+kvn+": &nbsp;"
-			
-			if( kv[1] == undefined ) valstr +="?"
-			else valstr+= kv[1]
+			var valstr = kv[1]
+			if(valstr == undefined)  valstr = '?'
+
+			var cidstr
+			if(kvn >=90) cidstr = "HK"+kvn+": &nbsp;" // Look similar to BlueShell
+			else cidstr = "#"+kvn+": &nbsp;"
 
 			if (valstr.charAt(0) == '*') { // Alarm
 				valstr = valstr.substring(1);
@@ -841,7 +841,7 @@ function generateDetails(idx) {
 			else if (alarmflag) icont = "<tr style='background: #FFC0FF'>"; // light magenta
 			else if (warnflag) icont = "<tr style='background: #FFFF00'>"; // yellow
 			else icont = "<tr>";
-			icont += "<td>" + valstr + "</td><td>&nbsp;" + unit + "</td></tr>";
+			icont += "<td>"+cidstr+" </td><td>" + valstr + "</td><td>&nbsp;" + unit + "</td></tr>";
 
 			cont += icont;
 		}
