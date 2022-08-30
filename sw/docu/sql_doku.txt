@@ -1,4 +1,4 @@
-* Anmerkungen zu den SQL Rows *
+* Anmerkungen zu den SQL Rows Stand 17.07.2022 *
 
 *************** Table Users **************************
 CREATE TABLE IF NOT EXISTS `users` (
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `id` int unsigned AUTO_INCREMENT,						Durchgezaehlt 1-x
   `mac` varchar(16) COLLATE utf8_unicode_ci NOT NULL,  	16 Stellen
   `first_seen` timestamp DEFAULT CURRENT_TIMESTAMP, 	Wann angelegt als Device (AUTO)
-  `last_seen` timestamp NULL DEFAULT NULL, 				Zuletzt Device gesehn 
+  `last_seen` timestamp NULL DEFAULT NULL, 				Zuletzt Device gesehen  (nur echte Uebertragungen MIT Daten)
   `last_change` timestamp DEFAULT CURRENT_TIMESTAMP,	Letzte Aenderung an der Tabelle
 
   `name` varchar(255) COLLATE utf8_unicode_ci,			Aktueller Name Eingetragen von TRIGGER

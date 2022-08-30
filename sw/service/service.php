@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 12.04.2022
+ * 17.07.2022
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -198,7 +198,48 @@ function check_users($rep){
 	return $status;
 }
 
-// Check Devices
+// ---------------- Trigger: External async Script lxu_trigger.php -------------------------
+function call_trigger($mac,$reason)
+{
+	global $xlog, $vis;
+
+	$self = $_SERVER['PHP_SELF'];
+	$port = $_SERVER['SERVER_PORT'];
+	$server = $_SERVER['SERVER_NAME'];
+	$rpos = strrpos($self, '/'); // Evtl. check for  backslash (only Windows?)
+	
+	$tscript = substr($self, 0, $rpos) . "/../lxu_trigger.php"; // 1 up!
+	$arg = "k=" . S_API_KEY . "&r=$reason&s=$mac";	// Parameter: API-KEY, reason and MAC
+
+	//	echo "Start Trigger $server:$port '$tscript?$arg' - ";
+
+	$fp = @fsockopen($server, $port, $errno, $errstr, 10);    // Try max. 10 seconds 
+	if ($fp) {
+		stream_set_timeout($fp, 0, 990000); // Wait max. 990 msec for a response of trigger
+
+		$out = "GET $tscript?$arg HTTP/1.0\r\n";
+		$out .= "Host: $server:$port\r\n"; // Assume: Same dir as self
+		$out .= "Connection: Close\r\n\r\n";
+
+		$wres = fwrite($fp, $out);
+		if ($wres != strlen($out)) {
+			if(strlen($xlog<500)) $xlog .= "(ERROR; Write to Trigger-Script failed)";
+		} else {
+			$rres = fread($fp, 1000);	// Only interested in the first few chars "HTTP/1.1 200 OK" or "HTTP/1.1 404 Not Found";
+			if (strpos($rres, " 200 ") != false) {
+				// if(strlen($xlog<500)) $xlog.="(Trigger-Script OK '$rres')"; // Norm. not necessary to record
+			} else if (strpos($rres, " 404 ") != false) { // Normally: Busy Trigger takes longer..
+				if(strlen($xlog<500)) $xlog .= "(ERROR: Trigger-Script not found)";
+			}  // Syntax-Erros in Script not catched!
+		}
+		fclose($fp);
+	} else {
+		if(strlen($xlog<500)) $xlog .= "(ERROR: Trigger-Script open)";
+	}
+}
+
+
+// Check Devices and opt. Timeouts
 function check_devices($rep){ 	
 	global $pdo,$now,$qday,$fmaxd;
 	global $vis,$xlog;
@@ -206,6 +247,7 @@ function check_devices($rep){
 	$statement->execute(); // Get ALL entries
 	if($vis) echo "---Devices Info---<br>\n";
 	$anz_devices=0;
+	$trigger_cnt=0;
 	while($row = $statement->fetch()){
 		$anz_devices++;
 		$mark="";
@@ -239,11 +281,32 @@ function check_devices($rep){
 				}
 				$xlog.="(OAge:Del. MAC:$mac)";
 			}
-		}
 
+		}else{	// Check Tranmission Timeouts
+			$las = $row['last_seen'];
+			if(isset($las)) $ageh = ($now - strtotime($las))/3600;
+			else $ageh=0;	// Macht kein Sinn - Never seen..
+			$toalarm = $row['timeout_alarm'];
+			$calltrigger=0;
+			if($toalarm>0 &&  $toalarm>$ageh){
+				$calltrigger=512;
+			}else{
+				$towarn = $row['timeout_warn'];
+				if($towarn>0 && $towarn> $ageh){
+					$calltrigger=1024;
+				}
+			}
+			if($calltrigger){
+				$trigger_cnt++;
+				$mark.="(NeedTrigger:$calltrigger)";
+				if($rep){	// Call Trigger for this device
+					call_trigger($mac,$calltrigger);
+				}
+			}
+		}
 		if($vis) echo "$mark  Mac:$mac - Lines:$lines - AgeDays:$age_d/$quota_days<br>\n";
 	}
-	$status = "0 Devices:$anz_devices";
+	$status = "0 Devices:$anz_devices Triggers:$trigger_cnt";
 	if($vis) echo "=> $status<br>\n<br>\n";
 	return $status;
 }

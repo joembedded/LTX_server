@@ -1,8 +1,8 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.18
- * 06.06.2022
+ * trigger for LTrax V1.19
+ * 17.07.2022
  * This is one version for a trigger that sortes all incomming data
  * in the default database. 
  * Can be triggered externally, see docu..
@@ -72,11 +72,11 @@ header('Content-Type: text/plain');
 
 $api_key = @$_GET['k'];				// max. 41 Chars KEY
 $mac = strtoupper(@$_GET['s']); 		// exactly 16 UC Chars. api_key and mac identify device
-$reason = @$_GET['r'];				// Opt. Reason (ALARMS) (as in device_info.dat also) *t.b.d* (e.g. timeout or HK-Service-Meta)
-// reason&256: SEND Contact
+$reason = intval(@$_GET['r']);				// Opt. Reason (ALARMS) (as in device_info.dat also) *t.b.d* (e.g. timeout or HK-Service-Meta)
+// reason&256: SEND Contact 512|1024:Timeout
 $now = time();						// one timestamp for complete run
 $mttr_t0 = microtime(true);           // Benchmark trigger
-$xlog = "(Import)";
+$xlog = "(Trigger:$reason)";		// Assume only Trigger/Service
 
 if (!isset($mac) || strlen($mac) != 16) {
 	if (strlen($mac) > 24) exit();		// URL Attacked?
@@ -91,7 +91,6 @@ if (!$dbg && (!isset($api_key) || strcmp($api_key, S_API_KEY))) {
 	exit_error("API Key");
 }
 
-
 // --- Now check files ---
 $dpath = S_DATA . "/$mac/in_new";		// Device Path (must exist)
 
@@ -100,13 +99,14 @@ if (!$flist) {
 	exit_error("MAC Unknown");
 }
 usort($flist, "flcmp");	// Now Compared by Filenames
-$cnt = count($flist) - 2;   // Without . and ..
+$fcnt = count($flist) - 2;   // Without . and ..
+if($fcnt>2) $xlog = "(Import)"; // Now: real import
 // foreach($flist as $fl) echo "$fl\n"; exit();
 $cpath = S_DATA . "/$mac/cmd";		// Path (UPPERCASE recommended, must exist)
 
 $res = 0;	// No Data
 
-if ($dbg) echo "*$cnt Files in '$dpath'*\n";
+if ($dbg) echo "*$fcnt Files in '$dpath'*\n";
 
 // --- Connect to DB ---
 db_init();
@@ -309,7 +309,9 @@ if (strlen($units)) $units = strtr(substr($units, 3), "'\"<>", "____");	// Remov
 
 // Get old Vals
 // prepare String for Db Update
-$insert_sql = "UPDATE devices SET last_seen=NOW(), last_change=NOW(),";
+$insert_sql = "UPDATE devices SET last_change=NOW(), ";
+if($fcnt>2) $insert_sql .= "last_seen=NOW(), ";
+
 if (strlen($units)) $insert_sql .= "units='$units',";
 if (strlen($laval)) $insert_sql .= "vals='$laval',";
 if (isset($cookie)) {
@@ -384,9 +386,9 @@ if ($qres == false) {
 	}
 
 
-	// Check if Position Update is necessary
+	// Check if Position Update is necessary (only with data)
 	$deltap = @array(-1, 604700, 86300, 3500, 60)[$deva['posflags']];
-	if ($deltap > 0 && $deva['lpos'] + $deltap < $now) {
+	if ($fcnt>2 && $deltap > 0 && $deva['lpos'] + $deltap < $now) {
 		$devi = array();
 		$lines = file(S_DATA . "/$mac/device_info.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 		if ($lines !== false) {
@@ -421,6 +423,21 @@ if ($qres == false) {
 		}
 	}
 
+	$las = $deva['last_seen'];
+	if(isset($las)) $ageh = ($now - strtotime($las))/3600;
+	else $ageh=0;	// Macht kein Sinn - Never seen..
+	$toalarm = $deva['timeout_alarm'];
+	if($toalarm>0 &&  $toalarm>$ageh){
+		$alam_new++;
+		$info_wea[] = "ALARM: Device last seen $age h ago ";		
+	}else{
+		$towarn = $deva['timeout_warn'];
+		if($towarn>0 && $towarn> $ageh){
+			$warn_new++;
+			$info_wea[] = "WARNING: Device last seen $age h ago ";		
+		}
+	}
+
 	// Posibility to reset sth. -> old+new=tot
 	$warn_tot = $warn_new + $warn_old;
 	$alarm_tot = $alarm_new + $alarm_old;
@@ -428,11 +445,15 @@ if ($qres == false) {
 	if ($warn_new) $xlog .= "($warn_new new Warnings)";
 	if ($alarm_new) $xlog .= "($alarm_new new Alarms)";
 	if ($err_new) $xlog .= "($err_new new Errors)";
-	$cond0 = trim($deva['cond0']);	// Evaluate Condition 0
+	$cond0 = $deva['cond0'];	// Evaluate Condition 0
+	if(!isset($cond0)) $cond0="";
+	else $cond0=trim($cond0);
 	if (strlen($cond0) || ($reason & 256)) {
 		$conds = explode(" ", $cond0);
 		// Check Alarm Condition(s)
-		$em_age0 = $now - strtotime($deva['em_date0']);	// Age of last Mail null->0
+		$tlmail = $deva['em_date0'];
+		if(!isset($tlmail)) $tlmail="";
+		$em_age0 = $now - strtotime($tlmail);	// Age of last Mail null->0
 		// echo "Condition:'".$deva['cond0']."'\n"; // Bsp: An+1:M+1000 Et+3 Wn+1 -> AlarmNew>=1 UND Mail>=1000 ODER Etot>=3 ODER Wnew>=1
 		$send_err = false;
 		$send_or = 0;
@@ -486,6 +507,7 @@ if ($qres == false) {
 		if ($send_err) $err_tot++;	// Can not Send Mail
 		else if ($send_or || ($reason & 256)) { // $reason&256 trggers Mail!
 			$mail_dest = $deva['email0'];
+			if(!isset($mail_dest)) $mail_dest="";
 			if (strlen(trim($mail_dest))) {
 				if ($dbg) echo "Send Mail to '$mail_dest'\n";
 				$mailno = $deva['em_cnt0'] + 1;
@@ -498,7 +520,8 @@ if ($qres == false) {
 				if (HTTPS_SERVER != null) $sec = "https://" . HTTPS_SERVER;
 				else $sec = "http://" . $_SERVER['HTTP_HOST'];
 				$url = $sec . $sroot;
-				$xcont = @$_GET['xc']; // Add. Content
+				$xcont = $_GET['xc']; // Add. Content
+				if(!isset($xcont)) $xcont="(NoContent)";
 				if (strlen($xcont)) {
 					$cont = "\n$xcont\n";
 					$mail_info = "Mail to '$mail_dest','$xcont'";
@@ -522,7 +545,7 @@ if ($qres == false) {
 					$err_tot++;
 				}
 			} else {
-				$xlog .= "(ERROR: No Contact)";
+				$xlog .= "(ERROR: Mail: No Contact)";
 				$info_wea[] = "ERROR: Mail: No Contact";
 				$err_tot++;
 			}
