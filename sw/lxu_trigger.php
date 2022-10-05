@@ -72,8 +72,8 @@ header('Content-Type: text/plain');
 
 $api_key = @$_GET['k'];				// max. 41 Chars KEY
 $mac = strtoupper(@$_GET['s']); 		// exactly 16 UC Chars. api_key and mac identify device
-$reason = intval(@$_GET['r']);				// Opt. Reason (ALARMS) (as in device_info.dat also) *t.b.d* (e.g. timeout or HK-Service-Meta)
-// reason&256: SEND Contact 512|1024:Timeout
+$reason = intval(@$_GET['r']);				// Opt. Reason (ALARMS) (as in device_info.dat also)
+// reason&256: SEND Contact 512|1024:Timeout (reason&16: oder $fcnt>0: Data neu)
 $now = time();						// one timestamp for complete run
 $mttr_t0 = microtime(true);           // Benchmark trigger
 $xlog = "(Trigger:$reason)";		// Assume only Trigger/Service
@@ -100,7 +100,7 @@ if (!$flist) {
 }
 usort($flist, "flcmp");	// Now Compared by Filenames
 $fcnt = count($flist) - 2;   // Without . and ..
-if($fcnt>2) $xlog = "(Import)"; // Now: real import
+if($fcnt>0) $xlog = "(Import)"; // Now: real import
 // foreach($flist as $fl) echo "$fl\n"; exit();
 $cpath = S_DATA . "/$mac/cmd";		// Path (UPPERCASE recommended, must exist)
 
@@ -310,7 +310,7 @@ if (strlen($units)) $units = strtr(substr($units, 3), "'\"<>", "____");	// Remov
 // Get old Vals
 // prepare String for Db Update
 $insert_sql = "UPDATE devices SET last_change=NOW(), ";
-if($fcnt>2) $insert_sql .= "last_seen=NOW(), ";
+if($fcnt>0) $insert_sql .= "last_seen=NOW(), ";
 
 if (strlen($units)) $insert_sql .= "units='$units',";
 if (strlen($laval)) $insert_sql .= "vals='$laval',";
@@ -388,7 +388,7 @@ if ($qres == false) {
 
 	// Check if Position Update is necessary (only with data)
 	$deltap = @array(-1, 604700, 86300, 3500, 60)[$deva['posflags']];
-	if ($fcnt>2 && $deltap > 0 && $deva['lpos'] + $deltap < $now) {
+	if ($fcnt>0 && $deltap > 0 && $deva['lpos'] + $deltap < $now) {
 		$devi = array();
 		$lines = file(S_DATA . "/$mac/device_info.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 		if ($lines !== false) {

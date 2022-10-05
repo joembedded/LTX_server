@@ -146,15 +146,18 @@ switch ($cmd) {
 			$status = "-146 ERROR: CMD '$cmd'";
 			break;
 		} else {
-			$anz = $statement->rowCount();
+			$anz = $statement->rowCount(); // 0 or 1
 			if ($anz) {
 				$device_row = $statement->fetch();
-				if ($device_row['owner_id'] == $user_id) {
+				$downer = $device_row['owner_id'];
+				if ($downer == $user_id) {
 					$status = "-147 ERROR: Can't add own Device!";
 					break;
 				}
-				$status = "-148 ERROR: MAC already added by other User!";
-				break;
+				if(!is_null($downer)){
+					$status = "-148 ERROR: MAC already added by other User! (Info:'$downer')";
+					break;
+				}
 			}
 		}
 
@@ -170,8 +173,8 @@ switch ($cmd) {
 			if ($stres[0] != '0') $status = $stres;
 			else if (strlen($fw_key) != 32) $status = "-101 ERROR: Firmware Key Len";
 			else {	// All OK: Add/Update Device to DB
-				// Evtl. generate MAC, might fail if already existing
-				$pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$newmac' )");
+				// Evtl. generate MAC, will fail if already existing
+				if($anz==0) $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$newmac' )");
 				$qres = $pdo->exec("UPDATE devices SET owner_id='$user_id', fw_key='$fw_key', last_change=NOW() WHERE mac ='$newmac'");
 				if ($qres == false) {
 					$status = "-102 ERROR: Update DB failed";
