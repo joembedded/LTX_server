@@ -77,7 +77,6 @@ if (isset($mac)) {		// CMD mit MAC always require ROLE
 		}
 	}
 }
-
 switch ($cmd) {
 	case "addGuestDevice":
 		$newmac = strtoupper(@$_REQUEST['newmac']);
@@ -558,8 +557,7 @@ switch ($cmd) {
 		$pos0 = @$_REQUEST['pos0'];
 		$anz = @$_REQUEST['anz'];
 		if(!isset($pos0)) $pos0=0;
-		if(!isset($anu)) $anz=0;
-
+		if(!isset($anz)) $anz=0;
 		$logall = @file($fname, FILE_IGNORE_NEW_LINES);
 
 		if ($logall == false || count($logall) < ($anz + $pos0)) {
@@ -568,7 +566,6 @@ switch ($cmd) {
 				$logall = array_merge($logall2, $logall); // Old First
 			}
 		}
-
 		if ($logall == false || count($logall) < 1) {
 			$status = "-126 ERROR: CMD No Data File";
 			break;
@@ -592,7 +589,7 @@ switch ($cmd) {
 		$pos0 = @$_REQUEST['pos0']; 
 		$anz = @$_REQUEST['anz']; 
 		if(!isset($pos0)) $pos0=0;
-		if(!isset($anu)) $anz=0;
+		if(!isset($anz)) $anz=0;
 
 		$logall = @file($fname, FILE_IGNORE_NEW_LINES);
 
