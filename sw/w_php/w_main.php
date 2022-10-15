@@ -430,6 +430,12 @@ switch ($cmd) {
 		$date0 = @file($fpath . "/date0.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 		$dinfo[] = "date0\t" . $date0[0];	// Add Date0 to Info
 
+		$quota = @file($fpath . "/quota_days.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+		if($quota !== false){
+			$dinfo[] = "quotal\t" . @$quota[1];	// Add Lines
+			$dinfo[] = "quotad\t" . @$quota[0];	// Add Days
+		}
+
 		// Specials
 		// Info about Position Update
 		$statement = $pdo->prepare("SELECT posflags FROM devices WHERE mac = ?");

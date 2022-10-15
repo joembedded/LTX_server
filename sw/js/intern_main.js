@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.52 (16.07.2022)";
+var prgVersion = "V0.53 (16.10.2022)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX1";
 
@@ -1199,6 +1199,7 @@ function edInfoFill() {
 	if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
 	infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
 	infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
+	infoStr += "<div>Quota (Days/Lines): <b>" + infoObj?.quotad +"/" +  infoObj?.quotal + "</b></div>";
 
 	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 	var fw_cookieStr;
@@ -1212,7 +1213,7 @@ function edInfoFill() {
 	infoStr += "<div>Disk (size/available in kB): <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
 
 	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
-	infoStr += "<div>SIM IMSI: <b>" + infoObj.imsi + "</b></div>";
+	infoStr += "<div>SIM ICCID: <b>" + infoObj.imsi + "</b></div>";
 
 	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 
