@@ -1,10 +1,13 @@
 <?php
 // --- w_main.php - Main worker ---
-// Main Worker for intern_main. State 15.07.2022
+// Main Worker for intern_main. State 15.10.2022
 // Note: json_encode will fail if non-utf8-chars are present
-// ToDo: Optimise Call: with cmd/without per includes..
+// ToDo: Setze "$status = "0 OK"; bei allen CMDs fuer besseres Debugging / 19.10.1022 
 // 'status' <= -1000: Fatal Error!
 // Last used ERROR: 148
+
+
+
 
 require_once("../inc/w_istart.inc.php");
 // ---------- functions ----------------
