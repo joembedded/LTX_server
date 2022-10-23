@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.53 (16.10.2022)";
+var prgVersion = "V0.54 (24.10.2022)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX1";
 
@@ -59,7 +59,7 @@ var editAktIdx; // Actual Index of Editet Channel in editDeviceParam.
 var editSCookie; // Plain Date instead of Unix
 var editParPending; // set to >0 if pending
 var editInfo; // device_info.dat as array
-var infoObj; // same as Object
+var infoObj; // Object
 var cellObj; // Cellinfo of edited Device
 var logId;
 var logLstart;
@@ -542,158 +542,160 @@ function user_poll(jcmd) {
 		lastSeenTimestamp = parseInt(data.dbnow); // UNIX Time of Database
 		lastSyncTimestamp = Date.now();
 		deltaLastSync = 0;
-		var anzW = data.devices.length; // unsorted Data from Worker
 
-		if (data.user_name != undefined && data.user_name != userName) { // Check User Setup
-			userName = data.user_name;
-			userRole = data.user_role;
-			userID = data.user_id;
-			var info = document.getElementById("welcomeInfo");
-			if (!(userRole & 32768)) { // Demo
-				info.innerHTML = "<b>&nbsp;* Limited Rights *&nbsp;</b>";
-				info.style.background = 'yellow';
-			} else if (userRole & 65536) { // ADMIN
-				info.innerHTML = "<b>&nbsp;* Administrator Rights*&nbsp;</b>";
-				info.style.background = 'red';
-				$(".cadmin").css("display", "none");
+		if (data.devices !== undefined) {
+			var anzW = data.devices.length; // unsorted Data from Worker
+
+			if (data.user_name != undefined && data.user_name != userName) { // Check User Setup
+				userName = data.user_name;
+				userRole = data.user_role;
+				userID = data.user_id;
+				var info = document.getElementById("welcomeInfo");
+				if (!(userRole & 32768)) { // Demo
+					info.innerHTML = "<b>&nbsp;* Limited Rights *&nbsp;</b>";
+					info.style.background = 'yellow';
+				} else if (userRole & 65536) { // ADMIN
+					info.innerHTML = "<b>&nbsp;* Administrator Rights*&nbsp;</b>";
+					info.style.background = 'red';
+					$(".cadmin").css("display", "none");
+				}
+
+				$("#userNameNav").text(userName);
+				$("#userNameTitle").text(userName);
+				document.title = prgShortName + " '" + userName + "'";
 			}
 
-			$("#userNameNav").text(userName);
-			$("#userNameTitle").text(userName);
-			document.title = prgShortName + " '" + userName + "'";
-		}
+			if (data.anz_devices != userAnzDevices) { // Check Number of Devices
+				userAnzDevices = data.anz_devices;
+				if (anzW != userAnzDevices) {
+					ownAlert("ERROR:", "Internal: Inconsistent Number of Devices");
+					lastSeenTimestamp = 0;
+					return;
+				}
 
-		if (data.anz_devices != userAnzDevices) { // Check Number of Devices
-			userAnzDevices = data.anz_devices;
-			if (anzW != userAnzDevices) {
-				ownAlert("ERROR:", "Internal: Inconsistent Number of Devices");
-				lastSeenTimestamp = 0;
-				return;
+				var devLiParent = $("#deviceList"); // Something changed: Rebuild Device List
+				devLiParent.empty();
+				$("#aMAC").val("");
+				$("#aOwnerToken").val("");
+				$("#noOfDevices").text("(" + userAnzDevices + ")");
+				//if(anzW) console.log("---- "+anzW+": Devices----"); // <- DEBUG
+				var adev;
+				var idx;
+				for (var i = 0; i < anzW; i++) {
+					//console.log(data.devices[i]);
+					adev = data.devices[i];
+					idx = adev.idx;
+					//console.log(adev.mac); // <- DEBUG
+
+					var hstr = "<li class='w3-display-container w3-white'>";
+
+					var isguest = (adev.owner_id != userID); // .role always there
+					if (isguest) { // Access with token
+						hstr += "<div><a class='jo-mac' href='gdraw.html?s=" + adev.mac + "&lim=1000&k=" + adev.token +
+							"' target='_blank'><b><i class='fas fa-chart-line w3-orange'></i> MAC: " + adev.mac;
+					} else {
+						hstr += "<div><a class='jo-mac' href='gdraw.html?s=" + adev.mac + "&lim=1000" +
+							"' target='_blank'><b><i class='fas fa-chart-line w3-green w3-text-black'></i> MAC: " + adev.mac;
+					}
+
+					if (typeof adev.name == 'string' && adev.name.length > 0) {
+						hstr += " '" + adev.name + "'";
+					}
+					hstr += "</b></a>";
+
+					if (userRole & 65536) {
+						if (adev.owner_id != null) hstr += " (Owner:'" + adev.real_owner_id + "')"; // Just for info
+						else hstr += " (Owner: (none))";
+					}
+					var gpsinfo = "";
+
+					if ((adev.units !== null && adev.units.includes(":Lat") && adev.units.includes(":Lng")) || (adev.posflags > 0)) {
+						if (isguest) { // Access with token
+							gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000&k=" + adev.token +
+								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; Position View</b></a>";
+						} else {
+							gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000" +
+								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; Position View</b></a>";
+						}
+					}
+					if (userRole & 65536) {
+						if (gpsinfo == "") gpsinfo += "<br>"
+						gpsinfo += "<a class='jo-mac' href='w_php/w_gdraw_db.php?s=" + adev.mac + "&lim=10000000&mk" +
+							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; Raw Data</b></a>";
+					}
+
+					hstr += " Age:&nbsp;<span id='devLiCon" + i + "'></span>" +
+						'<span onclick="macShowDetails(' + i +
+						')" class="w3-button w3-display-topright w3-light-gray"><i class="fas fa-ellipsis-v"></i></span>' + gpsinfo +
+						'</div><div style="display: none" id="devLiDet' +
+						i + '">I</div></li>';
+
+					devLiParent.append(hstr);
+					// Add 3 Extras
+
+					if (deviceXList[i] == undefined) deviceXList[i] = {};
+					deviceXList[i].content = document.getElementById("devLiCon" + i); // Cache Content Element
+					deviceXList[i].detailsVisible = false; // and Visibility
+					deviceXList[i].ocnt_lines = parseInt(adev.lines_cnt); // Old Number of Count Lines
+					deviceXList[i].isnew = true;
+					deviceXList[i].isguest = isguest;
+				}
 			}
+			// Update Dynamic Data
+			var warn_cnt = 0; // Sane Banes as lxu_trigger.php
+			var err_cnt = 0;
+			var alarm_cnt = 0;
 
-			var devLiParent = $("#deviceList"); // Something changed: Rebuild Device List
-			devLiParent.empty();
-			$("#aMAC").val("");
-			$("#aOwnerToken").val("");
-			$("#noOfDevices").text("(" + userAnzDevices + ")");
-			//if(anzW) console.log("---- "+anzW+": Devices----"); // <- DEBUG
-			var adev;
-			var idx;
-			for (var i = 0; i < anzW; i++) {
-				//console.log(data.devices[i]);
+			//if(anzW) console.log("---- "+anzW+": Changes----"); // <- DEBUG
+			for (i = 0; i < anzW; i++) {
 				adev = data.devices[i];
 				idx = adev.idx;
 				//console.log(adev.mac); // <- DEBUG
+				//console.log(adev);
+				// Cast Data to faster formats
+				adev.warnings_cnt = parseInt(adev.warnings_cnt);
+				adev.err_cnt = parseInt(adev.err_cnt);
+				adev.alarms_cnt = parseInt(adev.alarms_cnt);
+				adev.lines_cnt = parseInt(adev.lines_cnt);
+				adev.timeout_warn = parseInt(adev.timeout_warn);
+				adev.timeout_alarm = parseInt(adev.timeout_alarm);
+				adev.last_seen_ux = Math.floor(Date.parse(adev.last_seen) / 1000);
 
-				var hstr = "<li class='w3-display-container w3-white'>";
+				deviceWList[idx] = adev;
+				// new Lines
+				var nlc = adev.lines_cnt - deviceXList[idx].ocnt_lines;
+				deviceXList[idx].ocnt_lines = adev.lines_cnt;
+				if (nlc) { // New Lines: Show Info
+					var cont = "MAC: " + adev.mac;
 
-				var isguest = (adev.owner_id != userID); // .role always there
-				if (isguest) { // Access with token
-					hstr += "<div><a class='jo-mac' href='gdraw.html?s=" + adev.mac + "&lim=1000&k=" + adev.token +
-						"' target='_blank'><b><i class='fas fa-chart-line w3-orange'></i> MAC: " + adev.mac;
-				} else {
-					hstr += "<div><a class='jo-mac' href='gdraw.html?s=" + adev.mac + "&lim=1000" +
-						"' target='_blank'><b><i class='fas fa-chart-line w3-green w3-text-black'></i> MAC: " + adev.mac;
-				}
-
-				if (typeof adev.name == 'string' && adev.name.length > 0) {
-					hstr += " '" + adev.name + "'";
-				}
-				hstr += "</b></a>";
-
-				if (userRole & 65536) {
-					if (adev.owner_id != null) hstr += " (Owner:'" + adev.real_owner_id + "')"; // Just for info
-					else hstr += " (Owner: (none))";
-				}
-				var gpsinfo = "";
-
-				if ((adev.units !== null && adev.units.includes(":Lat") && adev.units.includes(":Lng")) || (adev.posflags > 0)) {
-					if (isguest) { // Access with token
-						gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000&k=" + adev.token +
-							"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; Position View</b></a>";
-					} else {
-						gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000" +
-							"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; Position View</b></a>";
+					if (typeof adev.name == 'string' && adev.name.length > 0) {
+						cont += " '" + adev.name + "'";
 					}
+
+					cont += ": New&nbsp;Lines&nbsp;Data:&nbsp;" + nlc;
+					var ccol = "w3-white"; // Default white
+					if (adev.warnings_cnt) {
+						cont += ", Warnings:&nbsp;" + adev.warnings_cnt;
+						ccol = "w3-yellow";
+					}
+					if (adev.err_cnt) {
+						cont += ", Errors:&nbsp;" + adev.err_cnt;
+						ccol = "w3-red";
+					}
+					if (adev.alarms_cnt) {
+						cont += ", Alarms:&nbsp;" + adev.alarms_cnt;
+						ccol = "w3-purple";
+					}
+					log_info(cont, ccol);
 				}
-				if (userRole & 65536) {
-					if (gpsinfo == "") gpsinfo += "<br>"
-					gpsinfo += "<a class='jo-mac' href='w_php/w_gdraw_db.php?s=" + adev.mac + "&lim=10000000&mk" +
-						"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; Raw Data</b></a>";
-				}
-
-				hstr += " Age:&nbsp;<span id='devLiCon" + i + "'></span>" +
-					'<span onclick="macShowDetails(' + i +
-					')" class="w3-button w3-display-topright w3-light-gray"><i class="fas fa-ellipsis-v"></i></span>' + gpsinfo +
-					'</div><div style="display: none" id="devLiDet' +
-					i + '">I</div></li>';
-
-				devLiParent.append(hstr);
-				// Add 3 Extras
-
-				if (deviceXList[i] == undefined) deviceXList[i] = {};
-				deviceXList[i].content = document.getElementById("devLiCon" + i); // Cache Content Element
-				deviceXList[i].detailsVisible = false; // and Visibility
-				deviceXList[i].ocnt_lines = parseInt(adev.lines_cnt); // Old Number of Count Lines
-				deviceXList[i].isnew = true;
-				deviceXList[i].isguest = isguest;
+				var msgs = adev.warnings_cnt + adev.err_cnt + adev.alarms_cnt;
+				if (nlc || ((deviceXList[idx].isnew && msgs > 0 && !(userRole & 65535)) || userAnzDevices < 3)) {
+					deviceXList[idx].isnew = false;
+					if (deviceXList[idx].detailsVisible == false) macShowDetails(idx);
+					else $("#devLiDet" + idx).html(generateDetails(idx)); // Just update Content
+				} else $("#devLiDet" + idx).html(generateDetails(idx)); // Just update Content
 			}
 		}
-		// Update Dynamic Data
-		var warn_cnt = 0; // Sane Banes as lxu_trigger.php
-		var err_cnt = 0;
-		var alarm_cnt = 0;
-
-		//if(anzW) console.log("---- "+anzW+": Changes----"); // <- DEBUG
-		for (i = 0; i < anzW; i++) {
-			adev = data.devices[i];
-			idx = adev.idx;
-			//console.log(adev.mac); // <- DEBUG
-			//console.log(adev);
-			// Cast Data to faster formats
-			adev.warnings_cnt = parseInt(adev.warnings_cnt);
-			adev.err_cnt = parseInt(adev.err_cnt);
-			adev.alarms_cnt = parseInt(adev.alarms_cnt);
-			adev.lines_cnt = parseInt(adev.lines_cnt);
-			adev.timeout_warn = parseInt(adev.timeout_warn);
-			adev.timeout_alarm = parseInt(adev.timeout_alarm);
-			adev.last_seen_ux = Math.floor(Date.parse(adev.last_seen) / 1000);
-
-			deviceWList[idx] = adev;
-			// new Lines
-			var nlc = adev.lines_cnt - deviceXList[idx].ocnt_lines;
-			deviceXList[idx].ocnt_lines = adev.lines_cnt;
-			if (nlc) { // New Lines: Show Info
-				var cont = "MAC: " + adev.mac;
-
-				if (typeof adev.name == 'string' && adev.name.length > 0) {
-					cont += " '" + adev.name + "'";
-				}
-
-				cont += ": New&nbsp;Lines&nbsp;Data:&nbsp;" + nlc;
-				var ccol = "w3-white"; // Default white
-				if (adev.warnings_cnt) {
-					cont += ", Warnings:&nbsp;" + adev.warnings_cnt;
-					ccol = "w3-yellow";
-				}
-				if (adev.err_cnt) {
-					cont += ", Errors:&nbsp;" + adev.err_cnt;
-					ccol = "w3-red";
-				}
-				if (adev.alarms_cnt) {
-					cont += ", Alarms:&nbsp;" + adev.alarms_cnt;
-					ccol = "w3-purple";
-				}
-				log_info(cont, ccol);
-			}
-			var msgs = adev.warnings_cnt + adev.err_cnt + adev.alarms_cnt;
-			if (nlc || ((deviceXList[idx].isnew && msgs > 0 && !(userRole & 65535)) || userAnzDevices < 3)) {
-				deviceXList[idx].isnew = false;
-				if (deviceXList[idx].detailsVisible == false) macShowDetails(idx);
-				else $("#devLiDet" + idx).html(generateDetails(idx)); // Just update Content
-			} else $("#devLiDet" + idx).html(generateDetails(idx)); // Just update Content
-		}
-
 		// Got User Data?
 		if (data.user !== undefined) {
 			userData = data.user;
@@ -796,11 +798,11 @@ function generateDetails(idx) {
 			// Unit now known or not found
 
 			var valstr = kv[1]
-			if(valstr == undefined)  valstr = '?'
+			if (valstr == undefined) valstr = '?'
 
 			var cidstr
-			if(kvn >=90) cidstr = "HK"+kvn+": &nbsp;" // Look similar to BlueShell
-			else cidstr = "#"+kvn+": &nbsp;"
+			if (kvn >= 90) cidstr = "HK" + kvn + ": &nbsp;" // Look similar to BlueShell
+			else cidstr = "#" + kvn + ": &nbsp;"
 
 			if (valstr.charAt(0) == '*') { // Alarm
 				valstr = valstr.substring(1);
@@ -841,7 +843,7 @@ function generateDetails(idx) {
 			else if (alarmflag) icont = "<tr style='background: #FFC0FF'>"; // light magenta
 			else if (warnflag) icont = "<tr style='background: #FFFF00'>"; // yellow
 			else icont = "<tr>";
-			icont += "<td>"+cidstr+" </td><td>" + valstr + "</td><td>&nbsp;" + unit + "</td></tr>";
+			icont += "<td>" + cidstr + " </td><td>" + valstr + "</td><td>&nbsp;" + unit + "</td></tr>";
 
 			cont += icont;
 		}
@@ -1192,6 +1194,7 @@ function edInfoFill() {
 	document.getElementById("infoLastCell").innerHTML = squal;
 
 	// Collapsed Info
+	if(infoObj !== undefined){
 	var infoStr = "<div>" +
 		"<div>Device Type: <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
 		"<div>Active Days: <b>" + activeDays + "</b></div>" +
@@ -1199,7 +1202,7 @@ function edInfoFill() {
 	if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
 	infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
 	infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
-	infoStr += "<div>Quota (Days/Lines): <b>" + infoObj?.quotad +"/" +  infoObj?.quotal + "</b></div>";
+	infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b></div>";
 
 	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 	var fw_cookieStr;
@@ -1225,6 +1228,7 @@ function edInfoFill() {
 	document.getElementById("infoLogType").selectedIndex = 0;
 	logId = -1;
 	infoGetLog(0, 0, logPageSize); // 0:Typ, From 0 x Lines
+	}
 
 }
 
@@ -1392,8 +1396,8 @@ function edParamChanDown() {
 }
 // Callback for Search
 function edParamIdxFind(aline, idx) { // Find Index of Current Param
-	console.log("A[" + idx + "]='" + aline + "' ");
-	console.log(typeof aline);
+	//console.log("A[" + idx + "]='" + aline + "' ");
+	//console.log(typeof aline);
 	if (aline !== undefined && aline.charAt(0) == '@' && aline.length > 1) {
 		var val = parseInt(aline.substr(1));
 		if (val == editAktChan) {

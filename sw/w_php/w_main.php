@@ -1,12 +1,10 @@
 <?php
 // --- w_main.php - Main worker ---
-// Main Worker for intern_main. State 15.10.2022
+// Main Worker for intern_main. State 24.10.2022
 // Note: json_encode will fail if non-utf8-chars are present
-// ToDo: Setze "$status = "0 OK"; bei allen CMDs fuer besseres Debugging / 19.10.1022 
+// set param dbg to generate readable output
 // 'status' <= -1000: Fatal Error!
 // Last used ERROR: 148
-
-
 
 
 require_once("../inc/w_istart.inc.php");
@@ -57,6 +55,7 @@ function call_trigger($mac, $reason, $xc)
 // Unix Timestamp as Database Time in secs
 $dbnow = $pdo->query("SELECT UNIX_TIMESTAMP() as now")->fetch()['now']; // UTC
 $dblast = intval(@$_REQUEST['last']);	// Last seen in secs UNIX_SECS
+$dbg = @$_REQUEST['dbg'];
 if (!$dblast) {
 	$ret['user_name'] = $uname; // 0: FULL Info
 	$ret['user_role'] = $urole;
@@ -121,6 +120,7 @@ switch ($cmd) {
 		$mac = $newmac;	// For loglib
 		$xlog .= "(Add Guest Device)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "addDevice":
@@ -188,6 +188,7 @@ switch ($cmd) {
 		$mac = $newmac;	// For loglib
 		$xlog .= "(Add own Device)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "removeDevice":
@@ -220,6 +221,7 @@ switch ($cmd) {
 				}
 			}
 		}
+		$status = "0 OK";		
 		break;
 
 	case "getUser":	// get All User Data
@@ -233,7 +235,9 @@ switch ($cmd) {
 			$user_row['password'] = "*";
 			$ret['user'] = $user_row;
 		}
+		$status = "0 OK";		
 		break;
+
 	case "changeUser":	// Change user - Test all Options
 		if (!($urole & 32768)) {	// ***** DEMO-USER ***
 			$status = "-128 ERROR: Not possible for this User";
@@ -263,6 +267,7 @@ switch ($cmd) {
 				$ret['user_id'] = $user_id;
 			}
 		} // other Options...
+		$status = "0 OK";		
 		break;
 
 		// Problem t.b.d: Check rights to make changes! (user_id==mac.user_id or role&token...)
@@ -272,6 +277,7 @@ switch ($cmd) {
 		if ($qres == false) $status = "-104 ERROR: CMD '$cmd'"; // Find by Number
 		$xlog .= "(Warnings reset)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 	case "removeErrors":
 		$statement = $pdo->prepare("UPDATE devices SET err_cnt = 0,last_change=NOW() WHERE mac = ?");
@@ -279,6 +285,7 @@ switch ($cmd) {
 		if ($qres == false) $status = "-105 ERROR: CMD '$cmd'"; // Find by Number
 		$xlog .= "(Errors reset)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 	case "removeAlarms":
 		$statement = $pdo->prepare("UPDATE devices SET alarms_cnt = 0,last_change=NOW() WHERE mac = ?");
@@ -286,6 +293,7 @@ switch ($cmd) {
 		if ($qres == false) $status = "-106 ERROR: CMD '$cmd'"; // Find by Number
 		$xlog .= "(Alarms reset)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "cntReset": // Reset Counter X
@@ -335,6 +343,7 @@ switch ($cmd) {
 			$user_row['available_cnt'] = $danz; // Add extra-Info
 			$ret['device'] = $user_row;
 		}
+		$status = "0 OK";		
 		break;
 
 	case "changeDevice":
@@ -363,8 +372,9 @@ switch ($cmd) {
 		}
 		$xlog .= "(Change Server Parameter)";
 		add_logfile();
-
+		$status = "0 OK";		
 		break;
+
 	case "getParam": // Get current Parameters 
 		$fpath = "../" . S_DATA . "/$mac"; // (one extra DIR up)
 		$par = @file($fpath . "/put/iparam.lxp", FILE_IGNORE_NEW_LINES); // pending Parameters?
@@ -380,6 +390,7 @@ switch ($cmd) {
 		}
 		$ret['iparam'] = $par; // array_map("utf8_encode",$par) ???10/2020 ; // File complete as lines
 		$ret['scookie'] = date('Y-m-d H:i:s', @$par[4]); // Special ADDs
+		$status = "0 OK";		
 		break;
 
 	case "saveParam";
@@ -406,6 +417,7 @@ switch ($cmd) {
 			$status = "-117 ERROR: Write Parameter:$slen/$ilen Bytes";
 		}
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "removePending": // Remove Pending Parameters
@@ -421,6 +433,7 @@ switch ($cmd) {
 		}
 
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "getInfo":	// Ask for Device Info
@@ -451,6 +464,7 @@ switch ($cmd) {
 		$dinfo[] = "posflags\t" . $user_row['posflags'];	// Add posflags to Info
 
 		$ret['dinfo'] = $dinfo; // File complete as lines + adds
+		$status = "0 OK";		
 		break;
 
 	case "clearDevice":	// Table, Notes and WEA-Counters
@@ -481,6 +495,7 @@ switch ($cmd) {
 
 		$xlog .= "(Clear Device DB)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "setPosUpdate":
@@ -495,6 +510,7 @@ switch ($cmd) {
 		}
 		$xlog .= "(Set posflags:$npf)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "getPos":
@@ -514,6 +530,7 @@ switch ($cmd) {
 			$ret['lon'] = $obj->lon;
 			$ret['accuracy'] = $obj->accuracy;
 		}
+		$status = "0 OK";		
 		break;
 
 	case "savePos": // GPS to DB
@@ -535,6 +552,7 @@ switch ($cmd) {
 		}
 		$xlog .= "(Set Pos. $nLat,$nLon,$nRad)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "clearPos": // GPS to DB
@@ -548,6 +566,7 @@ switch ($cmd) {
 		}
 		$xlog .= "(Clear Pos.)";
 		add_logfile();
+		$status = "0 OK";		
 		break;
 
 	case "getLog": // Get Logfile (or later also other 2-part text files - reverse)
@@ -589,6 +608,7 @@ switch ($cmd) {
 			$lidx0--;
 		}
 		$ret['lres'] = $lres;	// Return result
+		$status = "0 OK";		
 		break;
 
 	case "getWEA": // Get Warnings/Error/Alarms
@@ -623,6 +643,7 @@ switch ($cmd) {
 			}
 		}
 		$ret['weares'] = $lres;	// Return result
+		$status = "0 OK";		
 		break;
 
 	case "";
@@ -734,7 +755,7 @@ $mtrun = round((microtime(true) - $mtmain_t0) * 1000, 4);
 if (!isset($status)) $status = "0 OK";
 $ret['status'] = $status . " ($mtrun msec)";	// plus Time
 
-//$ret['echo']=json_encode($_REQUEST); // Optional Debug-Echo
 $ares = json_encode($ret); // assoc array always as object
 if (!strlen($ares)) $ares = "Error: json_encode";
-echo $ares;
+if(isset($dbg)) var_export($ret);
+else echo $ares;
