@@ -281,7 +281,8 @@ foreach ($flist as $fname) {
 				}
 			}
 		}
-		$line_time = $unixt;	// Might be 0 
+		if($unixt == 0) $unixt= NULL;
+		$line_time = $unixt;	// Might be 0:Works on MySQL, >0 MariaDB 
 		if ($dbg) echo "$line_cnt: '$line'\n";
 		$qres = $sqlps->execute(array($line_time, $line));
 		if ($qres == false) {	// Write failed
@@ -418,7 +419,7 @@ if ($qres == false) {
 				$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
 				$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
 				$trigger_fb .= "#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
-				$sqlps->execute(array(0, "<CELLOC $nlat $nlon $nrad>"));
+				$sqlps->execute(array(NULL, "<CELLOC $nlat $nlon $nrad>"));
 			}
 		}
 	}
