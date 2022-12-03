@@ -1,5 +1,6 @@
 <?php
 //** w_gdraw_db.php; Get Data from Device-TABLE. User verifiedy by DB (token or session) **
+// 03.12.2022
 
 header('Content-Type: text/plain');
 require_once("../inc/w_xstart.inc.php");	// INIT everything
@@ -24,7 +25,7 @@ if (isset($_REQUEST['mk'])) {
 	echo "#MK: " . MAPKEY . "\n";	// APIKey MAP
 
 	// If current GPS-Position is unknown: Use latest Cell Position 
-	if (strpos($device['vals'], "NoGPSValue") > 0 || strpos($device['vals'], "Lat") == false) {
+	if ((strpos($device['vals'], "NoGPSValue") > 0 || strpos($device['vals'], "Lat") == false) && isset($device['last_gps']) && isset($device['last_seen']) ) {
 		$gps_age =  strtotime($device['last_gps']) - strtotime($device['last_seen']); // OK for NULL
 		if ($gps_age < 9 || strlen($device['lat']) < 1 || strlen($device['lng']) < 1) {	// Update GPS-Data required
 			$devi = array();
@@ -80,7 +81,8 @@ if ($mdate != $cdate) { // Unchanged! Send all, else only #MDATE
 	//echo "#Sag Hallo\n"; // Option for Info...(eg. Alarm etc???=
 	// Minimum Header 
 	echo "<MAC: $mac>\n";
-	$dname = $device['name'];
+	$dname = @$device['name'];
+	if(!isset($dname)) $dname="(Unknown)";
 	if (strlen($dname)) echo "<NAME: $dname>\n";
 	$units = @$device['units']; // As String, Space separated
 	echo "!U $units\n";

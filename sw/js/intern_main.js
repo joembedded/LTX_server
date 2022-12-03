@@ -1096,8 +1096,9 @@ function infoPosUpdateSelect() { // Update Type of Pos.Selection
 }
 
 function infoEstimatePos() {
-	document.getElementById("infoCellular").innerHTML = "";
+	document.getElementById("infoCellular").innerHTML = ""
 
+	if(cellObj == undefined) return
 	// If cached Data: use
 	if (cellObj.eRad != undefined && cellObj.eLat != undefined && cellObj.eLon != undefined) {
 		document.getElementById("infoAccuracy").value = cellObj.eRad;
@@ -1134,7 +1135,7 @@ function edInfoFill() {
 	var date0 = new Date(infoObj.date0 * 1000);
 	var activeDays = Math.floor((Date.now() - date0) / 86400000);
 
-	var lcon = new Date(infoObj.dtime * 1000);
+	var lcon = new Date(infoObj.now * 1000);
 	var lage = Math.floor((Date.now() - lcon) / 1000); // Age of last connection
 
 	// Top Info
@@ -1161,73 +1162,77 @@ function edInfoFill() {
 	infoInfo += "</div>";
 
 	// GeooPos
-	var cellinfo = infoObj.signal.split(" ");
-	cellObj = {};
-	for (var i = 0; i < cellinfo.length; i++) {
-		var uv = cellinfo[i].split(":");
-		cellObj[uv[0]] = uv[1];
-	}
-	if (cellObj.ta == "255") cellObj.ta = 0; // 255: TA unknown
-
 	var squal
-	if (cellObj.dbm >= -1) {
-		squal = "<b><span class='w3-round-large w3-gray'>OK</span></b> (Not measured)"
-	} else {
-		var qual;
-		squal = "<b><span class='w3-round-large w3-"; // Source: Teltonica.lt
-		if (cellObj.dbm >= -70) {
-			qual = "Top";
-			squal += "light-green'>";
-		} else if (cellObj.dbm >= -85) {
-			qual = "Good";
-			squal += "yellow'>";
-		} else if (cellObj.dbm >= -100) {
-			qual = "Fair";
-			squal += "orange'>";
+
+	if (infoObj.signal !== undefined) {
+		var cellinfo = infoObj.signal.split(" ");
+		cellObj = {};
+		for (var i = 0; i < cellinfo.length; i++) {
+			var uv = cellinfo[i].split(":");
+			cellObj[uv[0]] = uv[1];
+		}
+		if (cellObj.ta == "255") cellObj.ta = 0; // 255: TA unknown
+
+		if (cellObj.dbm >= -1) {
+			squal = "<b><span class='w3-round-large w3-gray'>OK</span></b> (Not measured)"
 		} else {
-			qual = "Poor";
-			squal += "red'>";
-		} // Poor or none
-		squal += cellObj.dbm + " dbm</span></b> (" + qual + ")";
-	}
+			var qual;
+			squal = "<b><span class='w3-round-large w3-"; // Source: Teltonica.lt
+			if (cellObj.dbm >= -70) {
+				qual = "Top";
+				squal += "light-green'>";
+			} else if (cellObj.dbm >= -85) {
+				qual = "Good";
+				squal += "yellow'>";
+			} else if (cellObj.dbm >= -100) {
+				qual = "Fair";
+				squal += "orange'>";
+			} else {
+				qual = "Poor";
+				squal += "red'>";
+			} // Poor or none
+			squal += cellObj.dbm + " dbm</span></b> (" + qual + ")";
+		}
+	} else squal = "(Unknown)"
 
 	document.getElementById("infoLastCell").innerHTML = squal;
 
 	// Collapsed Info
-	if(infoObj !== undefined){
-	var infoStr = "<div>" +
-		"<div>Device Type: <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
-		"<div>Active Days: <b>" + activeDays + "</b></div>" +
-		"<div>Total Data (up/down in kB): <b>" + Math.floor(infoObj.total_in / 1024) + "/" + Math.floor(infoObj.total_out / 1024) + "</b></div>";
-	if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
-	infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
-	infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
-	infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b></div>";
+	if (infoObj !== undefined) {
+		var infoStr = "<div>" +
+			"<div>Device Type: <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
+			"<div>Active Days: <b>" + activeDays + "</b></div>" +
+			"<div>Total Data (up/down in kB): <b>" + Math.floor(infoObj.total_in / 1024) + "/" + Math.floor(infoObj.total_out / 1024) + "</b></div>";
+		if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
+		infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
+		infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
+		infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b></div>";
 
-	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
-	var fw_cookieStr;
-	var fw_csec = parseInt(infoObj.fw_cookie)
-	if (fw_csec < 1526030617 || fw_csec > 2472110617) fw_cookieStr = "<span class='w3-yellow'>WARNING: Bootloader Release unknown!</span>";
-	else {
-		var fwcs = new Date(fw_csec * 1000)
-		fw_cookieStr = "ID: " + fw_csec.toString(16).toUpperCase() + " (" + fwcs.toUTCString() + ")"
-	}
-	infoStr += "<div>Firmware: <b>V" + infoObj.fw_ver / 10 + " " + fw_cookieStr + "</b></div>"; // if undefined: NaN
-	infoStr += "<div>Disk (size/available in kB): <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
+		infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
+		var fw_cookieStr;
+		if(infoObj.fw_cookie !== undefined){
+			var fw_csec = parseInt(infoObj.fw_cookie)
+			if (fw_csec < 1526030617 || fw_csec > 0xF0000000) fw_cookieStr = "<span class='w3-yellow'>WARNING: Bootloader Release unknown!</span>";
+			else {
+				var fwcs = new Date(fw_csec * 1000)
+				fw_cookieStr = "ID: " + fw_csec.toString(16).toUpperCase() + " (" + fwcs.toUTCString() + ")"
+			}
+			infoStr += "<div>Firmware: <b>V" + infoObj.fw_ver / 10 + " " + fw_cookieStr + "</b></div>"; // if undefined: NaN
+			infoStr += "<div>Disk (size/available in kB): <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
 
-	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
-	infoStr += "<div>SIM ICCID: <b>" + infoObj.imsi + "</b></div>";
+			infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
+			infoStr += "<div>SIM ICCID: <b>" + infoObj.imsi + "</b></div>";
 
-	infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
+			infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
+		}
+		infoStr += "</div>";
+		
+		document.getElementById("infoInfo").innerHTML = infoInfo;
+		document.getElementById("infoDetailsContent").innerHTML = infoStr;
 
-	infoStr += "</div>";
-
-	document.getElementById("infoInfo").innerHTML = infoInfo;
-	document.getElementById("infoDetailsContent").innerHTML = infoStr;
-
-	document.getElementById("infoLogType").selectedIndex = 0;
-	logId = -1;
-	infoGetLog(0, 0, logPageSize); // 0:Typ, From 0 x Lines
+		document.getElementById("infoLogType").selectedIndex = 0;
+		logId = -1;
+		infoGetLog(0, 0, logPageSize); // 0:Typ, From 0 x Lines
 	}
 
 }

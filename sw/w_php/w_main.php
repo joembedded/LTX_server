@@ -4,7 +4,7 @@
 // Note: json_encode will fail if non-utf8-chars are present
 // set param dbg to generate readable output
 // 'status' <= -1000: Fatal Error!
-// Last used ERROR: 148
+// Last used ERROR: 149
 
 
 require_once("../inc/w_istart.inc.php");
@@ -328,7 +328,11 @@ switch ($cmd) {
 			$status = "-110 ERROR: CMD '$cmd'";
 		} else {
 			$user_row = $statement->fetch();
-			// Security Filter heres
+			if($user_row == false){
+				$status = "-149 ERROR: Access denied!";
+				break;
+			}
+			// Security Filter here
 			$user_row['fw_key'] = "*";
 			if ($user_row['cookie'] !== null)	$user_row['sCookie'] = date('Y-m-d H:i:s', $user_row['cookie']);
 			else $user_row['sCookie'] = "(unknown)";
