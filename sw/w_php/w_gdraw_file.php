@@ -1,5 +1,6 @@
 <?php
 //** w_gdraw_file.php; Get Data from Device-FILE. User verifiedy by DB (token or session) **
+//* Used by g_draw.js and gps_view.js
 
 header('Content-Type: text/plain');
 require_once("../inc/w_xstart.inc.php");	// INIT everything

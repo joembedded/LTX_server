@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.54 (24.10.2022)";
+var prgVersion = "V0.55 (04.12.2022)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX1";
 
@@ -515,6 +515,7 @@ function user_poll(jcmd) {
 	if (jcmd === undefined) jcmd = {};
 	//else console.log(jcmd); // <--- DEBUG enble to show CMDs
 	jcmd.last = lastSeenTimestamp;
+
 	$.post("w_php/w_main.php", jcmd, function (data) {
 		if (spinnerVisible) {
 			document.getElementById("modalSpinner").style.display = "none";
@@ -539,7 +540,7 @@ function user_poll(jcmd) {
 		var latency = parseFloat(data.status.substr(data.status.indexOf("(") + 1));
 		console.log("Latency: " + latency); // <-- LATENCY
 		// --Updates--
-		lastSeenTimestamp = parseInt(data.dbnow); // UNIX Time of Database
+		if(data.dbnow != undefined) lastSeenTimestamp = parseInt(data.dbnow); // UNIX Time of Database
 		lastSyncTimestamp = Date.now();
 		deltaLastSync = 0;
 

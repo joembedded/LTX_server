@@ -1,11 +1,13 @@
 <?php
-
 /*************************************************************
- * trigger for LTrax V1.20
- * 03.12.2022
- * This is one version for a trigger that sortes all incomming data
- * in the default database. 
- * Can be triggered externally, see docu..
+ * trigger for LTrax V1.20-SQL
+ *
+ * 04.12.2022 - (C)JoEmbedded.com
+ *
+ * This is database version for a trigger that accepts 
+ * all incomming data and insertes it into a SQL database.
+ * Tested with mySQL and MariaDB
+ *
  * Last used Err: 106
  ***************************************************************/
 
@@ -99,7 +101,7 @@ if (!$flist) {
 }
 usort($flist, "flcmp");	// Now Compared by Filenames
 $fcnt = count($flist) - 2;   // Without . and ..
-if($fcnt>0) $xlog = "(Import)"; // Now: real import
+if ($fcnt > 0) $xlog = "(Import)"; // Now: real import
 // foreach($flist as $fl) echo "$fl\n"; exit();
 $cpath = S_DATA . "/$mac/cmd";		// Path (UPPERCASE recommended, must exist)
 
@@ -203,10 +205,10 @@ foreach ($flist as $fname) {
 	$unixt = 0; // Start with unix-Time unknown
 	foreach ($lines as $line) { // Find 1.st time 
 		if ($line[0] != '!') continue;
-		$ht=intval(substr($line, 1));
-		if ($ht > 1526030617 && $ht < 0xF0000000){
-				$unixt=$ht; 
-				break;
+		$ht = intval(substr($line, 1));
+		if ($ht > 1526030617 && $ht < 0xF0000000) {
+			$unixt = $ht;
+			break;
 		}
 	}
 
@@ -288,7 +290,7 @@ foreach ($flist as $fname) {
 				}
 			}
 		}
-		if($unixt == 0) $unixt= NULL;
+		if ($unixt == 0) $unixt = NULL;
 		$line_time = $unixt;	// Might be 0:Works on MySQL, >0 MariaDB 
 		if ($dbg) echo "$line_cnt: '$line'\n";
 		$qres = $sqlps->execute(array($line_time, $line));
@@ -318,7 +320,7 @@ if (strlen($units)) $units = strtr(substr($units, 3), "'\"<>", "____");	// Remov
 // Get old Vals
 // prepare String for Db Update
 $insert_sql = "UPDATE devices SET last_change=NOW(), ";
-if($fcnt>0) $insert_sql .= "last_seen=NOW(), ";
+if ($fcnt > 0) $insert_sql .= "last_seen=NOW(), ";
 
 if (strlen($units)) $insert_sql .= "units='$units',";
 if (strlen($laval)) $insert_sql .= "vals='$laval',";
@@ -340,10 +342,10 @@ if (isset($cookie)) {
 		$hc = @$par[18];	// mAh
 		$insert_sql .= "cbat = $hc,";
 	} else {
-		if (!file_exists($sdata . "/$mac/cmd/sys_param.lxp.vmeta")) { // No Directory?
-			file_put_contents($sdata . "/$mac/cmd/getdir.cmd", "123");	// 3 Tries to get Directoy
+		if (!file_exists(S_DATA . "/$mac/cmd/sys_param.lxp.vmeta")) { // No Directory?
+			file_put_contents(S_DATA . "/$mac/cmd/getdir.cmd", "123");	// 3 Tries to get Directoy
 		} else { // Directory OK, but no sys_param
-			file_put_contents($sdata . "/$mac/get/sys_param.lxp", "123");	// 3 Tries to get sys_param.lxp
+			file_put_contents(S_DATA . "/$mac/get/sys_param.lxp", "123");	// 3 Tries to get sys_param.lxp
 		}
 	}
 }
@@ -396,7 +398,7 @@ if ($qres == false) {
 
 	// Check if Position Update is necessary (only with data)
 	$deltap = @array(-1, 604700, 86300, 3500, 60)[$deva['posflags']];
-	if ($fcnt>0 && $deltap > 0 && $deva['lpos'] + $deltap < $now) {
+	if ($fcnt > 0 && $deltap > 0 && $deva['lpos'] + $deltap < $now) {
 		$devi = array();
 		$lines = file(S_DATA . "/$mac/device_info.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 		if ($lines !== false) {
@@ -404,45 +406,48 @@ if ($qres == false) {
 				$tmp = explode("\t", $line);
 				$devi[$tmp[0]] = $tmp[1];
 			}
-			$cella = explode(" ", @$devi['signal']); // Cell-Infos as Array
-			$cell = array(); // KV-Array
-			foreach ($cella as $kv) {
-				$tmp = explode(":", $kv);
-				$cell[$tmp[0]] = $tmp[1];
-			}
-			// Now Call Cellserver
-			$sqs = CELLOC_SERVER_URL . '?k=' . G_API_KEY . "&s=$mac&mcc=" . $cell['mcc'] . "&net=" . $cell['net'] . "&lac=" . $cell['lac'] . "&cid=" . $cell['cid'];
-			$ch = curl_init($sqs);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			$result = curl_exec($ch);
-			if (curl_errno($ch))	$xlog .= "(ERROR: curl:'" . curl_error($ch) . "')";
-			curl_close($ch);
-			$obj = @json_decode($result);
-			if (strcmp($obj->code, "OK")) $xlog .= "(ERROR: CELLOC: " . $obj->code . "," . $cres . $obj->info . ")";
-			else {
-				$nlat = $obj->lat;
-				$nlon = $obj->lon;
-				$nrad = $obj->accuracy;
-				$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
-				$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
-				$trigger_fb .= "#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
-				$sqlps->execute(array(NULL, "<CELLOC $nlat $nlon $nrad>"));
+			$signal = @$devi['signal'];
+			if (isset($signal)) {
+				$cella = explode(" ", $signal); // Cell-Infos as Array
+				$cell = array(); // KV-Array
+				foreach ($cella as $kv) {
+					$tmp = explode(":", $kv);
+					$cell[$tmp[0]] = $tmp[1];
+				}
+				// Now Call Cellserver
+				$sqs = CELLOC_SERVER_URL . '?k=' . G_API_KEY . "&s=$mac&mcc=" . $cell['mcc'] . "&net=" . $cell['net'] . "&lac=" . $cell['lac'] . "&cid=" . $cell['cid'];
+				$ch = curl_init($sqs);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				$result = curl_exec($ch);
+				if (curl_errno($ch))	$xlog .= "(ERROR: curl:'" . curl_error($ch) . "')";
+				curl_close($ch);
+				$obj = @json_decode($result);
+				if (strcmp($obj->code, "OK")) $xlog .= "(ERROR: CELLOC: " . $obj->code . "," . $cres . $obj->info . ")";
+				else {
+					$nlat = $obj->lat;
+					$nlon = $obj->lon;
+					$nrad = $obj->accuracy;
+					$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
+					$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
+					$trigger_fb .= "#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
+					$sqlps->execute(array(NULL, "<CELLOC $nlat $nlon $nrad>"));
+				}
 			}
 		}
 	}
 
 	$las = $deva['last_seen'];
-	if(isset($las)) $ageh = ($now - strtotime($las))/3600;
-	else $ageh=0;	// Macht kein Sinn - Never seen..
+	if (isset($las)) $ageh = ($now - strtotime($las)) / 3600;
+	else $ageh = 0;	// Macht kein Sinn - Never seen..
 	$toalarm = $deva['timeout_alarm'];
-	if($toalarm>0 &&  $toalarm>$ageh){
+	if ($toalarm > 0 &&  $toalarm > $ageh) {
 		$alam_new++;
-		$info_wea[] = "ALARM: Device last seen $age h ago ";		
-	}else{
+		$info_wea[] = "ALARM: Device last seen $age h ago ";
+	} else {
 		$towarn = $deva['timeout_warn'];
-		if($towarn>0 && $towarn> $ageh){
+		if ($towarn > 0 && $towarn > $ageh) {
 			$warn_new++;
-			$info_wea[] = "WARNING: Device last seen $age h ago ";		
+			$info_wea[] = "WARNING: Device last seen $age h ago ";
 		}
 	}
 
@@ -454,13 +459,13 @@ if ($qres == false) {
 	if ($alarm_new) $xlog .= "($alarm_new new Alarms)";
 	if ($err_new) $xlog .= "($err_new new Errors)";
 	$cond0 = $deva['cond0'];	// Evaluate Condition 0
-	if(!isset($cond0)) $cond0="";
-	else $cond0=trim($cond0);
+	if (!isset($cond0)) $cond0 = "";
+	else $cond0 = trim($cond0);
 	if (strlen($cond0) || ($reason & 256)) {
 		$conds = explode(" ", $cond0);
 		// Check Alarm Condition(s)
 		$tlmail = $deva['em_date0'];
-		if(!isset($tlmail)) $tlmail="";
+		if (!isset($tlmail)) $tlmail = "";
 		$em_age0 = $now - strtotime($tlmail);	// Age of last Mail null->0
 		// echo "Condition:'".$deva['cond0']."'\n"; // Bsp: An+1:M+1000 Et+3 Wn+1 -> AlarmNew>=1 UND Mail>=1000 ODER Etot>=3 ODER Wnew>=1
 		$send_err = false;
@@ -515,7 +520,7 @@ if ($qres == false) {
 		if ($send_err) $err_tot++;	// Can not Send Mail
 		else if ($send_or || ($reason & 256)) { // $reason&256 trggers Mail!
 			$mail_dest = $deva['email0'];
-			if(!isset($mail_dest)) $mail_dest="";
+			if (!isset($mail_dest)) $mail_dest = "";
 			if (strlen(trim($mail_dest))) {
 				if ($dbg) echo "Send Mail to '$mail_dest'\n";
 				$mailno = $deva['em_cnt0'] + 1;
@@ -529,7 +534,7 @@ if ($qres == false) {
 				else $sec = "http://" . $_SERVER['HTTP_HOST'];
 				$url = $sec . $sroot;
 				$xcont = $_GET['xc']; // Add. Content
-				if(!isset($xcont)) $xcont="(NoContent)";
+				if (!isset($xcont)) $xcont = "(NoContent)";
 				if (strlen($xcont)) {
 					$cont = "\n$xcont\n";
 					$mail_info = "Mail to '$mail_dest','$xcont'";
