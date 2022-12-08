@@ -1,6 +1,6 @@
 <?php
 // --- w_main.php - Main worker ---
-// Main Worker for intern_main. State 24.10.2022
+// Main Worker for intern_main. State 08.12.2022
 // Note: json_encode will fail if non-utf8-chars are present
 // set param dbg to generate readable output
 // 'status' <= -1000: Fatal Error!
@@ -277,7 +277,7 @@ try{
 			if ($qres == false) $status = "-104 ERROR: CMD '$cmd'"; // Find by Number
 			$xlog .= "(Warnings reset)";
 			add_logfile();
-			$status = "0 OK";		
+			// Give Immediate Feedback - $status = "0 OK"; 
 			break;
 		case "removeErrors":
 			$statement = $pdo->prepare("UPDATE devices SET err_cnt = 0,last_change=NOW() WHERE mac = ?");
@@ -285,7 +285,7 @@ try{
 			if ($qres == false) $status = "-105 ERROR: CMD '$cmd'"; // Find by Number
 			$xlog .= "(Errors reset)";
 			add_logfile();
-			$status = "0 OK";		
+			// Give Immediate Feedback - $status = "0 OK"; 
 			break;
 		case "removeAlarms":
 			$statement = $pdo->prepare("UPDATE devices SET alarms_cnt = 0,last_change=NOW() WHERE mac = ?");
@@ -293,10 +293,10 @@ try{
 			if ($qres == false) $status = "-106 ERROR: CMD '$cmd'"; // Find by Number
 			$xlog .= "(Alarms reset)";
 			add_logfile();
-			$status = "0 OK";		
+			// Give Immediate Feedback - $status = "0 OK"; 
 			break;
 
-		case "cntReset": // Reset Counter X
+		case "cntReset": // Reset (Mail) Counter X
 			$contNo = @$_REQUEST['contNo'];
 			$contCntId = "em_cnt$contNo";
 			$statement = $pdo->prepare("UPDATE devices SET $contCntId = 0 WHERE mac = ?");

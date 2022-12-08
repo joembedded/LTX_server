@@ -802,7 +802,7 @@ function generateDetails(idx) {
 			if (valstr == undefined) valstr = '?'
 
 			var cidstr
-			if (kvn >= 90) cidstr = "HK" + kvn + ": &nbsp;" // Look similar to BlueShell
+			if (kvn >= 90) cidstr = "H" + kvn + ": &nbsp;" // Look similar to BlueShell
 			else cidstr = "#" + kvn + ": &nbsp;"
 
 			if (valstr.charAt(0) == '*') { // Alarm

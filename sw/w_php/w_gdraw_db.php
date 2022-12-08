@@ -1,6 +1,6 @@
 <?php
 //** w_gdraw_db.php; Get Data from Device-TABLE. User verifiedy by DB (token or session) **
-// 03.12.2022
+// 08.12.2022
 
 header('Content-Type: text/plain');
 require_once("../inc/w_xstart.inc.php");	// INIT everything
@@ -88,9 +88,15 @@ try{
 		$units = @$device['units']; // As String, Space separated
 		echo "!U $units\n";
 
-		/* Get lines: Limited No, 0 if Table not exists */
-		if ($limit >= 0) $sql = "SELECT id,dataline FROM (  SELECT * FROM m$mac ORDER BY id DESC LIMIT $limit )Var1  ORDER BY id";
-		else $sql = "SELECT id,dataline FROM m$mac";
+		/* Get lines: Limited No, 0 if Table not exists, sort if HK100 ' 100:PackInd' found */
+		if(strpos($units," 100:PackInd")){	// Packet based Devivce - Packets may arrive in wrong oder!
+			if ($limit >= 0) $sql = "SELECT id,dataline FROM (  SELECT * FROM m$mac ORDER BY id DESC LIMIT $limit )Var1  ORDER BY calc_ts,id";
+			else $sql = "SELECT id,dataline FROM m$mac ORDER BY calc_ts,id";
+		}else{	// Logger with Bidirectional connection
+			if ($limit >= 0) $sql = "SELECT id,dataline FROM (  SELECT * FROM m$mac ORDER BY id DESC LIMIT $limit )Var1  ORDER BY id";
+			else $sql = "SELECT id,dataline FROM m$mac";
+		}
+
 		$statement = $pdo->prepare($sql);
 		$statement->execute();
 		$anz = $statement->rowCount(); // No of matches
