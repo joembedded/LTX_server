@@ -4,54 +4,43 @@
 // Note: json_encode will fail if non-utf8-chars are present
 // set param dbg to generate readable output
 // 'status' <= -1000: Fatal Error!
-// Last used ERROR: 149
+// Last used ERROR: 149 - 10.12.2022
 
 
 require_once("../inc/w_istart.inc.php");
 // ---------- functions ----------------
 header('Content-Type: text/plain; charset=utf-8');
 
-// Call Trigger to send Mail 
+// Call Trigger to send Mail
 function call_trigger($mac, $reason, $xc)
 {
 	global $xlog;
 	$self = $_SERVER['PHP_SELF'];
 	$port = $_SERVER['SERVER_PORT'];
-	if ($port = 443) $port = 80;	// Map HTTPS to HTTP
-	$server = $_SERVER['SERVER_NAME'];
-	$rpos = strrpos($self, '/sw'); // Evtl. check for  backslash (only Windows?)
-	$tscript = substr($self, 0, $rpos) . "/sw/lxu_trigger.php";
+	$isHttps =  (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')  || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+	if ($isHttps) $server = "https://";
+	else $server = "http://";
+	$server .= $_SERVER['SERVER_NAME'];
+	$rpos = strrpos($self, '/'); // Evtl. check for  backslash (only Windows?)
+	$tscript = substr($self, 0, $rpos) . "/lxu_trigger.php";
 	$arg = "k=" . S_API_KEY . "&r=$reason&s=$mac&xc=" . urlencode($xc);	// Parameter: API-KEY, reason and MAC and extended Content(encoded)
 
 	//$xlog.="(Trigger: $server:$port '$tscript?$arg')";
 	$res = ""; // OK
-	$fp = @fsockopen($server, $port, $errno, $errstr, 10);    // Try max. 10 seconds 
-	if ($fp) {
-		stream_set_timeout($fp, 15, 0); // Wait max. 15 sec for a response of trigger
 
-		$out = "GET $tscript?$arg HTTP/1.0\r\n";
-		$out .= "Host: $server:$port\r\n"; // Assume: Ssame dir as self
-		$out .= "Connection: Close\r\n\r\n";
-		$wres = fwrite($fp, $out);
-		if ($wres != strlen($out)) {
-			$xlog .= "(ERROR; Write to Trigger-Script failed)";
-			$res = "-140 ERROR: Write to Trigger-Script failed";
-		} else {
-			$rres = trim(fgets($fp), "\r\n");
-			if (strpos($rres, " 200 ") == false) {
-				$xlog .= "(ERROR: '$rres')";
-			}
-		}
-		fclose($fp);
-	} else {
-		$xlog .= "(ERROR: Trigger-Script open)";
-		$res = "-141 ERROR: Trigger-Script open";
+	$ch = curl_init("$server:$port/$tscript?$arg");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+	if (curl_errno($ch)) {
+		$xlog .= '(ERROR: Curl:' . curl_error($ch) . ')';
+		$res = "-140 ERROR: Write to Trigger-Script failed"; // Error -141 obsolete
 	}
 	return $res;
 }
 
 // --------- MAIN ------------
-try{
+try {
 	// Unix Timestamp as Database Time in secs
 	$dbnow = $pdo->query("SELECT UNIX_TIMESTAMP() as now")->fetch()['now']; // UTC
 	$dblast = intval(@$_REQUEST['last']);	// Last seen in secs UNIX_SECS
@@ -81,6 +70,10 @@ try{
 	}
 	switch ($cmd) {
 		case "addGuestDevice":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$newmac = strtoupper(@$_REQUEST['newmac']);
 			$newtok = strtoupper(@$_REQUEST['newtok']);
 			$statement = $pdo->prepare("SELECT * FROM guest_devices WHERE mac = ? AND guest_id = ? ");
@@ -120,10 +113,14 @@ try{
 			$mac = $newmac;	// For loglib
 			$xlog .= "(Add Guest Device)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "addDevice":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$newmac = strtoupper(@$_REQUEST['newmac']);
 			$newtok = strtoupper(@$_REQUEST['newtok']);
 
@@ -156,7 +153,7 @@ try{
 						$status = "-147 ERROR: Can't add own Device!";
 						break;
 					}
-					if(!is_null($downer)){
+					if (!is_null($downer)) {
 						$status = "-148 ERROR: MAC already added by other User! (Info:'$downer')";
 						break;
 					}
@@ -176,7 +173,7 @@ try{
 				else if (strlen($fw_key) != 32) $status = "-101 ERROR: Firmware Key Len";
 				else {	// All OK: Add/Update Device to DB
 					// Evtl. generate MAC, will fail if already existing
-					if($anz==0) $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$newmac' )");
+					if ($anz == 0) $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$newmac' )");
 					$qres = $pdo->exec("UPDATE devices SET owner_id='$user_id', fw_key='$fw_key', last_change=NOW() WHERE mac ='$newmac'");
 					if ($qres == false) {
 						$status = "-102 ERROR: Update DB failed";
@@ -188,10 +185,14 @@ try{
 			$mac = $newmac;	// For loglib
 			$xlog .= "(Add own Device)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "removeDevice":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$oldmac = strtoupper(@$_REQUEST['oldmac']);
 			$statement = $pdo->prepare("DELETE FROM guest_devices WHERE mac = ? AND guest_id = ? ");
 			$qres = $statement->execute(array($oldmac, $user_id));
@@ -221,7 +222,7 @@ try{
 					}
 				}
 			}
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "getUser":	// get All User Data
@@ -235,7 +236,7 @@ try{
 				$user_row['password'] = "*";
 				$ret['user'] = $user_row;
 			}
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "changeUser":	// Change user - Test all Options
@@ -267,11 +268,15 @@ try{
 					$ret['user_id'] = $user_id;
 				}
 			} // other Options...
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 			// Problem t.b.d: Check rights to make changes! (user_id==mac.user_id or role&token...)
 		case "removeWarnings":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$statement = $pdo->prepare("UPDATE devices SET warnings_cnt = 0,last_change=NOW() WHERE mac = ?");
 			$qres = $statement->execute(array($mac));
 			if ($qres == false) $status = "-104 ERROR: CMD '$cmd'"; // Find by Number
@@ -280,6 +285,10 @@ try{
 			// Give Immediate Feedback - $status = "0 OK"; 
 			break;
 		case "removeErrors":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$statement = $pdo->prepare("UPDATE devices SET err_cnt = 0,last_change=NOW() WHERE mac = ?");
 			$qres = $statement->execute(array($mac));
 			if ($qres == false) $status = "-105 ERROR: CMD '$cmd'"; // Find by Number
@@ -288,6 +297,10 @@ try{
 			// Give Immediate Feedback - $status = "0 OK"; 
 			break;
 		case "removeAlarms":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$statement = $pdo->prepare("UPDATE devices SET alarms_cnt = 0,last_change=NOW() WHERE mac = ?");
 			$qres = $statement->execute(array($mac));
 			if ($qres == false) $status = "-106 ERROR: CMD '$cmd'"; // Find by Number
@@ -297,6 +310,10 @@ try{
 			break;
 
 		case "cntReset": // Reset (Mail) Counter X
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$contNo = @$_REQUEST['contNo'];
 			$contCntId = "em_cnt$contNo";
 			$statement = $pdo->prepare("UPDATE devices SET $contCntId = 0 WHERE mac = ?");
@@ -328,7 +345,7 @@ try{
 				$status = "-110 ERROR: CMD '$cmd'";
 			} else {
 				$user_row = $statement->fetch();
-				if($user_row == false){
+				if ($user_row == false) {
 					$status = "-149 ERROR: Access denied!";
 					break;
 				}
@@ -347,7 +364,7 @@ try{
 				$user_row['available_cnt'] = $danz; // Add extra-Info
 				$ret['device'] = $user_row;
 			}
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "changeDevice":
@@ -376,7 +393,7 @@ try{
 			}
 			$xlog .= "(Change Server Parameter)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "getParam": // Get current Parameters 
@@ -394,7 +411,7 @@ try{
 			}
 			$ret['iparam'] = $par; // array_map("utf8_encode",$par) ???10/2020 ; // File complete as lines
 			$ret['scookie'] = date('Y-m-d H:i:s', @$par[4]); // Special ADDs
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "saveParam";
@@ -421,10 +438,14 @@ try{
 				$status = "-117 ERROR: Write Parameter:$slen/$ilen Bytes";
 			}
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "removePending": // Remove Pending Parameters
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$fpath = "../" . S_DATA . "/$mac"; // (one extra DIR up)
 			@unlink($fpath . "/cmd/iparam.lxp.pmeta");
 			@unlink($fpath . "/put/iparam.lxp");
@@ -437,7 +458,7 @@ try{
 			}
 
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "getInfo":	// Ask for Device Info
@@ -451,7 +472,7 @@ try{
 			$dinfo[] = "date0\t" . $date0[0];	// Add Date0 to Info
 
 			$quota = @file($fpath . "/quota_days.dat", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-			if($quota !== false){
+			if ($quota !== false) {
 				$dinfo[] = "quotal\t" . @$quota[1];	// Add Lines
 				$dinfo[] = "quotad\t" . @$quota[0];	// Add Days
 			}
@@ -468,10 +489,14 @@ try{
 			$dinfo[] = "posflags\t" . $user_row['posflags'];	// Add posflags to Info
 
 			$ret['dinfo'] = $dinfo; // File complete as lines + adds
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "clearDevice":	// Table, Notes and WEA-Counters
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$statement = $pdo->prepare("DROP TABLE m$mac");
 			$qres = $statement->execute();
 			if ($qres == false) {
@@ -500,10 +525,14 @@ try{
 
 			$xlog .= "(Clear Device DB)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "setPosUpdate":
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$statement = $pdo->prepare("UPDATE devices SET last_change=NOW(), 
 				posflags = ?
 				WHERE mac = ?");
@@ -515,7 +544,7 @@ try{
 			}
 			$xlog .= "(Set posflags:$npf)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "getPos":
@@ -535,10 +564,14 @@ try{
 				$ret['lon'] = $obj->lon;
 				$ret['accuracy'] = $obj->accuracy;
 			}
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "savePos": // GPS to DB
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$npos = @$_REQUEST['newpos'];
 			$nLat = floatval($npos['lat']);
 			$nLon = floatval($npos['lon']); // !! lng in DB
@@ -557,10 +590,14 @@ try{
 			}
 			$xlog .= "(Set Pos. $nLat,$nLon,$nRad)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "clearPos": // GPS to DB
+			if (!($urole & 32768)) {	// ***** DEMO-USER ***
+				$status = "-128 ERROR: Not possible for this User";
+				break;
+			}
 			$statement = $pdo->prepare("UPDATE devices SET last_change=NOW(), 
 				lat = NULL, lng = NULL, rad = NULL, last_gps=NOW()
 				WHERE mac = ?");
@@ -571,7 +608,7 @@ try{
 			}
 			$xlog .= "(Clear Pos.)";
 			add_logfile();
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "getLog": // Get Logfile (or later also other 2-part text files - reverse)
@@ -589,8 +626,8 @@ try{
 			}
 			$pos0 = @$_REQUEST['pos0'];
 			$anz = @$_REQUEST['anz'];
-			if(!isset($pos0)) $pos0=0;
-			if(!isset($anz)) $anz=0;
+			if (!isset($pos0)) $pos0 = 0;
+			if (!isset($anz)) $anz = 0;
 			$logall = @file($fname, FILE_IGNORE_NEW_LINES);
 
 			if ($logall == false || count($logall) < ($anz + $pos0)) {
@@ -613,17 +650,17 @@ try{
 				$lidx0--;
 			}
 			$ret['lres'] = $lres;	// Return result
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "getWEA": // Get Warnings/Error/Alarms
 			$fpath = "../" . S_DATA . "/$mac"; // (one extra DIR up)
 			$fname = $fpath . "/info_wea.txt";
 			$fname2 = $fpath . "/_info_wea_old.txt";
-			$pos0 = @$_REQUEST['pos0']; 
-			$anz = @$_REQUEST['anz']; 
-			if(!isset($pos0)) $pos0=0;
-			if(!isset($anz)) $anz=0;
+			$pos0 = @$_REQUEST['pos0'];
+			$anz = @$_REQUEST['anz'];
+			if (!isset($pos0)) $pos0 = 0;
+			if (!isset($anz)) $anz = 0;
 
 			$logall = @file($fname, FILE_IGNORE_NEW_LINES);
 
@@ -648,7 +685,7 @@ try{
 				}
 			}
 			$ret['weares'] = $lres;	// Return result
-			$status = "0 OK";		
+			$status = "0 OK";
 			break;
 
 		case "";
@@ -663,7 +700,7 @@ try{
 		if ($urole & 65536) {
 			$statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_change) AS lsc FROM devices"); // Admin
 			$statement->execute();
-		}else{
+		} else {
 			$statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_change) AS lsc FROM devices WHERE owner_id = ?"); // Normal User
 			$statement->execute(array($user_id));
 		}
@@ -762,8 +799,8 @@ try{
 
 	$ares = json_encode($ret); // assoc array always as object
 	if (!strlen($ares)) $ares = "Error: json_encode";
-	if(isset($dbg)) var_export($ret);
+	if (isset($dbg)) var_export($ret);
 	else echo $ares;
 } catch (Exception $e) {
-	exit("FATAL ERROR: '" . $e->getMessage()."'\n");
+	exit("FATAL ERROR: '" . $e->getMessage() . "'\n");
 }
