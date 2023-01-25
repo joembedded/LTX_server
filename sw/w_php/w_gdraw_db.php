@@ -95,7 +95,7 @@ try{
 
 		// Minimum Header 
 		$lts=intval(@$_REQUEST['lts']); //OPt &lts=1/2 Line Timestamp
-		$cts=intval(@$_REQUEST['cts']); //OPt &lts=1/2 Calc Timestamp
+		$cts=intval(@$_REQUEST['cts']); //OPt &cts=1/2 Calc Timestamp
 
 		$deltasel = @$_REQUEST['delta'];
 		echo "#COOKIE: $cookie\n";	// Current Cookie
