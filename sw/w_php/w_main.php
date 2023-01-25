@@ -4,7 +4,7 @@
 // Note: json_encode will fail if non-utf8-chars are present
 // set param dbg to generate readable output
 // 'status' <= -1000: Fatal Error!
-// Last used ERROR: 149 - 10.12.2022
+// Last used ERROR: 149 - 22.01.2023
 
 
 require_once("../inc/w_istart.inc.php");
@@ -475,6 +475,9 @@ try {
 			if ($quota !== false) {
 				$dinfo[] = "quotal\t" . @$quota[1];	// Add Lines
 				$dinfo[] = "quotad\t" . @$quota[0];	// Add Days
+				if(count($quota)>2){
+					$dinfo[] = "quotap\t" . htmlspecialchars($quota[2]);	// WheretoPush
+				}
 			}
 
 			// Specials

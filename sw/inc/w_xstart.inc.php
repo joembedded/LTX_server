@@ -8,7 +8,7 @@ $mtmain_t0 = microtime(true);         // for Benchmark
 session_start();
 require_once("../conf/config.inc.php");	// DB Access 
 require_once("../conf/api_key.inc.php"); // APIs
-require_once("db_funcs.inc.php"); // Init DB
+require_once("../inc/db_funcs.inc.php"); // Init DB
 
 $mac = @$_REQUEST['s'];	// s always MAC (k: API-Key, r: Reason)
 if(!isset($mac)) $mac="";

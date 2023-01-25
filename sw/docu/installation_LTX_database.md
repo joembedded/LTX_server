@@ -1,6 +1,6 @@
 ### Installation of LTX Database (File: './sw/docu/installation_LTX_database') ###
 
-### 09.12.2022 Jo ###
+### 22.01.2023 Jo ###
 
 LTX can be installed WITH (named as "LTX_Server") Database and WITHOUT (named as "LTX_Legacy").
 
@@ -18,11 +18,12 @@ This file is simple text ('EDT'-Format) and might become quite large over time ;
 The input script 'sw\ltu_trigger.php' will add the data.
 
 In case of "LTX_Server" all new data will be written to the database. There is a quota limit in
-'../sw/conf/api_key.inc.php' ("DB_QUOTA" with default "3650\n100000000"). A file 'quota_days.dat' with 2 lines
+'../sw/conf/api_key.inc.php' ("DB_QUOTA" with default "3650\n100000000"). A file 'quota_days.dat' with 2-3 lines
 will automatically be written for each new logger or device, 1.st line are days (here 3650), 2.nd line is lines (in the database).
+The optional 3.rd line is an URL where to send a PUSH notification on new data.
 The input script 'sw/ltu_trigger.php' will automatically remove older data.
 Change e.g. to "90\n1000" to allow only the last 90 days or max. 1000 lines per device (so even a small DB can hold thousands of devices!).
-The file 'quota_days.dat' my be set to individual values per logger at any time.
+The file 'quota_days.dat' my be set/edited to individual values per logger at any time.
 
 ## Important: This repository ('LTX_Server') is automatically generated/maintained by scripts! No Feedback to Issues/Request/Comments ##
 

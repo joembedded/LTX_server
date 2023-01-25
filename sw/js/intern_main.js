@@ -10,9 +10,9 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.55 (04.12.2022)";
+var prgVersion = "V0.56 (22.01.2023)";
 var prgName = "LTX - MicroCloud" + prgVersion;
-var prgShortName = "LTX1";
+var prgShortName = "LTX";
 
 var mapUrl = "https://maps.google.com/maps?f=q";
 var modalCloseRedir; // Redirect-Link for AlertBox
@@ -1207,7 +1207,10 @@ function edInfoFill() {
 		if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
 		infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
 		infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
-		infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b></div>";
+		infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b>, Push: <b>"
+		if(infoObj.quotap !==undefined && infoObj.quotap.length>0) infoStr += "'"+ infoObj.quotap+"'"
+		else infoStr += "(NOT SET)"
+		infoStr += "</b></div>";
 
 		infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 		var fw_cookieStr;

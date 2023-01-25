@@ -1,7 +1,8 @@
 <?php
 	/* Redirect to a different page in the current directory that was requested */
 	$host  = $_SERVER['HTTP_HOST'];
-	$uri   = $_SERVER['SCRIPT_NAME'];
+	$uri   = $_SERVER['PHP_SELF'];
+	if(!isset($uri) || strlen($uri)<4) exit("ERROR: 'PHP_SELF' not set");
 	$extra = substr($uri,0,strrpos($uri,'/')).'/sw/login.php';
 	$nloc = "Location: //$host$extra";
 	header($nloc);	// PHP-Redirection

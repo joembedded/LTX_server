@@ -1,24 +1,35 @@
 <?php
-//** w_gdraw_db.php; Get Data from Device-TABLE. User verifiedy by DB (token or session) **
-// 28.12.2022
+/** w_gdraw_db.php; Get Data from Device-TABLE. User verifiedy by DB (token or session) **
+*
+* Die DB ist im Prinzip extrem simple aufgebaut: 
+* - Pro Logger gibt es einen Eintrag in der Tabelle devices und/oder guest_devices
+* - Die Daten der Logger stehen zeilenweis in der Tabelle mMAC (MAC: 16 Digits)
+*
+* MDATE: Last seen TS
+* NOW: Current TS (only for info)
+* COOKIE: TS of Parameter set 'iparam.lxp'
+* $cdate (TS via m=), (normally) lower than < MDATE
+* lim: >=0: Count, or <0: ALL
+* cmd: here unused
+*
+* 25.01.2023 JoEm
+*/
 
 header('Content-Type: text/plain');
 require_once("../inc/w_xstart.inc.php");	// INIT everything
 
 try{
-	/* Just for Info/Debug - Enable in g_draw.js
-		$ajt=@$_REQUEST['ajt'];	// Miliseconds since 1970
-		$aid=@$_REQUEST['aid']; // Counts up each call
-		*/
 
 	$now = time();
-	$dbg = 0;	// Biser noch ohne Fkt.
+	$dbg = 0;	// Bisher noch ohne Fkt.
 
 	$last_seen = $device['last_seen'];
 	if (!$last_seen) {
 		echo "#ERROR: No Data\n";
 		exit();
 	}
+	$cookie = $device['cookie'];
+	
 	$mdate = strtotime($last_seen); // invers: echo date("Y-m-d H:i:s", $mdate);	
 	echo "#MDATE: $mdate\n";	// Delta
 	echo "#NOW: $now\n";
@@ -48,12 +59,14 @@ try{
 					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 					$result = curl_exec($ch);
 					if (curl_errno($ch)) {
+						echo "#INFO: CELLOC: '$sqs'\n"; // Display Query String on Failure
 						echo "#ERROR(internal): curl:'" . curl_error($ch) . "'\n";
 					}
 					curl_close($ch);
 					$obj = @json_decode($result);
 					if (strcmp($obj->code, "OK")) {
-						echo "#ERROR(internal): CELLOC: " . $obj->code . "," . $cres . $obj->info . "\n";
+						echo "#INFO: CELLOC: '$sqs'\n";
+						echo "#ERROR(internal): CELLOC: " . $obj->code . "," . $obj->info . "\n";
 					} else {
 						$nlat = $obj->lat;
 						$nlon = $obj->lon;
@@ -74,13 +87,19 @@ try{
 			echo "#LNG: " . $device['lng'] . "\n";
 			echo "#RAD: " . $device['rad'] . "\n";
 		}
-		
 	}
 
 	$anz = 0;	// Assume no Change
-	if ($mdate != $cdate) { // Unchanged! Send all, else only #MDATE
-		//echo "#Sag Hallo\n"; // Option for Info...(eg. Alarm etc???=
+	//echo "MDATE: $mdate  CDATE: $cdate\n";
+	if ($mdate != $cdate) { // Unchanged! Send all, else only #MDATE // normally cdate <= mdate!
+
 		// Minimum Header 
+		$lts=intval(@$_REQUEST['lts']); //OPt &lts=1/2 Line Timestamp
+		$cts=intval(@$_REQUEST['cts']); //OPt &lts=1/2 Calc Timestamp
+
+		$deltasel = @$_REQUEST['delta'];
+		echo "#COOKIE: $cookie\n";	// Current Cookie
+
 		echo "<MAC: $mac>\n";
 		$dname = @$device['name'];
 		if(!isset($dname)) $dname="(Unknown)";
@@ -88,48 +107,52 @@ try{
 		$units = @$device['units']; // As String, Space separated
 		echo "!U $units\n";
 
+		// Gen SQL 
+		$lmac = strtolower($mac);
+		$innersel = "m$lmac";
+		if(isset($deltasel)){
+			if($cdate>0 ) $innersel .= " WHERE line_ts >= FROM_UNIXTIME( $cdate ) ";
+			else echo "<WARNING: Opt. 'delta' needs 'm'>\n";
+		}
+		if($limit >= 0) $innersel = "( SELECT * FROM $innersel ORDER BY id DESC LIMIT $limit )Var1";
 		/* Get lines: Limited No, 0 if Table not exists, sort if HK101 ' 101:Travel(sec)' found */
-		if(strpos($units," 101:Travel(sec)")){	// Packet based Devivce - Packets may arrive in wrong oder!
-			if ($limit >= 0) $sql = "SELECT id,dataline FROM (  SELECT * FROM m$mac ORDER BY id DESC LIMIT $limit )Var1  ORDER BY calc_ts,id";
-			else $sql = "SELECT id,dataline FROM m$mac ORDER BY calc_ts,id";
+		if(strpos($units," 101:Travel(sec)")){	// Packet based Devivce - Packets may arrive in wrong oder! ALways ORDER
+			if ($limit >= 0) $sql = "SELECT * FROM $innersel ORDER BY calc_ts,id";
+			else $sql = "SELECT * FROM $innersel ORDER BY calc_ts,id";
 		}else{	// Logger with Bidirectional connection
-			if ($limit >= 0) $sql = "SELECT id,dataline FROM (  SELECT * FROM m$mac ORDER BY id DESC LIMIT $limit )Var1  ORDER BY id";
-			else $sql = "SELECT id,dataline FROM m$mac";
+			if ($limit >= 0) $sql = "SELECT * FROM $innersel ORDER BY id";
+			else $sql = "SELECT * FROM $innersel";
 		}
 
+		//echo "<SQL: '$sql'>\n";
+		$tzo = timezone_open('UTC');
+	
 		$statement = $pdo->prepare($sql);
 		$statement->execute();
 		$anz = $statement->rowCount(); // No of matches
 		for ($i = 0; $i < $anz; $i++) {
 			$user_row = $statement->fetch();
+			if($lts) {		
+				$lval = $user_row['line_ts']; // lts=1: Standart
+				if($lts>1) $lval = date_create($lval)->getTimestamp(); // lts=2: UNIX TS
+				echo $lval.' ';
+			}
+			if($cts) {
+				$cval = $user_row['calc_ts']; // cts=1: Standart
+				if($cts>1) {
+					$cval = date_create($cval)->getTimestamp(); // cts=2: UNIX TS
+					if($cval<0) $cval = 0; 	// Komp. mit UNIX TS
+				}
+				echo $cval.' ';
+			}
+
 			echo $user_row['id'] . ' ' . $user_row['dataline'] . "\n";
 		}
-
 		if ($auth < 0) echo "<WARNING: External Use with Owner Token>\n";
-
 		// Optional Info
 		$mtrun = round((microtime(true) - $mtmain_t0) * 1000, 4);
 		echo '<' . $anz . ' Lines (' . $mtrun . " msec)>\n";
 	}
-		//sleep(5); // Timeout-Test
-
-		/*
-		$log=@fopen("intern/log.txt",'a');
-		if($log){                
-			// UNIX-Daytime *1k
-			$ajtrel=($now*1000-$ajt);
-			$lc=0;
-			while(!flock($log,LOCK_EX)) {
-				usleep(10000);  // Lock File - Is a MUST
-				$lc++;
-			}
-			fputs($log,gmdate("d.m.y H:i:s ",$now).$_SERVER['REMOTE_ADDR']." ");        // Write file
-			fwrite($log,"$mac [$aid/$ajtrel/$lc]->$anz\n");
-			fclose($log);
-		}else{
-			echo "<ERROR: Logfile?>\n";
-		}
-		*/
 } catch (Exception $e) {
 	exit("FATAL ERROR: '" . $e->getMessage() . "'\n");
 }

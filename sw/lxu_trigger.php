@@ -2,13 +2,15 @@
 /*************************************************************
  * trigger for LTrax V1.20-SQL
  *
- * 04.12.2022 - (C)JoEmbedded.com
+ * 21.01.2023 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
  * Tested with mySQL and MariaDB
  *
  * Last used Err: 106
+ *
+ * 
  ***************************************************************/
 
 error_reporting(E_ALL);
@@ -104,8 +106,6 @@ $fcnt = count($flist) - 2;   // Without . and ..
 if ($fcnt > 0) $xlog = "(Import)"; // Now: real import
 // foreach($flist as $fl) echo "$fl\n"; exit();
 $cpath = S_DATA . "/$mac/cmd";		// Path (UPPERCASE recommended, must exist)
-
-$res = 0;	// No Data
 
 if ($dbg) echo "*$fcnt Files in '$dpath'*\n";
 
@@ -568,7 +568,7 @@ if ($qres == false) {
 // --Check-- OK
 
 // 2.rd Part: Clear old data
-$quota = @file(S_DATA . "/$mac/quota_days.dat");
+$quota = @file(S_DATA . "/$mac/quota_days.dat", FILE_IGNORE_NEW_LINES);
 $quota_days = intval(@$quota[0]);
 if ($quota_days < 1) $quota_days = 366;	// 1 Day minimum, if unknown assume 1 year
 $pdo->query("DELETE FROM m$mac WHERE DATEDIFF(NOW(), line_ts) > $quota_days;");
@@ -634,10 +634,28 @@ if (count($info_wea)) {
 	fclose($log);
 }
 
+// 4.th Part PUSH (opt.) Reduce CURL TIMEOUT  to 10 sec
+if(isset($quota[2]) && strlen($quota[2])){
+	$qpar = explode(' ',trim( preg_replace('/\s+/', ' ', $quota[2]) ));
+	if (count($qpar)){
+		$qpush = $qpar[0]."?s=$mac";
+		if(count($qpar)>=2) $qpush = $qpush."&k=".$qpar[1];	// Opt. Key
+		$ch = curl_init($qpush);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+		$cres = curl_exec($ch);	// Might be long!
+		if ($dbg) $xlog .= "(Curl '$qpush' Result:\nSTART=====>\n$cres\n<=====END)"; 
+		if (curl_errno($ch)) $xlog .= "(ERROR: Push:'$qpush':(".curl_errno($ch)."):'" . curl_error($ch) . "')";
+		else $xlog .=  "(Push:'$qpush':".intval($cres).")";
+		curl_close($ch);
+	}
+}
+
 $mtrun = round((microtime(true) - $mttr_t0) * 1000, 4);
 $xlog .= "(Run:$mtrun msec)"; // Script Runtime
 
-echo "*TRIGGER(DBG:$dbg) RES:$res ('$xlog')*\n"; // Always
+echo "*TRIGGER(DBG:$dbg) RES: ('$xlog')*\n"; // Always
 echo $trigger_fb; // Send Feedback
 
 add_logfile();

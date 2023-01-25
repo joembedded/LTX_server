@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 17.07.2022
+ * 21.01.2023
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -19,6 +19,8 @@
  * Service can be started manually extern, see "@_GET[].."
  * Bsp: https://server.xxx/.../sw/service/service.php?k=APIKEY&v=1&d=2
  * Removes all devices with age > 2days (maybe in n turns)
+ *
+ * TODO: Deal with quota PUSH
  ***************************************************************/
 
 error_reporting(E_ALL);

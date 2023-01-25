@@ -9,8 +9,9 @@ This file is simple text ('EDT'-Format) and might become quite large over time ;
 The input script 'sw\ltu_trigger.php' will add the data.
 
 In case of "LTX_Server" all new data will be written to the database. There is a quota limit in
-'./sw/conf/api_key.inc.php' ("DB_QUOTA" with default "3650\n100000000"). A file 'quota_days.dat' with 2 lines
+'./sw/conf/api_key.inc.php' ("DB_QUOTA" with default "3650\n100000000"). A file 'quota_days.dat' with 2-3 lines
 will automatically be written for each new logger, 1.st line are days (here 3650), 2.nd line is lines (in the database).
+The optional 3.rd line is an URL where to send a PUSH notification on new data (only used for LTX_Server).
 The input script 'sw\ltu_trigger.php' will automatically remove older data.
 Change e.g. to "90\n1000" to allow only the last 90 days or max. 1000 lines per device (so even a small DB can hold thousands of devices).
 The file 'quota_days.dat' my be set to individual values per logger at any time.
@@ -38,3 +39,5 @@ LTX API (only DE): ['LTX API (DE)'](./docs/LTX_Server_Get.pdf "LTX API (DE)")
 - V1.02 08.12.2020 Docs added
 - V1.10 09.01.2021 More Docs added
 - V1.50 08.12.2022 SWARM Packet driver added
+- V1.52 20.01.2023 ASTOROCAST Packet driver added
+- V1.60 21.01.2023 Push-URL added 
