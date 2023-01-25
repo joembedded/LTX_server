@@ -98,7 +98,7 @@ try{
 		$cts=intval(@$_REQUEST['cts']); //OPt &cts=1/2 Calc Timestamp
 
 		$deltasel = @$_REQUEST['delta'];
-		echo "#COOKIE: $cookie\n";	// Current Cookie
+		//echo "#COOKIE: $cookie\n";	// Current Cookie (not req.)
 
 		echo "<MAC: $mac>\n";
 		$dname = @$device['name'];
@@ -108,8 +108,7 @@ try{
 		echo "!U $units\n";
 
 		// Gen SQL 
-		$lmac = strtolower($mac);
-		$innersel = "m$lmac";
+		$innersel = "m$mac";
 		if(isset($deltasel)){
 			if($cdate>0 ) $innersel .= " WHERE line_ts >= FROM_UNIXTIME( $cdate ) ";
 			else echo "<WARNING: Opt. 'delta' needs 'm'>\n";
@@ -124,7 +123,7 @@ try{
 			else $sql = "SELECT * FROM $innersel";
 		}
 
-		//echo "<SQL: '$sql'>\n";
+		echo "<SQL: '$sql'>\n";
 		$tzo = timezone_open('UTC');
 	
 		$statement = $pdo->prepare($sql);

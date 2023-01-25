@@ -16,6 +16,7 @@ if (strlen($mac) != 16) {
 	echo "#ERROR: MAC len\n";
 	exit();
 }
+$mac=strtoupper($mac);
 
 $cdate = @$_REQUEST['m']; 	// Last known Modification Date
 if(!isset($cdate)) $cdate="";

@@ -106,8 +106,7 @@ try {
 		echo "!U $units\n";
 
 		// Gen SQL  query
-		$lmac = strtolower($mac);
-		$innersel = "m$lmac";
+		$innersel = "m$mac";
 		if (isset($deltasel)) {
 			if ($cdate > 0) $innersel .= " WHERE line_ts >= FROM_UNIXTIME( $cdate ) ";
 			else echo "<WARNING: Opt. 'delta' needs 'm'>\n";
