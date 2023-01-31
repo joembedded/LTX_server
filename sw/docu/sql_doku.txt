@@ -1,4 +1,7 @@
-* Anmerkungen zu den SQL Rows Stand 08.12.2023 *
+* Anmerkungen zu den SQL Rows Stand 30.01.2023 *
+*********** Globals ***********************************
+SET GLOBAL time_zone = '+0:00';						UTC setzen
+SELECT CURRENT_TIME;								Check
 
 *************** Table Users **************************
 CREATE TABLE IF NOT EXISTS `users` (
@@ -61,9 +64,9 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `timeout_warn` int unsigned DEFAULT 0,				Timeout in sec fuer Warning
   `timeout_alarm` int unsigned DEFAULT 0,				Timeout in sec fuer (Alarm) Error, da mit Hardware verbunden
   
-  `vbat0` float,										BatterieVoltage 0% Full V
-  `vbat100` float,										BatterieVoltage 100% Full V
-  `cbat` float,											BatterieCapacity FULL mAh
+  `vbat0` float DEFAULT 0,								BatterieVoltage 0% Full V
+  `vbat100` float DEFAULT 0,							BatterieVoltage 100% Full V
+  `cbat` float DEFAULT 0,								BatterieCapacity FULL mAh
  
   
   `role0` int unsigned DEFAULT 0,						Flags User0

@@ -1,6 +1,6 @@
 ### Installation of LTX Database (File: './sw/docu/installation_LTX_database') ###
 
-### 22.01.2023 Jo ###
+### 31.01.2023 Jo ###
 
 LTX can be installed WITH (named as "LTX_Server") Database and WITHOUT (named as "LTX_Legacy").
 

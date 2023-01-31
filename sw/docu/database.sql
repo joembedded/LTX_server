@@ -1,6 +1,9 @@
 -- SQL statments for initialising login.php and device database
--- 07.12.2020 JoEmbedded.de
+-- 30.01.2023 JoEmbedded.de
 -- LTX Table Structure 
+
+SET GLOBAL time_zone = '+0:00';
+
 -- for Tabelle `users`:
 -- (rem: initial remember-flag, confirmed: increments for each mail sent)
 
@@ -66,9 +69,9 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `timeout_warn` int unsigned DEFAULT 0,
   `timeout_alarm` int unsigned DEFAULT 0,
   
-  `vbat0` float,
-  `vbat100` float,
-  `cbat` float,
+  `vbat0` float DEFAULT 0,
+  `vbat100` float DEFAULT 0,
+  `cbat` float DEFAULT 0,
   
   `role0` int unsigned DEFAULT 0,
   `token0` varchar(16) COLLATE utf8_unicode_ci,

@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.56 (22.01.2023)";
+var prgVersion = "V0.57 (30.01.2023)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -541,7 +541,7 @@ function user_poll(jcmd) {
 		console.log("Latency: " + latency); // <-- LATENCY
 		// --Updates--
 		if(data.dbnow != undefined) lastSeenTimestamp = parseInt(data.dbnow); // UNIX Time of Database
-		lastSyncTimestamp = Date.now();
+		lastSyncTimestamp = Date.now(); // Fuer Sync
 		deltaLastSync = 0;
 
 		if (data.devices !== undefined) {
@@ -660,7 +660,8 @@ function user_poll(jcmd) {
 				adev.lines_cnt = parseInt(adev.lines_cnt);
 				adev.timeout_warn = parseInt(adev.timeout_warn);
 				adev.timeout_alarm = parseInt(adev.timeout_alarm);
-				adev.last_seen_ux = Math.floor(Date.parse(adev.last_seen) / 1000);
+				adev.last_seen_ux = Math.floor(Date.parse(adev.last_seen + " GMT") / 1000); // DB is UTC
+								
 
 				deviceWList[idx] = adev;
 				// new Lines
@@ -875,7 +876,7 @@ function generateDetails(idx) {
 	var footer = "";
 	if (adev.lat != null && adev.lng != null) {
 		var gpslink = mapUrl + "&q=" + adev.lat + "," + adev.lng + "&z=12";
-		var gdate = new Date(Date.parse(adev.last_gps));
+		var gdate = new Date(Date.parse(adev.last_gps + " GMT")); // UTC
 		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> Cell Position from " + gdate.toLocaleString().replace(" ", "&nbsp;");
 		if (adev.rad > 0) footer += ", Accuracy: " + adev.rad + "m";
 		footer += "</b></a></div>";
@@ -1068,7 +1069,6 @@ function clearDeviceData(idx) {
 
 function clearDeviceDataEnable() {
 	document.getElementById("edCheckSubmit").disabled = !document.getElementById("edCheckClear").checked;
-
 }
 
 function clearDeviceSubmit() {
