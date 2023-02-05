@@ -1,7 +1,8 @@
 -- SQL statments for initialising login.php and device database
--- 30.01.2023 JoEmbedded.de
+-- 06.02.2023 JoEmbedded.de
 -- LTX Table Structure 
 
+-- Achtung: Evtl. Probleme mit dieser Fkt.!
 SET GLOBAL time_zone = '+0:00';
 
 -- for Tabelle `users`:
