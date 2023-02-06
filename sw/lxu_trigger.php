@@ -1,9 +1,9 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.22-SQL
+ * trigger for LTrax V1.23-SQL
  *
- * 30.01.2023 - (C)JoEmbedded.com
+ * 06.02.2023 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
@@ -30,6 +30,7 @@ try {
 		global $pdo; // Nothing will work without the DB
 		if (isset($pdo)) return;
 		$pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8", DB_USER, DB_PASSWORD);
+		$pdo->query("SET @@session.time_zone='+00:00'"); // UTC
 	}
 
 	// Filename-sort-callback

@@ -35,7 +35,7 @@
  * 102: Unbekanntes Kommando cmd
  */
 
-define ('VERSION',"LTX V1.0 31.01.2023"); 
+define ('VERSION',"LTX V1.01 06.02.2023"); 
 
 error_reporting(E_ALL);
 header("Content-type: application/json; charset=utf-8");

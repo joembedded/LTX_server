@@ -1,7 +1,7 @@
 <?php
 /*****************************************************
  * Database Toolbox (C)JoEmbedded.de 
- * Last modified: 25.10.2021
+ * Last modified: 06.02.2023
  * ****************************************************/
 
 // ------------- Functions --------------
@@ -14,6 +14,7 @@ function db_init()
 	try { // Nothing will work without the DB
 		$pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8", DB_USER, DB_PASSWORD);
 		$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+		$pdo->query("SET @@session.time_zone='+00:00'"); // UTC
 	} catch (PDOException $e) {
 		exit("ERROR: '" . $e->getMessage() . "'<br>");
 	}
