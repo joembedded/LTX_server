@@ -2,9 +2,6 @@
 -- 06.02.2023 JoEmbedded.de
 -- LTX Table Structure 
 
--- Achtung: Evtl. Probleme mit dieser Fkt.!
-SET GLOBAL time_zone = '+0:00';
-
 -- for Tabelle `users`:
 -- (rem: initial remember-flag, confirmed: increments for each mail sent)
 

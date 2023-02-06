@@ -1,7 +1,5 @@
-* Anmerkungen zu den SQL Rows Stand 30.01.2023 *
+* Anmerkungen zu den SQL Rows Stand 06.02.2023 *
 *********** Globals ***********************************
-SET GLOBAL time_zone = '+0:00';						UTC setzen
-SELECT CURRENT_TIME;								Check
 
 *************** Table Users **************************
 CREATE TABLE IF NOT EXISTS `users` (
