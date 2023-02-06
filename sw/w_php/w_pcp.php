@@ -306,6 +306,7 @@ try {
 			$user_row = $statement->fetch();
 			$line_ts = $user_row['line_ts'];	// Wann eingepflegt in DB (UTC)
 			$calc_ts = $user_row['calc_ts'];	// RTC des Gerates (UTC)
+			$id = $user_row['id']; 				// Zeilen ID. *** Achtung: Nach ClearDevice beginnt die wieder bei 1 ***
 			if($calc_ts == null) $calc_ts = $line_ts; // Sinnvoller Default falls Geraet ohne Zeit, z.B. nach RESET
 			$line = $user_row['dataline'];	// Daten oder Messages - extrem flach organisiert fuer max. Flexibilitaet
 			$ltyp="msg";
@@ -319,9 +320,9 @@ try {
 			}	
 /************************************************************
  * HIER WERDEN DIE DATEN ERSTMAL ***QUASI ROH** aingepflegt,
- * mit IT klaeren, welche Format GENAU gewuenscht 31.01.2023 JoWI
+ * mit IT klaeren, welche Format GENAU gewuenscht 06.02.2023 JoWI
  ************************************************************/
-			$valarr[] = array('line_ts' => $line_ts, 'calc_ts' => $calc_ts, 'type' => $ltyp, 'line' => $line);
+			$valarr[] = array('id' => $id, 'line_ts' => $line_ts, 'calc_ts' => $calc_ts, 'type' => $ltyp, 'line' => $line);
 
 		}
 		$retResult['get_count'] = count($valarr); // Allowed Devices
