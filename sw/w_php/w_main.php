@@ -427,8 +427,8 @@ try {
 			else $slen = -1;
 			if ($ilen == $slen) {
 				file_put_contents($fpath . "/cmd/iparam.lxp.pmeta", "sent\t0\n");
-				$par = @file($fpath . "/put/iparam.lxp", FILE_IGNORE_NEW_LINES); // Set NewName?
-				if ($par != false) {
+				$wnpar = @file($fpath . "/put/iparam.lxp", FILE_IGNORE_NEW_LINES); // Set NewName?
+				if ($wnpar != false) {
 					$statement = $pdo->prepare("UPDATE devices SET name = ? WHERE mac = ?");
 					$statement->execute(array(@$par[5], $mac));
 				}

@@ -123,7 +123,7 @@ try{
 			else $sql = "SELECT * FROM $innersel";
 		}
 
-		echo "<SQL: '$sql'>\n";
+		//echo "<SQL: '$sql'>\n";
 		$tzo = timezone_open('UTC');
 	
 		$statement = $pdo->prepare($sql);

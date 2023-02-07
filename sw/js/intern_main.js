@@ -1059,7 +1059,6 @@ function showDeviceWEA(idx) {
 //------------- NotesEnd -----------
 
 
-
 function clearDeviceData(idx) {
 	document.getElementById("edCheckClear").checked = false;
 	document.getElementById("edCheckSubmit").disabled = true;
