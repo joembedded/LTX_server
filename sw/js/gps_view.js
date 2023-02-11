@@ -8,7 +8,7 @@
 /*global L, $*/
 
 // ------------------ Globals ----------------------
-var prgVersion = 'V1.04 (14.06.2022)'
+var prgVersion = 'V1.05 (12.02.2023)'
 var prgName = 'GPS View ' + prgVersion
 var prgShortName = 'GPS View'
 
@@ -129,7 +129,7 @@ function showMap() {
     myMap = L.map('map').setView(L.latLng(48.9463, 8.4079), 5);
 
     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-      maxZoom: 20,
+      maxZoom: 18,
       attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
         '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
         'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
@@ -156,8 +156,9 @@ function showMap() {
   }
 
   if (idx_lat === undefined || idx_lng === undefined) {
-    ownAlert("ERROR: No Entries 'Lat' and 'Lng' in Data", 60);
-
+    document.getElementById("checkCompact").checked = false;
+    document.getElementById("checkCompact").disabled = true;
+    ownAlert("Info: No Entries for Satellite-GPS 'Lat' and 'Lng' in Data", 10);
     if (cell_lat !== undefined) { // Opt. show Cell
       coc = L.latLng(cell_lat, cell_lng);
       L.circle(coc, cell_rad, {
@@ -380,7 +381,7 @@ function showMap() {
     }).addTo(myMap);
     myMap.fitBounds(GPS_track.getBounds());
   } else {
-    ownAlert("ERROR: No valid GPS Positions in Data", 60);
+    ownAlert("Info: No valid GPS Positions in Data", 10);
 
     if (cell_lat !== undefined) { // Opt. show Cell
       coc = L.latLng(cell_lat, cell_lng);
@@ -865,6 +866,16 @@ function ownAlertClose(allclose = false) {
   ajaxActiveFlag = 0
 }
 
+function ownAlertAutoClose(to) {
+  if(to>0)  {
+    let bb = document.getElementById('id_txtokbut');
+    bb.innerText = "(Auto-Close in "+to+" sec)";
+    setTimeout(ownAlertAutoClose,1000,to-1);
+  }
+  else ownAlertClose(true);
+}
+
+
 // Own Alert, Always with spinner disabled. Add Text and Time
 function ownAlert(txt, timeout) {
   msgVisible = 1
@@ -873,9 +884,10 @@ function ownAlert(txt, timeout) {
   console.log('Alert[' + alertcnt + ']: ' + txt)
   if (alerttxt !== undefined) txt = alerttxt + '\n' + txt
   alerttxt = txt
+  document.getElementById('id_txtokbut').innerText="";
   document.getElementById('msgText').innerText = txt
   document.getElementById('msgBox').style.display = 'block'
-  setTimeout(ownAlertClose, timeout * 1000) // AutClose for Info
+  setTimeout(ownAlertAutoClose, 1000,  timeout) // AutClose for Info
 }
 
 

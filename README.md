@@ -43,3 +43,4 @@ LTX API (only DE): ['LTX API (DE)'](./docs/LTX_Server_Get.pdf "LTX API (DE)")
 - V1.60 21.01.2023 Push-URL first draft
 - V1.70 11.01.2023 PushPull Pre-Releasa in PHP
 - V1.71 06.02.2023 Database UTC
+- V1.72 11.02.2023 GPS_View.html cosmetics
