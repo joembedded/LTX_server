@@ -47,11 +47,13 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * 102: Unbekanntes Kommando cmd
  * 103: 'iparam' Parameter Error
  * 104,105: Index Error bei 'iparam'
+ * 106: Keine geaenderten Parameter gefunden
+ * 107: Mehr als 90 Messkanaele nicht moeglich
  * 
- *  ***todo*** parameter check
+ *  ***todo*** parameter check in  checkiparam()
  */
 
-define('VERSION', "LTX V1.02 07.02.2023");
+define('VERSION', "LTX V1.03 16.02.2023");
 
 error_reporting(E_ALL);
 header("Content-type: application/json; charset=utf-8");
@@ -76,7 +78,7 @@ $xlog = ""; // Log-String
  * sich denke ich den Luxus der Beschreibung erlauben
  ************************************************************/
 // Beschreibung der Parameter damit leichter lesbar
-$p100_beschr = array(
+$p100_beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"*@100_System",
 	"*DEVICE_TYP", // WICHTIG: Zeilen mit '*' duerfen NICHT vom User geendert werden
 	"*MAX_CHANNELS", // *
@@ -97,7 +99,7 @@ $p100_beschr = array(
 	"MinTemp_oC[-40..10]",
 	"Period_Internet_Offset[0..Period_Internet_sec]",
 );
-$pkan_beschr = array(
+$pkan_beschr = array( // SIZE eines Kanals ist absolut FIX
 	"*@ChanNo",  // (*) Neue Kanaele dazufuegen ist erlaubt, sofer aufsteigend und komplett
 	"Action[0..65535] (B0:Meas B1:Cache B2:Alarms)",
 	"Physkan_no[0..65535]",
@@ -192,25 +194,24 @@ try {
 	// Pruefen einer Parameterdatei
 	function checkiparam($par)
 	{
-		global $status, $parLastChanIdx, $parLastChanNo, $parChanSize;
-		unset($parLastChanIdx);
-
+		global $status, $parLastChanIdx, $parLastChanNo, $parChanSize, $pkan_beschr;
 		for (;;) {
+			// 1. Teil Pruefen der Gemeinsamen Parameter
 			if ($par[0] !== '@100') break;
+			$parLastChanIdx=-1; // unset incompat. to global
 			for ($i = 1; $i < count($par); $i++) {	// Scan for last parameter in Src
 				if (@$par[$i][0] == '@') $parLastChanIdx = $i;
 			}
-			if (!isset($parLastChanIdx)) break;
-
+			if ($parLastChanIdx<0) break; 
 			$parLastChanNo = intval(substr($par[$parLastChanIdx], 1));
 			if ($parLastChanNo<0 || $parLastChanNo > 89) break;
 			$parChanSize = count($par) - $parLastChanIdx;
+			if($parChanSize!=count($pkan_beschr)) break;	
 			// Anfangsteil checken
-			
 			//***todo***
+			
 			// Kanalteil checken
 			//***todo***
-			
 			return false;	// OK
 		}
 		$status  = "103 'iparam' Error";
@@ -342,6 +343,7 @@ try {
 			$opar = $par = getcurrentiparam();
 			if ($par == false) break;
 			if(checkiparam($par)) break;
+			
 			$nparlist = $_REQUEST['iparam'];
 			foreach ($nparlist as $npk => $npv) {
 				$idx = intval($npk);
@@ -349,16 +351,24 @@ try {
 					$status = "104 Index Error";
 					break;
 				}
-				while ($idx > count($par)) { // Solange neuer Idx ausserhalb von existierendem:
+
+				// Bei Bedarf neue Kanaele erzeugen, solange neuer Idx ausserhalb von existierendem:
+				while ($idx > count($par)) { 
 					$parLastChanNo++;
 					$par[] = '@' . $parLastChanNo;
-					for ($i = 1; $i < $parChanSize; $i++) $par[] = $par[$parLastChanIdx + $i]; // Letzten Kanal duplizieren
+					$par[] = 0;	// ACTION als 0 vorgeben
+					for ($i = 2; $i < $parChanSize; $i++) $par[] = $par[$parLastChanIdx + $i]; // Letzten Kanal duplizieren
 					$parLastChanIdx+=$parChanSize;
 				}
-				if ($idx >= $parLastChanIdx && ($idx - $parLastChanIdx) % $parChanSize == 0) {
-					$status = "105 Index Error"; // Kanalnr. nicht aenderbar
+				if($parLastChanNo>89){
+					$status = "107 Too many Channels"; // max. 90 Kanaele
 					break;
 				}
+				if ($idx >= $parLastChanIdx && ($idx - $parLastChanIdx) % $parChanSize == 0) {
+					$status = "105 Index Error"; // Kanalnr. nicht aenderbar '@xx'
+					break;
+				}
+
 			}
 			if (isset($status)) break;
 			// Nun alles OK, Alte Werte durch neue ersetzen
@@ -366,10 +376,26 @@ try {
 				$idx = intval($npk);
 				$par[$idx] = $npv;
 			}
-			if (checkiparam($par)) break; // Nochmal pruefen
+			// Parameter vom Ende her kompaktieren. 
+			while($parLastChanNo>0){
+				if(intval($par[$parLastChanIdx+1])) break;	// Action is 0: Wird also nicht verwendet, kann raus
+				for($i=0;$i<$parChanSize;$i++) array_pop($par);	// Kanal unbelegt, entfernen
+				$parLastChanNo--;
+				$parLastChanIdx-=$parChanSize;
+			}
 
+			if (checkiparam($par)) break; // Nochmal pruefen
+			
 			// Auf Delta pruefen 
-			//***todo***
+			if(count($opar)==count($par)){
+				for($i=0;$i<count($opar);$i++){
+					if($opar[$i]!=$par[$i]) break;
+				}
+				if($i==count($opar)){
+					$status = "106 No Changes found"; // Keine Aederungen
+					break;
+				}
+			}
 
 			// Aus Array File erzeugen
 			$par[4]=time();	// Neuen Cookie dafuer
