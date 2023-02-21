@@ -9,18 +9,26 @@
  *
  * Fuer einfache CMDs per URL:
 
+//Basis-Aufruf / Ausgabe Version
 http://localhost/ltx/sw/w_php/w_pcp.php?cmd
 
-http://localhost/ltx/sw/w_php/w_pcp.php?k=ABC&cmd=list
+// Listet alle Devives zu diesem Key auf
+http://localhost/ltx/sw/w_php/w_pcp.php?k=ABC&cmd=list 
 
+// Device Details (device-Eintrag aus DB)
 http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=details
 
-http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=getdata&minid=1800
+// Daten Zeilen aus DB ausgeben (opt. limits minid/maxid)
+http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=getdata&minid=1800 
 
+// Parameter 'iparam.lxp' zu diesem Device mit Beschreibung ausgeben
 http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparam
-http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamchange&iparam[5]=NeuMeriva&iparam[6]=3601
-http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpend
 
+// Parameter 'iparam.lxp' zu diesem Device aendern 
+http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamchange&iparam[5]=NeuMeriva&iparam[6]=3601
+
+// Pending Parameter zu diesem Device entfernen
+http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpend
 
  * Um kompliziertere Sachen per JSON zu uebergeben z.B. per Script und jquery:
  * (Geht nat. umstaendlich auch per URL, z.B. ```&jo[lang]="de"&jo[age]=58```)
@@ -45,15 +53,15 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * 100: Keine Tabelle mMAC fuer diese MAC
  * 101: Keine Parameter gefunden fuer diese MAC
  * 102: Unbekanntes Kommando cmd
- * 103: 'iparam' Parameter Error
+ * 103: Mehr als 90 Messkanaele nicht moeglich
  * 104,105: Index Error bei 'iparam'
  * 106: Keine geaenderten Parameter gefunden
- * 107: Mehr als 90 Messkanaele nicht moeglich
- * 
- *  ***todo*** parameter check in  checkiparam()
+ * ...
+ * 300-699: Wie BlueBlx.cs (siehe checkiparam())
+ * ...
  */
 
-define('VERSION', "LTX V1.03 16.02.2023");
+define('VERSION', "LTX V1.04 21.02.2023");
 
 error_reporting(E_ALL);
 header("Content-type: application/json; charset=utf-8");
@@ -78,7 +86,7 @@ $xlog = ""; // Log-String
  * sich denke ich den Luxus der Beschreibung erlauben
  ************************************************************/
 // Beschreibung der Parameter damit leichter lesbar
-$p100_beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
+$p100beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"*@100_System",
 	"*DEVICE_TYP", // WICHTIG: Zeilen mit '*' duerfen NICHT vom User geendert werden
 	"*MAX_CHANNELS", // *
@@ -99,7 +107,7 @@ $p100_beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"MinTemp_oC[-40..10]",
 	"Period_Internet_Offset[0..Period_Internet_sec]",
 );
-$pkan_beschr = array( // SIZE eines Kanals ist absolut FIX
+$pkanbeschr = array( // SIZE eines Kanals ist absolut FIX
 	"*@ChanNo",  // (*) Neue Kanaele dazufuegen ist erlaubt, sofer aufsteigend und komplett
 	"Action[0..65535] (B0:Meas B1:Cache B2:Alarms)",
 	"Physkan_no[0..65535]",
@@ -191,31 +199,84 @@ try {
 		return $par;
 	}
 
-	// Pruefen einer Parameterdatei
+	// Prueft Zahlenwert auf Grenzen
+	function nverify($str, $ilow, $ihigh){
+		if(!is_numeric($str)) return true;
+		$val = intval($str);
+		if($val<$ilow || $val>$ihigh) return true;	// Fehler
+		return false;
+	}
+	function nisfloat($str){	// PHP recht relaxed, alles als Float OK, daher mind. 1 char.
+		if(!is_numeric($str)) return true;
+		return false;
+	}
+	// Pruefen einer Parameterdatei - return NULL (OK) oder Status - (wie in BlueShell: BlueBlx.cs)
 	function checkiparam($par)
 	{
-		global $status, $parLastChanIdx, $parLastChanNo, $parChanSize, $pkan_beschr;
-		for (;;) {
-			// 1. Teil Pruefen der Gemeinsamen Parameter
-			if ($par[0] !== '@100') break;
-			$parLastChanIdx=-1; // unset incompat. to global
-			for ($i = 1; $i < count($par); $i++) {	// Scan for last parameter in Src
-				if (@$par[$i][0] == '@') $parLastChanIdx = $i;
+		global $parLastChanIdx, $parLastChanNo, $parChanSize, $pkanbeschr, $p100beschr;
+
+		// 1. Teil Pruefen der Gemeinsamen Parameter
+		if ($par[0] !== '@100') return "301 File Format (No valid 'iparam.lxp', ID must be '@100')";
+		$parLastChanIdx=-1; // unset incompat. to global
+		$parChan0Idx=-1;
+		for ($i = 1; $i < count($par); $i++) {	// Scan for last parameter in Src
+			if (@$par[$i][0] == '@') {
+				$parLastChanIdx = $i;
+				if($parChan0Idx<0) $parChan0Idx = $i;
 			}
-			if ($parLastChanIdx<0) break; 
-			$parLastChanNo = intval(substr($par[$parLastChanIdx], 1));
-			if ($parLastChanNo<0 || $parLastChanNo > 89) break;
-			$parChanSize = count($par) - $parLastChanIdx;
-			if($parChanSize!=count($pkan_beschr)) break;	
-			// Anfangsteil checken
-			//***todo***
-			
-			// Kanalteil checken
-			//***todo***
-			return false;	// OK
 		}
-		$status  = "103 'iparam' Error";
-		return true; // Fehler
+		if ($parLastChanIdx<0) return "300 File Size 'iparam.lxp' (too small)";
+		$parLastChanNo = intval(substr($par[$parLastChanIdx], 1));
+		if ($parLastChanNo<0 || $parLastChanNo > 89) return "399 Invalid Parameters 'iparam.lxp";
+		$parChanSize = count($par) - $parLastChanIdx;
+		if($parChanSize!=count($pkanbeschr)) return "300 File Size 'iparam.lxp' (too small)";
+		// Anfangsteil checken 
+		if(nverify($par[1],0,9999)) return "302 Illegal DEVICE_TYP";
+		if(nverify($par[2],1,90)) return "303 MAX_CHANNELS out of range";
+		if(nverify($par[3],0,255)) return "304 HK_FLAGS out of range";
+		if(strlen($par[4])!= 10) return "305 Cookie (must be exactly 10 Digits)";
+		if(strlen($par[5])>41) return "306 Device Name Len"; // len=0: Use DefaultAdvertising Name
+		if(nverify($par[6],10,86400)) return "307 Measure Period out of range";
+		if(nverify($par[7],0,intval($par[6])-1)) return "308 Period Offset (must be < than Period)";
+		if(nverify($par[8],0,intval($par[6]))) return "309 Alarm Period out of range";
+		if(nverify($par[9],0,604799)) return "310 Internet Period out or range";
+		if(nverify($par[10],0,intval($par[9]))) return "311 Internet Alarm Period (must be <= than Internet Period)";
+		if(nverify($par[11],-43200,43200)) return "312: UTC Offset out or range";
+
+		if(nverify($par[12],0,255)) return "313 Record Flags out of range";
+		if(nverify($par[13],0,255)) return "314 HK Flags out of range";
+		if(nverify($par[14],0,255)) return "315 HK Reload out of range";
+		if(nverify($par[15],0,255)) return "316 Net Mode out of range";
+		if(nverify($par[16],0,255)) return "317 Error Policy out of range";
+		if(nverify($par[17],-40,10)) return "318 MinTemp oC out of range";
+		if(nverify($par[18],0,0x7FFFFFFF)) return "319 U31_Unused";
+
+		$pidx = $parChan0Idx;
+		if($pidx<count($p100beschr)) return "600: Missing Channel #0 (at least 1 channel required)";
+		$chan = 0;
+		for(;;){
+			if (@$par[$pidx][0] != '@' || intval(substr($par[$pidx],1)!=$chan))	return "615 Unexpected Line in Channel #$chan";
+
+			if(nverify($par[$pidx+1],0,255)) return "602 Action for Channel #$chan";
+			if(nverify($par[$pidx+2],0,65535)) return "603 PhysChan for Channel #$chan";
+			if(strlen($par[$pidx+3])>8 ) return "604 KanCaps Len for Channel #$chan";
+			if(nverify($par[$pidx+4],0,255)) return "605 SrcIndex for Channel #$chan";
+			if(strlen($par[$pidx+5])>8) return "606 Unit Len for Channel #$chan";
+			if(nverify($par[$pidx+6],0,255)) return "607 Number Format  for Channel #$chan";
+			if(nverify($par[$pidx+7],0,0x7FFFFFFF)) return "608 DB_ID for Channel #$chan";
+			if(nisfloat($par[$pidx+8])) return "609 Offset for Channel #$chan (Format requires Decimal Point)";
+			if(nisfloat($par[$pidx+9])) return "610 Factor for Channel #$chan (Format requires Decimal Point)";
+			if(nisfloat($par[$pidx+10])) return "611 Alarm_Hi for Channel #$chan (Format requires Decimal Point)";
+			if(nisfloat($par[$pidx+11])) return "612 Alarm_Low for Channel #$chan (Format requires Decimal Point)";
+			if(nverify($par[$pidx+12],0,65535)) return "613 MeasBits  for Channel #$chan";
+			if(strlen($par[$pidx+13])>32) return "614 XBytes Lenfor Channel #$chan";
+			if($pidx == $parLastChanIdx ) break;
+			$chan++;
+			$pidx +=  $parChanSize;
+		}
+			
+		// Kanalteil checken
+		return null;	// OK
 	}
 
 	//=========== MAIN ==========
@@ -252,7 +313,6 @@ try {
 			if (!count($macarr)) throw new Exception("No Access");
 			$retResult['list_count'] = count($macarr); // Allowed Devices
 			$retResult['list_mac'] = $macarr;
-			$cmd = "";	// CMD Erledigt
 			break;
 
 		default: // Alle anderen CMDs sind Geratespezifsich
@@ -308,6 +368,10 @@ try {
 
 	// --- cmd Main Start - CMD auswerten ---
 	switch ($cmd) {
+		case '': // VERSION
+		case 'list': // Liste schon fertig
+			break;	
+
 		case 'details':	// Einfach ALLES fuer diese MAC
 			$retResult['details'] = $devres;
 			break;
@@ -315,18 +379,22 @@ try {
 		case 'iparam': // Parameterfile fuer diese MAC
 			$par = getcurrentiparam();
 			if ($par == false) break;
-			if(checkiparam($par)) break;
+			$chkres = checkiparam($par);
+			if($chkres != null) { 
+				$status = $chkres;
+				break;
+			}
 			$vkarr = [];	// Ausgabe der Parameter etwas verzieren fuer leichtere Lesbarkeit
 			foreach ($par as $p) {
 				if (strlen($p) && $p[0] == '@') {
 					$ktyp = intval(substr($p, 1));
 					if ($ktyp < 0 || $ktyp > 100) throw new Exception("Parameter 'iparam.lxp' invalid");
 					if ($ktyp == 100) {
-						$infoarr = $p100_beschr;
+						$infoarr = $p100beschr;
 						$lcnt = 0;	// Damit MUSS es beginnen
 						$erkl = "Common";
 					} else {
-						$infoarr = $pkan_beschr;
+						$infoarr = $pkanbeschr;
 						$erkl = "Chan $ktyp";
 					}
 					$ridx = 0;
@@ -342,8 +410,11 @@ try {
 		case 'iparamchange': // Parameter changes sorgfaeltig einpflegen. Probleme melden
 			$opar = $par = getcurrentiparam();
 			if ($par == false) break;
-			if(checkiparam($par)) break;
-			
+			$chkres = checkiparam($par);
+			if($chkres != null) { 
+				$status = $chkres;
+				break;
+			}
 			$nparlist = $_REQUEST['iparam'];
 			foreach ($nparlist as $npk => $npv) {
 				$idx = intval($npk);
@@ -361,11 +432,11 @@ try {
 					$parLastChanIdx+=$parChanSize;
 				}
 				if($parLastChanNo>89){
-					$status = "107 Too many Channels"; // max. 90 Kanaele
+					$status = "103 Too many Channels"; // max. 90 Kanaele
 					break;
 				}
 				if ($idx >= $parLastChanIdx && ($idx - $parLastChanIdx) % $parChanSize == 0) {
-					$status = "105 Index Error"; // Kanalnr. nicht aenderbar '@xx'
+					$status = "105 Index Error (Index/Line $idx)"; // Kanalnr. nicht aenderbar '@xx'
 					break;
 				}
 
@@ -384,7 +455,11 @@ try {
 				$parLastChanIdx-=$parChanSize;
 			}
 
-			if (checkiparam($par)) break; // Nochmal pruefen
+			$chkres = checkiparam($par); // Nochmal pruefen
+			if($chkres != null) { 
+				$status = $chkres;
+				break;
+			}
 			
 			// Auf Delta pruefen 
 			if(count($opar)==count($par)){
