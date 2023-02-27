@@ -17,7 +17,7 @@ Change e.g. to "90\n1000" to allow only the last 90 days or max. 1000 lines per 
 The file 'quota_days.dat' my be set to individual values per logger at any time.
 
 
-![LTX Gdraw tool](./docs/G-Draw.jpg "LTX Gdraw tool")
+![LTX Gdraw tool](./docs_raw2edit/G-Draw.jpg "LTX Gdraw tool")
 
 Details, see: ['sw\docu\installation_LTX_database.md'](./sw/docu/installation_LTX_database.md "Details...")
 
@@ -25,11 +25,11 @@ Live demo LTX: ['https://joembedded.de...' (User: 'demo', Password: '123456')](h
 
 More docus in the Media-Browser:
 
-LTX Cloud Overview: ['LTX Overview'](./docs/LTX_Cloud_V1.pdf "LTX Overview")
+LTX Cloud Overview: ['LTX Overview'](./docs_raw2edit/LTX_Cloud_V1.pdf "LTX Overview")
 
-LTX Alarme (only DE): ['LTX Alarme (DE)'](./docs/LTX_AlarmeDE_V1.pdf "LTX Alarme (DE)")
+LTX Alarme (only DE): ['LTX Alarme (DE)'](./docs_raw2edit/LTX_AlarmeDE_V1.pdf "LTX Alarme (DE)")
 
-LTX API (only DE): ['LTX API (DE)'](./docs/LTX_Server_Get.pdf "LTX API (DE)")
+LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "LTX PushPull-API (DE)")
 
 ---
 
