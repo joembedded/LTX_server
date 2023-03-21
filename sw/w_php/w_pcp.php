@@ -61,7 +61,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.04 21.02.2023");
+define('VERSION', "LTX V1.05 09.03.2023");
 
 error_reporting(E_ALL);
 header("Content-type: application/json; charset=utf-8");
@@ -228,6 +228,7 @@ try {
 		if ($parLastChanIdx<0) return "300 File Size 'iparam.lxp' (too small)";
 		$parLastChanNo = intval(substr($par[$parLastChanIdx], 1));
 		if ($parLastChanNo<0 || $parLastChanNo > 89) return "399 Invalid Parameters 'iparam.lxp";
+		if ($parLastChanNo>= intval($par[2])) return "398 Too many channels";
 		$parChanSize = count($par) - $parLastChanIdx;
 		if($parChanSize!=count($pkanbeschr)) return "300 File Size 'iparam.lxp' (too small)";
 		// Anfangsteil checken 
