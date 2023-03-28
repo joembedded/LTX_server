@@ -8,7 +8,7 @@
 /*global L, $*/
 
 // ------------------ Globals ----------------------
-var prgVersion = 'V1.05 (12.02.2023)'
+var prgVersion = 'V1.06 (28.03.2023)'
 var prgName = 'GPS View ' + prgVersion
 var prgShortName = 'GPS View'
 
@@ -341,7 +341,7 @@ function showMap() {
         fillOpacity: fop
       }).addTo(myMap);
 
-    } else if (i == 0) { // Kein GPS fuer Akt. Pos.: Take CellPos
+    } else if (i == 0 && cell_lat !== undefined ) { // Kein GPS fuer Akt. Pos.: Take CellPos
       //console.log(cell_lat,cell_lng,cell_rad);
       pos0UK = true
       coc = L.latLng(cell_lat, cell_lng);

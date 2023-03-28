@@ -35,7 +35,6 @@ try{
 	echo "#NOW: $now\n";
 	if (isset($_REQUEST['mk'])) {
 		echo "#MK: " . MAPKEY . "\n";	// APIKey MAP
-
 		// If current GPS-Position is unknown: Use latest Cell Position 
 		if (isset($device['vals']) && ((strpos($device['vals'], "NoGPSValue") > 0 || strpos($device['vals'], "Lat")) == false) && isset($device['last_gps']) && isset($device['last_seen']) ) {
 			$gps_age =  strtotime($device['last_gps']) - strtotime($device['last_seen']); // OK for NULL
