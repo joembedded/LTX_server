@@ -61,9 +61,9 @@ var GPS_track
 var GPS_lastPosMarker
 var GPS_varMarker
 
-var cell_lat
-var cell_lng
-var cell_rad
+var cell_lat  // undefined per Def.
+var cell_lng = 0 // Falls fehlend
+var cell_rad = 0
 
 // Creating a custom icon
 var raceIconOptions = {
@@ -425,7 +425,7 @@ function slider() {
     GPS_varMarker.setLatLng(co);
     coord = ""; // "("+gpsp.lat.toFixed(5)+","+gpsp.lng.toFixed(5)+")"
   } else {
-    if (!idx) {
+    if (!idx && cell_lat!== undefined) {
       var coc = L.latLng(cell_lat, cell_lng);
       GPS_varMarker.setOpacity(0)
       GPS_varMarker.setIcon(hereIcon);

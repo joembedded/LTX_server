@@ -45,4 +45,4 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V1.71 06.02.2023 Database UTC
 - V1.72 11.02.2023 GPS_View.html cosmetics
 - V1.73 21.02.2023 Push/Pull w_pcp.php V1.05 released
-- V1.74 28.03.2023 Fixed 'undefined' in gps_view.js
+- V1.74a 28.03.2023 Fixed 'undefined' in gps_view.js
