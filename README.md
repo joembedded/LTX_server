@@ -41,7 +41,7 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V1.50 08.12.2022 SWARM Packet driver added
 - V1.52 20.01.2023 ASTOROCAST Packet driver added
 - V1.60 21.01.2023 Push-URL first draft
-- V1.70 11.01.2023 PushPull Pre-Releasa in PHP
+- V1.70 11.01.2023 PushPull Pre-Release in PHP
 - V1.71 06.02.2023 Database UTC
 - V1.72 11.02.2023 GPS_View.html cosmetics
 - V1.73 21.02.2023 Push/Pull w_pcp.php V1.05 released
