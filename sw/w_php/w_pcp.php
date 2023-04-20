@@ -61,7 +61,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.05 09.03.2023");
+define('VERSION', "LTX V1.06 20.04.2023");
 
 error_reporting(E_ALL);
 header("Content-type: application/json; charset=utf-8");
@@ -336,6 +336,7 @@ try {
 			$devres = $statement->fetch(); // $devres[]: 'device(mac)'!
 
 			$ovv = array();	// Overview zu dieser MAC
+			$ovv['mac']=$mac;   
 			$ovv['db_now'] = $pdo->query("SELECT NOW() as now")->fetch()['now']; // *JETZT* als Datum UTC - Rein zurInfo
 
 			$statement = $pdo->prepare("SELECT MIN(id) as minid, MAX(id) as maxid FROM m$mac");
