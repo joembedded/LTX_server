@@ -558,7 +558,8 @@ function user_poll(jcmd) {
 				} else if (userRole & 65536) { // ADMIN
 					info.innerHTML = "<b>&nbsp;* Administrator Rights*&nbsp;</b>";
 					info.style.background = 'red';
-					$(".cadmin").css("display", "none");
+					$(".cadmin").css("display", "none"); // Disable Normal user items
+					$(".sadmin").css("display", "block"); // Only Main User
 				}
 
 				$("#userNameNav").text(userName);
@@ -623,6 +624,9 @@ function user_poll(jcmd) {
 						if (gpsinfo == "") gpsinfo += "<br>"
 						gpsinfo += "<a class='jo-mac' href='w_php/w_gdraw_db.php?s=" + adev.mac + "&lim=10000000&mk" +
 							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; Raw Data</b></a>";
+						gpsinfo += "<a class='jo-mac' href='../legacy/device_lx.php?s=" + adev.mac +
+							"' target='_blank'><b><i class='fas fa-file w3-text-blue'></i>&nbsp; Legacy Data</b></a>";
+														
 					}
 
 					hstr += " Age:&nbsp;<span id='devLiCon" + i + "'></span>" +
@@ -1976,6 +1980,12 @@ function editUserShow() { // Aquire User-Data
 	});
 }
 // ---- Edit User End---
+
+function legacyMainShow() { // SpringInLLegacy
+	//alert("Hallo Admin")
+	window.open('../legacy/index.php', '_blank');
+}
+
 
 //------ Test ------
 function test() {

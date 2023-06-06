@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 21.01.2023
+ * 05.06.2023
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -404,10 +404,15 @@ function check_legacy($rep){
 $dbg = 0;	// Debug-Level if >0, see docu
 //header('Content-Type: text/plain');
 
-$api_key = @$_GET['k'];				// max. 41 Chars KEY
-$cmd = @$_GET['cmd'];				// Command
-$vis = @$_GET['v'];					// Visibility
-$qmaxd = @$_GET['d']; 				// Limit days extern (!!For explicit DB clenup!!) alles aeltere mit Gewalt entfernen!
+session_start();
+if (isset($_REQUEST['k'])) {
+	$api_key = $_REQUEST['k']; // max. 41 Chars KEY
+	$_SESSION['key'] = L_KEY;
+} else $api_key = @$_SESSION['key'];
+
+$cmd = @$_REQUEST['cmd'];				// Command
+$vis = @$_REQUEST['v'];					// Visibility
+$qmaxd = @$_REQUEST['d']; 				// Limit days extern (!!For explicit DB clenup!!) alles aeltere mit Gewalt entfernen!
 
 $now = time();						// one timestamp for complete run
 $mttr_t0 = microtime(true);           // Benchmark trigger
@@ -429,7 +434,7 @@ $qday = intval(DB_QUOTA);	// Use Default if unknown/notset
 //echo "API-KEY: '$api_key'<br>\n"; // TEST
 
 if (!$dbg && strcmp($api_key, L_KEY)) { // Kein API-Key
-	if($vis || $qmaxd) exit_error("Commands only with Option 'v' and with API Key");
+	if($vis || $qmaxd) exit_error("Commands only with Option 'v' require valid API Key");
 }else{
 	$xlog .= "(api_key:OK')";
 	if($qmaxd>1) {
