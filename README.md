@@ -46,5 +46,6 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V1.72 11.02.2023 GPS_View.html cosmetics
 - V1.73 21.02.2023 Push/Pull w_pcp.php V1.05 released
 - V1.74 28.03.2023 Fixed 'undefined' in gps_view.js
-- V1.75 20.04.2023 w_pcp.php V1.06
+- V1.75 20.04.2023 w_pcp.php V1.07
 - V1.76 06.06.2023 Access Legacy for Admin Users
+- V1.77 28.06.2023 Added sw/js/xtract_demo.html: demo to access BLE_API data in IndexDB

@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+    xtract_demo.html - V0.1 - 28.01.2023
+
+    Die LTX-Logger arbeiten zeilenorieniert und speichern Daten im .EDT-Format
+    .EDT-Dateien oder Teile davon koennen aus verschiedenen Quellen stammen, z.B.
+    via AJAX aus Datenbanken, aus Dateien oder der IndexDB...
+    Je nach Quelle enthalten sie auch unterschiedliche Meta-Informationen
+
+    Ziel ist es, die zeilenorientierten .EDT-Daten in eine ganglinienorientierte
+    Darstellung umzuwandeln unter der Randbedingung, dass sich z.B. Kanalzuordnungen,
+    Einheiten, Zeitraster, etc.. aendern. Oder z.B. andere Meta-Daten eingebettet
+    wurden (z.B. Beschleunigungsevents oder BASE64-komprimierte Messwerte)
+
+    Es ist vorgesehen, diese Routinen als Import-Module zu verwenden und spaeter (ab V1.0) 
+    auch in die anderen JS-Programme (G-DRAW, GPS_VIEW, ...) einzubinden. 
+
+    V0.1: Bisher nur IndexDB, Aufruf z.B. 
+        http://localhost/ltx/sw/js/xtract_demo.html?st=CFA091D23F3D0F27_xtract.edt oder
+        http://localhost/ltx/sw/js/xtract_demo.html?st=CFA091D23F3D0F27_xtract.edt&sn=GIZMO (mit Name)
+
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xtract_demo.html</title>
+
+    <script src="../jquery/jquery.min.js"></script>
+    <script src="../ble_api/blStore.js"></script>
+
+    <script>
+        'use strict'
+
+        //--------- globals ------ 
+        var terminal // Terminal HTML-Element div
+
+        const gGetStore = '*' // Kommando/Quelle
+        var gdrawAjaxCmd = undefined // SeveralSources for Data: File, AJAX, Store
+
+        var sMac = '(undefined)' // MAC as String, bzw. NAME wenn vergeben
+        var sName = '(undefined)' // Der Name (Advertising) Nicht aus EDT-Daten erkennbar, steht in iparam.lxp
+        var reqMac // => s=00124B001574DCC8 MAC immer nur die 16-Char MAC
+        var datafile // Name of remote data
+
+        var autoTimerLastSyncRec // Last Sync Received (fuer Automatisches Refresh)
+        var modDateKnown // Servertimes in UnixSec (fuer Automatisches Refresh)
+
+        /* Here Raw Data */
+        var dataLinesRaw = [] // Raw Data as lines (.EDT)
+        var dataAnzRaw = 0 // Number of raw lines (if OK: >0)
+        var refreshLimit = -1 // Data Size in Lines 1-xx (-1: Maximum, macht nur Sinn fuer AJAX)
+
+        /* Here Scanned Data: - NACH der Umwandlung*/
+        var totalUsedChannels = 0 /* By Design max. 199 */
+        var channelUnits = []
+        var timeVals = [] // Holds an array[values] for each timestamp
+        var channelVisible = [] // Mask-Array - false/true: Channel visibility (For Time: d.c) - Wenn [x]=false: nicht extrahieren, sonst immer
+
+        /* Infos fuer Zoom-Fenster und Autozoom */
+        var inIdx0 = -1;
+        var inIdx1 = -1;
+        var inMin0, inMax0 // Extrem/Mapping Values for Zoomlevel0 (as scanned)
+        var inIdxMax = -1 // Indices in timeVals (first visible, first invisible)
+        var gmtOffset = null // if null: use local time settings, else TZO + gmtOffset
+        var inMin, inMax // Extrem- or mapping-values calculated
+        var zoomLevel = 0 // If 0: Autozoom allowed
+
+
+        //---------------- setup ------------
+        async function setup() {
+            terminal = document.getElementById('terminal')
+            // Isolate URL Parameters
+            const qs = location.search.substr(1).split('&')
+            var urlpar = {}
+            if (qs[0].length) {
+                terminalPrint("Url Parameter:")
+                for (let x = 0; x < qs.length; x++) {
+                    let kv = qs[x].split('=')
+                    if (kv[1] === undefined) kv[1] = ''
+                    urlpar[kv[0]] = kv[1]
+                    terminalPrint("urlpar." + kv[0] + " = '" + kv[1]) // List all Params
+                }
+            }
+            terminalPrint('')
+            if (urlpar.sn !== undefined) {         // Optional Name (auch in iparam.lxp)
+                sName = urlpar.sn
+            }
+
+            if (urlpar.lim !== undefined) {         // Optional Parameter lim=MAX_LINES wenn per AJAX
+                refreshLimit = parseInt(urlpar.lim) // Macht keinen Sinn fuer indexDB, da sonst evtl. Infos fehlen!
+            } else refreshLimit = -1 // No CLip - empfohlen fuer File und UndexDB
+
+            // Now all URL paramater are properties of 'urlpar'
+            if (urlpar.st !== undefined) { // Mandatory Parameter MAC/Filename
+                const storemac = urlpar.st.substr(0, 17)
+                const fname = urlpar.st.substr(17)
+                if (storemac.length !== 17 || storemac.charAt(16) !== '_' || fname.charAt(0) === '#' || fname.length < 1 || fname.length > 21) {
+                    ownAlert("ERROR: Invalid blxStore Filename")
+                    return
+                }
+                reqMac = storemac.substr(0, 16) // Only for Info
+                sMac = reqMac // Only for Info
+                datafile = urlpar.st
+                await storeLoaderLight(datafile) // Load File and Decode from Store
+            }
+        }
+
+        function terminalPrint(msg) {
+            terminal.innerText += msg + '\n'
+        }
+        function ownAlert(msg, _timeout) {
+            terminal.innerText += msg + '\n'
+        }
+        function clearTerminal() {
+            terminal.innerText = ""
+        }
+        async function dataReload() {
+            await storeLoaderLight(datafile)
+        }
+        function data2CSV() {
+            var flags = 1 /*+2+4*/ // 1:WithAlarms, 2:Compact, 4:UseDecimalComma
+            var res = generateCSV(flags)
+            terminal.innerText = res
+        }
+
+        // Load and Display File from local store, st_filename already checked
+        // *** For AJAX or long Files  SPINNER is recommended! ***
+        async function storeLoaderLight(st_fname) {
+            try {
+                terminalPrint("Load '" + st_fname + "'...")
+                await blStore.get(st_fname)
+                const KeyVal = blStore.result()
+                if (KeyVal === undefined) {
+                    ownAlert('ERROR(Store): ' + 'No Value' + " (Key: '" + st_fname + "')")
+                    return
+                }
+                const raw = new TextDecoder().decode(KeyVal.v.bytebuf)
+                terminalPrint("OK, Length: " + raw.length)
+                console.log("Load '" + st_fname + "'' OK, Length: " + raw.length)
+                gdrawAjaxCmd = gGetStore
+                saveRawData(raw, 'success', true) // With clip
+            } catch (err) {
+                ownAlert('ERROR(Store): ' + err + " (Key: '" + st_fname + "')")
+            }
+        }
+
+        // Callback after AJAX or Store Import, stores raw data
+        function saveRawData(data, status, clip = false) {
+            dataAnzRaw = 0
+            if (status !== 'success') { // AJAX
+                ownAlert('ERROR: Status: ' + status, 15)
+                return
+            }
+
+            data = data.replace('\r', '')
+            dataLinesRaw = data.split('\n')
+            dataAnzRaw = dataLinesRaw.length
+
+            if (dataAnzRaw < 1) {
+                ownAlert('ERROR: No Data Lines!', 15)
+                return
+            }
+
+            // Only use last refreshLimit lines
+            if (clip === true && refreshLimit > 0) {
+                if (dataAnzRaw > refreshLimit) {
+                    dataLinesRaw = dataLinesRaw.splice(-refreshLimit)
+                    dataAnzRaw = dataLinesRaw.length
+                }
+            }
+
+            var modDateNew = -1 // force Scan if missing in Reply
+            var loc // Local Line
+            /* Check first Lines with '#'  - Meta-Infos, ONLY for AJAX, not BlStore */
+            for (var i = 0; i < dataAnzRaw; i++) {
+                loc = dataLinesRaw[i]
+                if (loc.charAt(0) !== '#') break
+                if (loc.startsWith('#MDATE: ')) {
+                    modDateNew = parseInt(loc.substr(8))
+                } else if (loc.startsWith('#NOW: ')) {
+                    serverNow = parseInt(loc.substr(6))
+                    clientNow = Date.now()
+                } else {
+                    ownAlert('MESSAGE from Server:\n' + loc.substr(1), 30)
+                }
+            }
+
+            autoTimerLastSyncRec = Date.now() // Last Sync Received
+            if (modDateNew < 0 || modDateKnown != modDateNew) {
+                /* Scan raw NEW Data to Lines, but keep raw Data */
+                modDateKnown = modDateNew
+                var res = scanRawDataToVisibleData()
+
+                // ---DRAW...
+                //generateLegend()
+                //drawOuterGraph()
+
+
+                if (typeof res === 'string') {
+                    ownAlert('ERROR: Scan Data:\n' + res, 15)
+                    return
+                }
+            } else console.log("No changes")
+        }
+        // === RawData2Visible START ***
+
+        // Find min/max in Range, ignore disabled disabled channels
+        function scan_autozoom() {
+            var fMin = 1e10;
+            var fMax = -1e10
+            var fnd = 0
+            console.log("START scan_autozoom()")
+            for (var ix = inIdx0; ix < inIdx1; ix++) {
+                var av = timeVals[ix]
+                if (av === undefined) continue
+                var avl = av.length
+                if (avl > 2) {
+                    for (var ki = 2; ki < avl; ki++) {
+                        if (!channelVisible[ki]) continue
+                        var valstr = av[ki]
+                        if (valstr === undefined) continue // Empty Channel?
+                        var fval
+                        if (valstr.charAt(0) == '*') { // Alarm
+                            fval = parseFloat(valstr.substr(1))
+                        } else {
+                            fval = parseFloat(valstr)
+                        }
+                        if (!isNaN(fval)) {
+                            if (fval > fMax) fMax = fval
+                            if (fval < fMin) fMin = fval
+                            fnd++
+                        }
+                    }
+                }
+            }
+            if (fnd >= 2) {
+                inMin = fMin
+                inMax = fMax
+                zoomLevel = 0
+            }
+            // Scan-Bereich ist -/+1 ausserhalb des Fensters
+            console.log("MinMaxVals in [" + inIdx0 + ".." + inIdx1 + "]: " + inMin + "/" + inMax + ", Zoomlevel: " + zoomLevel)
+            console.log("END scan_autozoom()")
+        }
+
+        // Fuer base64-inframe-decoder helpers
+        let deltatime = 0
+        let lux_sec = 0;
+
+        // Base64-Stuff -START- Padding not required in JS and PHP
+        function decodeB64Str(b64str) {
+            let rstr = '' // Zeit erst einbauen wenn Deltazeit bekannt
+            try {
+                let bbuf = Uint8Array.from(atob(b64str), c => c.charCodeAt(0))
+                let alarmflag = false
+                for (let idx = 0; idx < bbuf.length;) {
+                    let tokan = bbuf[idx++] // Token/Kanal
+                    if (tokan < 90) { // JS: Shift causes Sign Overflow for Bit31(!!!)
+                        rstr += ' ' + tokan + ':'
+                        let bm = bbuf[idx++]  // Could mark Err
+                        if (bm == 0xFD) {
+                            let errno = (bbuf[idx++] * 65536) + (bbuf[idx++] * 256) + bbuf[idx++]
+                            rstr += getErrstr(errno)
+                        } else {
+                            let binval = bm * 16777216 + (bbuf[idx++] * 65536) + (bbuf[idx++] * 256) + bbuf[idx++]
+                            if (alarmflag) rstr += '*'
+                            let numstr = (1 * decodeF32(binval).toPrecision(7)) // Tricky remove of trailing 0
+                            rstr += numstr;
+                        }
+                        alarmflag = false
+                    } else if (tokan == 110) {
+                        alarmflag = true // Gilt nur einmal
+                    } else if (tokan == 111) {
+                        deltatime = (bbuf[idx++] * 256) + bbuf[idx++];
+                        //rstr += "(Dt:"+deltatime+")"
+                    } else {
+                        throw "IllegalTokan(" + tokan + ")"
+                    }
+                }
+                if (deltatime == 0 || deltatime >= 43200) throw "IllegalDeltatime"
+                lux_sec += deltatime
+                rstr = '!' + lux_sec.toString() + rstr
+
+            } catch (err) {
+                var estr = err.toString();
+                if (estr.length > 40) estr = estr.substr(0, 40) + '...';
+                rstr = "<ERROR: Base64-Decode: " + estr + ">"
+            }
+            return rstr
+        }
+
+        function decodeF32(bin) // U32 -> Float IEEE 754
+        {
+            let sign = (bin & 0x80000000) > 0 ? -1 : 1
+            let exp = ((bin & 0x7F800000) >> 23)
+            let mantis = (bin & 0x7FFFFF)
+
+            if (mantis == 0 && exp == 0) {
+                return 0
+            }
+            if (exp == 255) {
+                if (mantis == 0) return Infinity
+                if (mantis != 0) return NaN
+            }
+
+            if (exp == 0) { // denormalisierte Zahl
+                mantis /= 0x800000
+                return sign * Math.pow(2, -126) * mantis
+            } else {
+                mantis |= 0x800000
+                mantis /= 0x800000
+                return sign * Math.pow(2, exp - 127) * mantis
+            }
+        }
+
+        function getErrstr(errno) {
+            switch (errno) {
+                case 1:
+                    return "NoValue"
+                case 2:
+                    return "NoReply"
+                case 3:
+                    return "OldValue"
+                // 4,5
+                case 6:
+                    return "ErrorCRC"
+                case 7:
+                    return "DataError"
+                case 8:
+                    return "NoCachedValue"
+                default:
+                    return "Err" + errno;
+            }
+        }
+        // Base64-Stuff -END-
+
+        // Analyse raw Data in 2 passes and find inMin/inMax
+        function scanRawDataToVisibleData() {
+            var errmsg = '' // Cumullated Error Mesage
+            var txt = '' // Debug String
+            var loc // Local line
+            var ldata
+            var idx, lno
+            var physChanUnits = [] // phys. channels 0-199: e.g. pCU[90]="HK-Bat"
+            var physChanCnt = [] // counts used physical channels e.g pCC[4]=60 pCC[90]=10
+            var mapPhys2Log = [] // Maps logical channels to available (on screen)
+            var strangeTimesCnt = 0
+
+            // --Presets--
+            if (gdrawAjaxCmd !== gGetStore) {
+                sMac = '(undefined)'
+                sName = '(undefined)'
+                gmtOffset = null
+            }
+
+            totalUsedChannels = 0
+            channelUnits = []
+            timeVals = []
+            inIdx0 = -1;
+            inIdx1 = -1;
+            inIdxMax = -1 // Assume no Values
+            inMin = undefined;
+            inMax = inMin
+            zoomLevel = 0
+            var mlid
+            var loclen
+
+            lux_sec = 0 // last UNIX seconds
+            deltatime = 0
+            // *** PASS 1: find the used channels and preset Units ***
+            console.log("Scan Pass 1 Start")
+            for (var i = 0; i < dataAnzRaw; i++) {
+                loc = dataLinesRaw[i]
+                loclen = loc.length
+                //console.log("LineP1 "+i+" '"+loc+"'("+loclen+")"); // **TEST**
+                if (loclen < 1) {
+                    continue
+                }
+                if (loclen > 256) {
+                    if (errmsg.length < 500) errmsg += 'ERROR: Line:' + i + " Too long:'" + (loc.substr(0, 80)) + "...'\n"
+                    continue
+                }
+                var c0 = loc.charAt(0)
+                var c00 = c0 // Save wg. timescan
+                if (c0 == '$') { // Decompress Line and replace in incomming data
+                    //console.log("LineComp " + i + " '" + loc + "'"); // **TEST**
+                    loc = decodeB64Str(loc.substr(1))
+                    //console.log(lux_sec,deltatime,"-> '" + loc + "'")
+
+                    dataLinesRaw[i] = loc;
+                    c0 = '!' // Continue with decomrpessed line
+                }
+                if (c0 == '<' || c0 == '!') { // EDT-Fomrat either ! or <
+                    lno = i
+                    ldata = loc
+                    mlid = ': Line:' + i + ' ID:' + lno
+                } else if (c0 == '#') {
+                    continue // Info! Reserved
+                } else { // Database-Format with Line Number
+                    idx = loc.indexOf(' ')
+                    if (idx < 1) { // Also Empty
+                        if (errmsg.length < 500) errmsg += 'ERROR: Line:' + i + " No ID:'" + loc + "'\n"
+                        continue
+                    }
+                    lno = parseInt(loc)
+                    if (isNaN(lno)) lno = '-'
+                    ldata = loc.substr(idx + 1) // Stored data
+                    mlid = ': Line:' + i + ' ID:' + lno
+                    if (!ldata.length) {
+                        if (errmsg.length < 500) errmsg += 'ERROR' + mlid + ' Empty\n'
+                        continue
+                    }
+                }
+                switch (ldata.charAt(0)) {
+                    case '<': // Metaline
+                        if (ldata.startsWith('<MAC: ')) {
+                            sMac = ldata.substr(6, 16)
+                            if (sMac.length != 16) {
+                                if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " MAC Format:'" + ldata + "'\n"
+                                continue
+                            }
+                        } else if (ldata.startsWith('<NAME: ')) {
+                            sName = ldata.substr(7, ldata.length - 8) // Brackets
+                        } else if (ldata.startsWith('<GMT: ')) { // Normally not used (= Long Format)
+                            gmtOffset = parseInt(ldata.substr(6))
+                            if (gmtOffset < -43200 || gmtOffset > 43200) {
+                                if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " GMT Format:'" + ldata + "'\n"
+                                continue
+                            }
+                        }
+                        break
+                    case '!':
+                        var vals = ldata.split(' ') // Split in Components
+                        var valn = vals.length // At least 1
+
+                        if (ldata.charAt(1) == 'U') {
+                            for (var ii = 1; ii < valn; ii++) { // Without !U
+                                // Split in Index:Value UNITS
+                                var kv = vals[ii].split(':')
+                                var kvn = parseInt(kv[0])
+                                if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
+                                    if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " Units:'" + ldata + "'\n"
+                                    break
+                                }
+                                // maybe more units than channels...
+                                if (typeof physChanUnits[kvn] !== 'undefined') {
+                                    if (physChanUnits[kvn] != kv[1]) {
+                                        if (errmsg.length < 500) errmsg += 'WARNING' + mlid + "Unit changed '" + physChanUnits[kvn] + "' to '" + kv[1] + "'\n"
+                                    }
+                                }
+                                physChanUnits[kvn] = kv[1] // Save last used units
+                            }
+                        } else {
+                            if (c00 != '$') { // 2.nd scan of same line not required
+                                var lts0
+                                lts0 = vals[0].substr(1) // Local Time String
+                                if (lts0.charAt(0) == '+') {
+                                    deltatime = parseInt(lts0)
+                                    lux_sec += deltatime
+                                } else {
+                                    lux_sec = parseInt(lts0)
+                                }
+                            }
+                            for (ii = 1; ii < valn; ii++) { // Without !U
+                                // Split in Index:Value UNITS
+                                kv = vals[ii].split(':')
+                                kvn = parseInt(kv[0])
+                                if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
+                                    if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " ChannelNo:'" + ldata + "'\n"
+                                    break
+                                }
+
+                                if (typeof physChanCnt[kvn] === 'undefined') physChanCnt[kvn] = 0
+                                physChanCnt[kvn]++
+                            }
+                        }
+                        break
+                    default:
+                        if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " Format:'" + ldata + "'\n"
+                }
+            }
+            // Pass 1 End
+
+            // Now all used channels are known
+            channelUnits[0] = 'Time'
+            channelUnits[1] = 'Events'
+            if (channelVisible[1] === undefined) channelVisible[1] = true
+            totalUsedChannels = 2 // Channel 0/1 always reserved
+            for (var x = 0; x < physChanCnt.length; x++) {
+                if (typeof physChanCnt[x] !== 'undefined') {
+                    if (typeof physChanUnits[x] === 'undefined') physChanUnits[x] = '???' // Unknown Unit
+                    // txt+=" K("+x+")=>"+totalUsedChannels+":"+ physChanCnt[x] + " " + physChanUnits[x];
+                    if (channelVisible[totalUsedChannels] === undefined) {
+                        channelVisible[totalUsedChannels] = true
+                    }
+                    // x: ChannelIdx
+                    var unitstr
+                    if (x >= 90) unitstr = "H" + x + ": " + physChanUnits[x] // Save Units // Look similar to BlueShell
+                    else unitstr = "#" + x + ": " + physChanUnits[x]
+
+                    channelUnits[totalUsedChannels] = unitstr;
+                    mapPhys2Log[x] = totalUsedChannels++
+                }
+            }
+            console.log("Pass 1 End, Total used channels: " + totalUsedChannels)
+
+            /** * PASS 2: Fill data Errors always: 'ERROR: Line:xxx ...' xxx Sourceline */
+            console.log("Scan Pass 2 Start")
+            lux_sec = 0 // last UNIX seconds
+            for (i = 0; i < dataAnzRaw; i++) {
+                var linevals = []
+                loc = dataLinesRaw[i]
+                loclen = loc.length
+                if (loclen < 1) {
+                    continue
+                }
+                //console.log("LineP2 "+i+" '"+loc+"'("+loclen+")");
+                if (loclen > 256) {
+                    // if(errmsg.length<500) errmsg+="ERROR: Line:"+i+" Too long:'"+(loc.substr(0,80))+"...'\n";
+                    continue
+                }
+                c0 = loc.charAt(0)
+                if (c0 == '<' || c0 == '!') { // EDT-Fomrat either ! or <
+                    lno = i
+                    ldata = loc
+                    mlid = ': Line:' + i + ' ID:' + lno
+                } else if (c0 == '#') {
+                    continue // Info! Reserved
+                } else {
+                    idx = loc.indexOf(' ')
+                    if (idx < 1) { // Also Empty
+                        // if(errmsg.length<500) errmsg+="ERROR: Line:"+i+" No ID:'"+loc+"'\n";
+                        linevals[1] = 'ERROR: Line:' + i + ' No ID'
+                        timeVals.push(linevals)
+                        continue
+                    }
+                    lno = parseInt(loc) // ID Not stored
+                    ldata = loc.substr(idx + 1) // Stored data
+                    if (!ldata.length) {
+                        // if(errmsg.length<500) errmsg+= "ERROR"+mlid+" Empty\n";
+                        linevals[1] = 'ERROR' + mlid + ' Empty'
+                        timeVals.push(linevals)
+                        continue
+                    }
+                }
+                switch (ldata.charAt(0)) {
+                    case '<': // Metaline
+                        if (ldata.startsWith('<MAC: ')) {
+                            sMac = ldata.substr(6, 16) // 2.nd time
+                            if (sMac.length != 16) {
+                                // if(errmsg.length<500) errmsg+="ERROR"+mlid+" MAC Format:'"+ldata+"'\n";
+                                linevals[1] = 'ERROR' + mlid + ' MAC Format'
+                                timeVals.push(linevals)
+                            } // Else: if OK forget
+                            continue
+                        } else if (ldata.startsWith('<NAME: ')) {
+                            continue
+                        } else if (ldata.startsWith('<GMT: ')) {
+                            gmtOffset = parseInt(ldata.substr(6))
+                            if (gmtOffset < -43200 || gmtOffset > 43200) {
+                                // if(errmsg.length<500) errmsg+="ERROR"+mlid+" GMT Format:'"+ldata+"'\n";
+                                linevals[1] = 'ERROR' + mlid + ' GMT Format'
+                                timeVals.push(linevals)
+                            }
+                            continue
+                        } else {
+                            var ltrimmed = ldata.substr(1, ldata.length - 2) // Remove brackets
+                            linevals[1] = ltrimmed
+                            timeVals.push(linevals)
+                        }
+                        break
+                    case '!':
+                        vals = ldata.split(' ') // Split in Components
+                        valn = vals.length // At least 1
+
+                        if (ldata.charAt(1) == 'U') {
+                            for (ii = 1; ii < valn; ii++) { // Without !U
+                                // Split in Index:Value UNITS
+                                kv = vals[ii].split(':')
+                                kvn = parseInt(kv[0])
+                                if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
+                                    // if(errmsg.length<500) errmsg+="ERROR"+mlid+" Units:'"+ldata+"'\n";
+                                    linevals[1] = 'ERROR' + mlid + ' Units'
+                                    timeVals.push(linevals)
+                                    break
+                                }
+                                // maybe more units than channels...
+                                // already done physChanUnits[kvn]=kv[1];	// Save last used units
+                            }
+                            continue
+                        } else {
+                            var unixsec, lts, lus
+                            lts = vals[0].substr(1) // Local Time String
+                            if (lts.charAt(0) == '+') {
+                                var dt = parseInt(lts)
+                                unixsec = lux_sec + dt
+                            } else {
+                                lus = unixsec
+                                unixsec = parseInt(lts)
+                                lus -= unixsec
+                                if (lus < 0) lus = -lus
+                                if (lus > 605000) { // >+/- 1w?
+                                    strangeTimesCnt++ // Error later
+                                    if (linevals[1] === undefined) {
+                                        linevals[1] = 'TIMEGAP'
+                                    } else {
+                                        if (!linevals[1].includes('TIMEGAP')) {
+                                            linevals[1] += ' TIMEGAP' // No Comma
+                                        }
+                                    }
+                                }
+                            }
+                            lux_sec = unixsec
+                            if (unixsec < 1526030617 || unixsec >= 0xF0000000) { // 2097
+                                strangeTimesCnt++ // Error later
+                            }
+                            linevals[0] = unixsec * 1000 // Time in msec
+                            for (ii = 1; ii < valn; ii++) { // Without !U
+                                // Split in Index:Value UNITS
+                                kv = vals[ii].split(':')
+                                kvn = parseInt(kv[0])
+                                if (isNaN(kvn) || kvn < 0 || kvn > 200 || kv.length != 2 || kv[1].length < 1) {
+                                    // if(errmsg.length<500) errmsg+="ERROR"+mlid+" ChannelNo:'"+ldata+"'\n";
+                                    linevals[0] = 'ERROR' + mlid + ' ChannelNo'
+                                    break
+                                }
+                                var sidx = mapPhys2Log[kvn]
+                                if (typeof linevals[sidx] !== 'undefined') {
+                                    if (errmsg.length < 500) errmsg += 'ERROR' + mlid + " Double Values:'" + ldata + "'\n"
+                                    linevals[0] = 'ERROR' + mlid + ' DoubleValues'
+                                    break
+                                }
+
+                                var valstr = kv[1]
+                                if (valstr == undefined) valstr = '?'
+                                // Find Minimum/Maximum
+                                var fval
+                                if (valstr.charAt(0) == '*') { // Alarm
+                                    fval = parseFloat(valstr.substr(1))
+                                } else {
+                                    fval = parseFloat(valstr)
+                                }
+                                if (isNaN(fval)) {
+                                    if (linevals[1] === undefined) {
+                                        linevals[1] = 'VALUE'
+                                    } else {
+                                        if (!linevals[1].includes('VALUE')) {
+                                            linevals[1] += ' VALUE' // No Comma
+                                        }
+                                    }
+                                }
+
+                                linevals[sidx] = valstr // Add Value (Text/(Alarm+)Float)
+                                // already done if(typeof physChanCnt[kvn]==='undefined') physChanCnt[kvn]=0;
+                                // already done physChanCnt[kvn]++;
+                            }
+                        }
+                        timeVals.push(linevals)
+                        break
+                    default:
+                        // if(errmsg.length<500) errmsg+="ERROR"+mlid+" Format:'"+ldata+"'\n";
+                        linevals[1] = 'ERROR' + mlid + ' Format'
+                        timeVals.push(linevals)
+                }
+            } // Pass 2 End
+            inIdxMax = timeVals.length // Show Available Lines if different from selected
+            console.log("Pass 2 End, Lines(timeVals[]): " + inIdxMax)
+
+            var linstr = ''
+            var delta
+            if (refreshLimit > 0) delta = refreshLimit - inIdxMax
+            else delta = -99 // Show in any case!
+            if (delta < -2 || delta > 2) linstr = '(Loaded: ' + (inIdxMax + 1) + ' Lines)'
+
+            terminalPrint(linstr)
+
+            inIdx1 = inIdxMax
+            scan_autozoom() // Raender zu kennen ist immer noetig, z.B. fuer Maus-Klicks auf Daten
+            if (inMin === undefined) {
+                inMin = 0;
+                inMax = 1000 // Something
+            }
+
+            inMin0 = inMin // Save computed Maxima
+            inMax0 = inMax
+
+            //for(let idx=0;idx<inIdxMax;idx++) console.log(timeVals[idx]) // Check
+            //for(let idx=0;idx<dataLinesRaw.length;idx++) console.log(dataLinesRaw[idx]) // Check
+
+            // errmsg be displayed, else return 'undefined'
+            if (strangeTimesCnt && errmsg.length < 500) errmsg += 'WARNING: Unknown Times (' + strangeTimesCnt + ') Lines'
+            if (errmsg.length >= 500) errmsg += '...' // More errors
+            if (errmsg.length) return errmsg
+        }
+        // === RawData2Visible END ***
+
+        // Date as String
+        function getDateForIdx(xidx) { // Index in timeVals
+            var tv = timeVals[xidx]
+            if (tv === undefined) return
+            var xts = tv[0] // timestamp from data
+            if (xts === undefined) { // time for X found
+                return
+            }
+            if (xts < 86400000000) { // 1000T
+                return '+' + xts / 1000
+            }
+            var tzo, dt
+            if (gmtOffset !== null) { // if '<GMT: +/-xxx seconds set>'
+                tzo = gmtOffset * 1000 // Offset defined: use it (in miliseconds)
+                dt = new Date(xts + tzo)
+            } else {
+                dt = new Date(xts)
+            }
+            return dt
+        }
+
+
+        // Rebuilt CSV-File. flags: 1:RemoveAlarm* 2:WithoutInfoLines 4;DecimalCOMMA
+        function generateCSV(flags) {
+            var anzl = timeVals.length
+
+            var ltxt = ''
+            if (!(flags & 2)) ltxt = 'MAC: ' + sMac + ' Name: ' + sName + ' Lines:' + anzl + ' Channels:' + (totalUsedChannels - 2) + '\n'
+
+            if (gmtOffset !== null) {
+                ltxt += 'Times: GMT'
+                if (gmtOffset >= 0) ltxt += '+'
+                ltxt += (gmtOffset / 3600) + '\n'
+            }
+
+            for (var i = 0; i < totalUsedChannels; i++) {
+                if (i) {
+                    if (flags & 4) ltxt += '; ' // Semicolon for Decimal COMMA
+                    else ltxt += ', '
+                }
+                ltxt += channelUnits[i]
+            }
+            ltxt += '\n'
+
+            for (var zi = 0; zi < anzl; zi++) {
+                var linval
+                linval = timeVals[zi]
+                var anzz = linval.length
+                var gds = getDateForIdx(zi)
+                var xtstr
+                if (gds !== undefined) {
+                    if (gmtOffset !== null) { // Given GMT
+                        xtstr = gds.toUTCString()
+                        if (gmtOffset >= 0) xtstr += '+'
+                        xtstr += gmtOffset / 3600
+                    } else {
+                        xtstr = gds.toLocaleString()
+                    }
+                    xtstr = xtstr.replace(',', '') // Remove Comma in any Case
+                } else {
+                    xtstr = '- '
+                    if (flags & 2) continue // Without Infolines
+                }
+                ltxt += xtstr // TIME
+                for (i = 1; i < anzz; i++) {
+                    if (flags & 4) ltxt += '; ' // Semicolon for Decimal COMMA
+                    else ltxt += ', '
+                    var y = linval[i]
+                    if (y === undefined) {
+                        ltxt += '- '
+                        continue // Chan1: No Text
+                    }
+                    if (y.charAt(0) == '*' && (flags & 1)) y = y.substr(1) // No Alarms
+                    if (flags & 4) y = y.replaceAll('.', ',')
+                    ltxt += y
+                }
+                ltxt += '\n'
+            }
+            return ltxt
+        }
+        // Rebuilt CSV-File END
+
+        window.addEventListener("load", setup);
+    </script>
+
+</head>
+
+<body>
+    <div style="font-family:'Courier New';">File: <b>'xtract_demo.html'</b> - Description: Demo how to load/decode
+        .EDT-Files from IndexDB</div>
+    <hr>
+    <button type="button" onclick="clearTerminal()"> Clear </button>
+    <button type="button" onclick="dataReload()"> Reload </button>
+    <button type="button" onclick="data2CSV()"> ToCSV </button>
+    <hr>
+    <pre><div id="terminal"></div></pre>
+    <hr>
+</body>
+
+</html>
