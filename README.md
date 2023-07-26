@@ -33,6 +33,14 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 
 ---
 
+## 3.rd Party Software ##
+- PHP QR Code https://sourceforge.net/projects/phpqrcode License: LGPL
+- jQUERY https://jquery.org/license/  License: MIT
+- FontAwesome https://fontawesome.com/license/free License: MIT, SIL-OFL, CC-BY-4.0
+- FileSaver https://github.com/eligrey/FileSaver.js/blob/master/LICENSE.md License: MIT
+
+---
+
 ## Changelog ##
 - V1.00 04.12.2020 Initial
 - V1.01 06.12.2020 Checked for PHP8 compatibility

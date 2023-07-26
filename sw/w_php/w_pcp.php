@@ -61,9 +61,11 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.06 20.04.2023");
+define('VERSION', "LTX V1.07 12.07.2023");
 
 error_reporting(E_ALL);
+ini_set("display_errors", true);
+
 header("Content-type: application/json; charset=utf-8");
 header('Access-Control-Allow-Origin: *');	// CORS enabler
 
@@ -543,7 +545,7 @@ try {
 					$ltyp = "error";	// Markieren, aber durchreichen
 				}
 				/************************************************************
-				 * HIER WERDEN DIE DATEN ERSTMAL ***QUASI ROH** aingepflegt,
+				 * HIER WERDEN DIE DATEN ERSTMAL ***QUASI ROH** eingepflegt,
 				 * mit IT klaeren, welches Format GENAU gewuenscht 07.02.2023 JoWI
 				 ************************************************************/
 				$valarr[] = array('id' => $id, 'line_ts' => $line_ts, 'calc_ts' => $calc_ts, 'type' => $ltyp, 'line' => $line);

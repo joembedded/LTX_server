@@ -24,6 +24,7 @@
  ***************************************************************/
 
 error_reporting(E_ALL);
+ini_set("display_errors", true);
 
 ignore_user_abort(true);
 set_time_limit(600); // 10 Min runtime
