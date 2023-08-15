@@ -57,3 +57,5 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V1.75 20.04.2023 w_pcp.php V1.07
 - V1.76 06.06.2023 Access Legacy for Admin Users
 - V1.77 28.06.2023 Added sw/js/xtract_demo.html: demo to access BLE_API data in IndexDB
+- V1.78 15.08.2023 Device Timouts in service.php
+

@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 05.06.2023
+ * 15.08.2023
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -29,9 +29,12 @@ ini_set("display_errors", true);
 ignore_user_abort(true);
 set_time_limit(600); // 10 Min runtime
 
-// For Local access: 
+//*** * For Local access - if CRON not called via HTTP/HTTPS ***
 if (!isset($_SERVER['SERVER_NAME'])) $_SERVER['SERVER_NAME'] ="joembedded.de";
 if (!isset($_SERVER['REMOTE_ADDR'])) $_SERVER['REMOTE_ADDR'] ="joembedded.de";
+if (!isset($_SERVER['PHP_SELF'])) $_SERVER['PHP_SELF'] ="/ltx/sw/service/service.php";
+if (!isset($_SERVER['SERVER_PORT'])) $_SERVER['SERVER_PORT'] =80;
+
 
 include("../conf/api_key.inc.php");
 include("../conf/config.inc.php");	// DB Access Param
@@ -201,46 +204,30 @@ function check_users($rep){
 	return $status;
 }
 
-// ---------------- Trigger: External async Script lxu_trigger.php -------------------------
-function call_trigger($mac,$reason)
+// ---------------- Trigger: External async Script lxu_trigger.php // Geht evtl. nicht mit CURL wg. OS-Call -------------------------
+function call_trigger($mac, $reason)
 {
 	global $xlog, $vis;
-
 	$self = $_SERVER['PHP_SELF'];
 	$port = $_SERVER['SERVER_PORT'];
-	$server = $_SERVER['SERVER_NAME'];
-	$rpos = strrpos($self, '/'); // Evtl. check for  backslash (only Windows?)
-	
-	$tscript = substr($self, 0, $rpos) . "/../lxu_trigger.php"; // 1 up!
+	$isHttps =  (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')  || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+	if ($isHttps) $server = "https://";
+	else $server = "http://";
+	$server .= $_SERVER['SERVER_NAME'];
+	$rpos = strrpos($self, '/service/'); // 1 Level up
+	$tscript = substr($self, 0, $rpos) . "/lxu_trigger.php";
 	$arg = "k=" . S_API_KEY . "&r=$reason&s=$mac";	// Parameter: API-KEY, reason and MAC
-
-	//	echo "Start Trigger $server:$port '$tscript?$arg' - ";
-
-	$fp = @fsockopen($server, $port, $errno, $errstr, 10);    // Try max. 10 seconds 
-	if ($fp) {
-		stream_set_timeout($fp, 0, 990000); // Wait max. 990 msec for a response of trigger
-
-		$out = "GET $tscript?$arg HTTP/1.0\r\n";
-		$out .= "Host: $server:$port\r\n"; // Assume: Same dir as self
-		$out .= "Connection: Close\r\n\r\n";
-
-		$wres = fwrite($fp, $out);
-		if ($wres != strlen($out)) {
-			if(strlen($xlog<500)) $xlog .= "(ERROR; Write to Trigger-Script failed)";
-		} else {
-			$rres = fread($fp, 1000);	// Only interested in the first few chars "HTTP/1.1 200 OK" or "HTTP/1.1 404 Not Found";
-			if (strpos($rres, " 200 ") != false) {
-				// if(strlen($xlog<500)) $xlog.="(Trigger-Script OK '$rres')"; // Norm. not necessary to record
-			} else if (strpos($rres, " 404 ") != false) { // Normally: Busy Trigger takes longer..
-				if(strlen($xlog<500)) $xlog .= "(ERROR: Trigger-Script not found)";
-			}  // Syntax-Erros in Script not catched!
-		}
-		fclose($fp);
-	} else {
-		if(strlen($xlog<500)) $xlog .= "(ERROR: Trigger-Script open)";
+	$ch = curl_init("$server:$port$tscript?$arg");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+	$result = curl_exec($ch);
+	if($vis) echo "---Start Trigger $server:$port '$tscript?$arg', Result:'$result' ---<br>\n";
+	if (curl_errno($ch)) {
+		$xlog .= '(ERROR: Curl:' . curl_error($ch) . ')';
 	}
+	curl_close($ch);
 }
-
 
 // Check Devices and opt. Timeouts
 function check_devices($rep){ 	
@@ -285,23 +272,23 @@ function check_devices($rep){
 				$xlog.="(OAge:Del. MAC:$mac)";
 			}
 
-		}else{	// Check Tranmission Timeouts
+		}else{	// Check Transmission Timeouts
 			$las = $row['last_seen'];
 			if(isset($las)) $ageh = ($now - strtotime($las))/3600;
 			else $ageh=0;	// Macht kein Sinn - Never seen..
 			$toalarm = $row['timeout_alarm'];
 			$calltrigger=0;
-			if($toalarm>0 &&  $toalarm>$ageh){
+			if($toalarm>0 &&  $ageh>$toalarm){
 				$calltrigger=512;
 			}else{
 				$towarn = $row['timeout_warn'];
-				if($towarn>0 && $towarn> $ageh){
+				if($towarn>0 && $ageh>$towarn){
 					$calltrigger=1024;
 				}
 			}
 			if($calltrigger){
 				$trigger_cnt++;
-				$mark.="(NeedTrigger:$calltrigger)";
+				$mark.="(CallTrigger:$calltrigger)";
 				if($rep){	// Call Trigger for this device
 					call_trigger($mac,$calltrigger);
 				}

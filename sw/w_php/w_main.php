@@ -21,17 +21,20 @@ function call_trigger($mac, $reason, $xc)
 	if ($isHttps) $server = "https://";
 	else $server = "http://";
 	$server .= $_SERVER['SERVER_NAME'];
-	$rpos = strrpos($self, '/'); // Evtl. check for  backslash (only Windows?)
+	$rpos = strrpos($self, '/w_php'); // 1 Level up
 	$tscript = substr($self, 0, $rpos) . "/lxu_trigger.php";
 	$arg = "k=" . S_API_KEY . "&r=$reason&s=$mac&xc=" . urlencode($xc);	// Parameter: API-KEY, reason and MAC and extended Content(encoded)
 
-	//$xlog.="(Trigger: $server:$port '$tscript?$arg')";
 	$res = ""; // OK
 
-	$ch = curl_init("$server:$port/$tscript?$arg");
+	$ch = curl_init("$server:$port$tscript?$arg");
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 	curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+	$result = curl_exec($ch);
+
+	//$xlog.="(Trigger:'$server:$port$tscript?$arg', Result:'$result')"; // Text Output
+
 	if (curl_errno($ch)) {
 		$xlog .= '(ERROR: Curl:' . curl_error($ch) . ')';
 		$res = "-140 ERROR: Write to Trigger-Script failed"; // Error -141 obsolete

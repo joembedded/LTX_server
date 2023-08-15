@@ -1,9 +1,9 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.23-SQL
+ * trigger for LTrax V1.30-SQL
  *
- * 06.02.2023 - (C)JoEmbedded.com
+ * 14.08.2023 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
@@ -438,19 +438,20 @@ try {
 		}
 
 		$las = $deva['last_seen'];
-		if (isset($las)) $ageh = ($now - strtotime($las)) / 3600;
+		if (isset($las)) $ageh = round(($now - strtotime($las)) / 3600,2);
 		else $ageh = 0;	// Macht kein Sinn - Never seen..
 		$toalarm = $deva['timeout_alarm'];
-		if ($toalarm > 0 &&  $toalarm > $ageh) {
-			$alam_new++;
-			$info_wea[] = "ALARM: Device last seen $age h ago ";
+		if ($toalarm > 0 &&  $ageh > $toalarm ) {
+			$alarm_new++;
+			$info_wea[] = "ALARM: Device last seen $ageh h ago!";
 		} else {
 			$towarn = $deva['timeout_warn'];
-			if ($towarn > 0 && $towarn > $ageh) {
+			if ($towarn > 0 &&  $ageh > $towarn) {
 				$warn_new++;
-				$info_wea[] = "WARNING: Device last seen $age h ago ";
+				$info_wea[] = "WARNING: Device last seen $ageh h ago!";
 			}
 		}
+
 
 		// Posibility to reset sth. -> old+new=tot
 		$warn_tot = $warn_new + $warn_old;
@@ -535,8 +536,7 @@ try {
 					else $sec = "http://" . $_SERVER['HTTP_HOST'];
 					$url = $sec . $sroot;
 					$xcont = $_GET['xc']; // Add. Content
-					if (!isset($xcont)) $xcont = "(NoContent)";
-					if (strlen($xcont)) {
+					if (isset($xcont)) {
 						$cont = "\n$xcont\n";
 						$mail_info = "Mail to '$mail_dest','$xcont'";
 					} else {
@@ -548,6 +548,10 @@ try {
 					if ($alarm_tot) $cont .= "- Alarms (new/total): $alarm_new/$alarm_tot\n";
 					if ($err_tot) $cont .= "- Errors (new/total): $err_new/$err_tot\n";
 					if ($warn_tot) $cont .= "- Warnings (new/total): $warn_new/$warn_tot\n";
+
+					if(count($info_wea)){
+						$cont .= "\n".implode("\n",$info_wea)."\n";
+					}
 
 					if (send_alarm_mail($mail_dest, $cont, $subj, $from) == true) {
 						$statement = $pdo->prepare("UPDATE devices SET em_date0=NOW(), em_cnt0 = em_cnt0+1 WHERE mac = ?");
