@@ -349,7 +349,7 @@ try {
 	}
 
 	// ---Check--- device_info.dat for alarms, ect..
-	$statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_gps) as lpos FROM devices WHERE mac = ?");
+	$statement = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(last_gps) as lpos, UNIX_TIMESTAMP(last_seen) as las FROM devices WHERE mac = ?");
 	$qres = $statement->execute(array($mac));
 	if ($qres == false) {
 		if ($dbg) echo ("(ERROR 106:" . $pdo->errorInfo()[2] . ")"); // Can not Update Table?
@@ -393,8 +393,7 @@ try {
 			if (count($info_wea) < 20) $info_wea[] = "WARNING: Internal Humidity High";
 		}
 
-
-		// Check if Position Update is necessary (only with data)
+		// Check if Position Update necessary (lpos: as)
 		$deltap = @array(-1, 604700, 86300, 3500, 60)[$deva['posflags']];
 		if ($fcnt > 0 && $deltap > 0 && $deva['lpos'] + $deltap < $now) {
 			$devi = array();
@@ -437,9 +436,9 @@ try {
 			}
 		}
 
-		$las = $deva['last_seen'];
-		if (isset($las)) $ageh = round(($now - strtotime($las)) / 3600,2);
-		else $ageh = 0;	// Macht kein Sinn - Never seen..
+		$las = $deva['las']; //
+		if (isset($las)) $ageh = round(($now - $las) / 3600,2);
+		else $ageh = 0;	// Never seen..
 		$toalarm = $deva['timeout_alarm'];
 		if ($toalarm > 0 &&  $ageh > $toalarm ) {
 			$alarm_new++;

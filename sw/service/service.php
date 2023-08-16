@@ -29,7 +29,7 @@ ini_set("display_errors", true);
 ignore_user_abort(true);
 set_time_limit(600); // 10 Min runtime
 
-//*** * For Local access - if CRON not called via HTTP/HTTPS ***
+//*** * For Local access - if CRON not called via HTTP/HTTPS: Edit missing '$_SERVER': ***
 if (!isset($_SERVER['SERVER_NAME'])) $_SERVER['SERVER_NAME'] ="joembedded.de";
 if (!isset($_SERVER['REMOTE_ADDR'])) $_SERVER['REMOTE_ADDR'] ="joembedded.de";
 if (!isset($_SERVER['PHP_SELF'])) $_SERVER['PHP_SELF'] ="/ltx/sw/service/service.php";
@@ -273,9 +273,7 @@ function check_devices($rep){
 			}
 
 		}else{	// Check Transmission Timeouts
-			$las = $row['last_seen'];
-			if(isset($las)) $ageh = ($now - strtotime($las))/3600;
-			else $ageh=0;	// Macht kein Sinn - Never seen..
+			$ageh = ($now - $row['x'])/3600;
 			$toalarm = $row['timeout_alarm'];
 			$calltrigger=0;
 			if($toalarm>0 &&  $ageh>$toalarm){
