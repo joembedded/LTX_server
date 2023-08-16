@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.58 (06.06.2023)";
+var prgVersion = "V0.59 (16.08.2023)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -445,7 +445,7 @@ function getAgeStr(ls, towarn, toerr, idx) {
 	var destr = deltaToTimeString(delta);
 	if (delta < 0 || delta > 87000) destr = "<span class='w3-red'>" + destr + "</span>";
 	else if (delta < 300) destr = "<span class='w3-green'>" + destr + "</span>";
-
+	delta /= 3600
 	if (toerr && delta > toerr) deviceXList[idx].content.style.background = 'red';
 	else if (towarn && delta > towarn) deviceXList[idx].content.style.background = 'yellow';
 	else deviceXList[idx].content.style.background = 'white';
