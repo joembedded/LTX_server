@@ -5,7 +5,7 @@
   </head>
   <body>
          <form name="serviceform" action="service.php?v=1" method="get" >
-			Password ('L_KEY'): 
+			<b>Password ('L_KEY'): </b>
 
 <?PHP 
 error_reporting(E_ALL);
@@ -18,11 +18,12 @@ if (isset($_REQUEST['k'])) {
 } else {
 	$api_key = @$_SESSION['key'];
 }
+
 if(isset($api_key)){
 	echo "<input type='password' name='k' value='$api_key'>"; // Given PW
 }else{
 	echo '<!-- User (Legacy): --><input placeholder="Enter User" type="input" name="user" value="legacy" hidden>';
-	echo '<input type="text" name="k">'; // Plain Text field
+	echo '<input type="password" name="k" placeholder="Enter Password">'; // Plain Text field
 }
 ?>
 			<br>
