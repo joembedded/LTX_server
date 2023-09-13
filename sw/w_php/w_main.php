@@ -4,7 +4,7 @@
 // Note: json_encode will fail if non-utf8-chars are present
 // set param dbg to generate readable output
 // 'status' <= -1000: Fatal Error!
-// Last used ERROR: 149 - 22.01.2023
+// Last used ERROR: 150 - 13.09.2023
 
 
 require_once("../inc/w_istart.inc.php");
@@ -503,9 +503,14 @@ try {
 				$status = "-128 ERROR: Not possible for this User";
 				break;
 			}
+
+			if ($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount() === 0) { // No Table: already cleared?
+				$status = "-150 ERROR: Already cleared?";
+				break;
+			}
 			$statement = $pdo->prepare("DROP TABLE m$mac");
 			$qres = $statement->execute();
-			if ($qres == false) {
+			if ($qres == false) { // Exception if not found??
 				$status = "-143 ERROR: No Data";
 				break;
 			}
