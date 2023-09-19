@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.59 (16.08.2023)";
+var prgVersion = "V0.60 (19.09.2023)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -1512,7 +1512,7 @@ function edParamFormFill() { // Fill Parameters with act. chan
 	generate_drops("selErrorPolicy", optErrorPolicy, editDeviceParam[16]);
 
 	document.getElementById("parMinTemp").value = editDeviceParam[17];
-	document.getElementById("parPerInternetOffset").value = editDeviceParam[18];
+	document.getElementById("parConfig0").value = editDeviceParam[18];
 
 	edParamChanUpDownloc(0);
 }
@@ -1592,7 +1592,7 @@ function editParamMainGet() {
 	getv = $("#parMinTemp").val();
 	editDeviceParam[17] = getv; // MinTemp
 
-	getv = $("#parPerInternetOffset").val();
+	getv = $("#parConfig0").val();
 	editDeviceParam[18] = getv;
 
 	return true;
@@ -1880,19 +1880,19 @@ function edGenerateNewToken(idx) {
 	for (var i = 0; i < 16; i++) newtok += Math.floor(Math.random() * 16).toString(16);
 	dtok.value = newtok.toUpperCase();
 	dtok.style.color = 'black';
-	event.preventDefault();
 }
 
 function edCopyTokenToClipboard(idx) {
 	var dtok = document.getElementById("edToken" + idx);
 	dtok.disabled = false;
 	dtok.select();
-	document.execCommand("copy");
+	dtok.setSelectionRange(0, 99999); // For mobile devices
 	var clb = dtok.value;
+	var cpytxt = `MAC:${editDeviceData.mac}\nTOK${idx}:${clb}`
 	dtok.disabled = true;
+	navigator.clipboard.writeText(cpytxt)
 	if (clb.length != 16) ownAlert("ERROR:", "Token #" + idx + ": (None)");
-	else ownAlert("Copied to Clipboard", "For MAC: " + editDeviceData.mac + " <br>Token #" + idx + ": <b>" + clb + "</b><br><br>(Don't forget to 'SAVE CHANGES')");
-	event.preventDefault();
+	else ownAlert("Copied to Clipboard", "<b>MAC:" + editDeviceData.mac + " <br>TOK" + idx + ":" + clb + "</b><br><br>(Don't forget to 'SAVE CHANGES')");
 }
 
 function checkSaved() { // true if all changed

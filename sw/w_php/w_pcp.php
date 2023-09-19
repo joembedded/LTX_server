@@ -61,7 +61,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.07 12.07.2023");
+define('VERSION', "LTX V1.08 19.09.2023");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -107,7 +107,7 @@ $p100beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"Net_Mode (0:Off 1:OnOff 2:On_5min 3:Online)",
 	"ErrorPolicy (O:None 1:RetriesForAlarms, 2:RetriesForAll)",
 	"MinTemp_oC[-40..10]",
-	"Period_Internet_Offset[0..Period_Internet_sec]",
+	"Config0_U31 (B0-B30)",
 );
 $pkanbeschr = array( // SIZE eines Kanals ist absolut FIX
 	"*@ChanNo",  // (*) Neue Kanaele dazufuegen ist erlaubt, sofer aufsteigend und komplett
