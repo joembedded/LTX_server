@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.60 (19.09.2023)";
+var prgVersion = "V0.61 (05.10.2023)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -1152,6 +1152,9 @@ function edInfoFill() {
 		case 3:
 			reas = "MANUAL ";
 			break;
+		case 4:
+			reas = "START ";
+			break;
 		default:
 			reas = "UNKNOWN(" + infoObj.reason + ") ";
 	}
@@ -1513,7 +1516,8 @@ function edParamFormFill() { // Fill Parameters with act. chan
 
 	document.getElementById("parMinTemp").value = editDeviceParam[17];
 	document.getElementById("parConfig0").value = editDeviceParam[18];
-
+	document.getElementById("parCmdConfig").value = editDeviceParam[19];
+	
 	edParamChanUpDownloc(0);
 }
 // Get Parameters from MAIN-Part
@@ -1537,8 +1541,8 @@ function editParamMainGet() {
 	editDeviceParam[7] = getv; // PeriodOffset
 
 	getv = $("#parPeriodAlarm").val();
-	if (getv != 0 && getv >= parseInt(editDeviceParam[6])) {
-		ownAlert("ERROR:", "Alarm Period >= Period");
+	if (getv != 0 && getv > parseInt(editDeviceParam[6])) {
+		ownAlert("ERROR:", "Alarm Period > Period");
 		return false;
 	}
 	editDeviceParam[8] = getv; // AlarmPeriod
@@ -1594,6 +1598,9 @@ function editParamMainGet() {
 
 	getv = $("#parConfig0").val();
 	editDeviceParam[18] = getv;
+
+	getv = $("#parCmdConfig").val();
+	editDeviceParam[19] = getv.replace("@", "?").replace("#", "?")
 
 	return true;
 

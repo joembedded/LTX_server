@@ -61,7 +61,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.08 19.09.2023");
+define('VERSION', "LTX V1.09 05.10.2023");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -108,6 +108,7 @@ $p100beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"ErrorPolicy (O:None 1:RetriesForAlarms, 2:RetriesForAll)",
 	"MinTemp_oC[-40..10]",
 	"Config0_U31 (B0-B30)",
+	"Configuration_Command[$79]",	
 );
 $pkanbeschr = array( // SIZE eines Kanals ist absolut FIX
 	"*@ChanNo",  // (*) Neue Kanaele dazufuegen ist erlaubt, sofer aufsteigend und komplett
@@ -253,6 +254,7 @@ try {
 		if(nverify($par[16],0,255)) return "317 Error Policy out of range";
 		if(nverify($par[17],-40,10)) return "318 MinTemp oC out of range";
 		if(nverify($par[18],0,0x7FFFFFFF)) return "319 U31_Unused";
+		if(strlen($par[19])>79) return "320 Configuration Command Len"; 
 
 		$pidx = $parChan0Idx;
 		if($pidx<count($p100beschr)) return "600: Missing Channel #0 (at least 1 channel required)";
