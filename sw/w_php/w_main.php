@@ -534,6 +534,11 @@ try {
 			@unlink($fname);
 			@unlink($fname2);
 
+			$fname = $fpath . "/ppinfo.dat";
+			$fname2 = $fpath . "/cmd/okreply.cmd";
+			@unlink($fname);
+			@unlink($fname2);
+			
 			$xlog .= "(Clear Device DB)";
 			add_logfile();
 			$status = "0 OK";

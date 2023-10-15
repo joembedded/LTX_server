@@ -193,7 +193,7 @@ if ($prot !== false) {
 	$xlines = array($xhdr."\n");	// Exportierte Daten
 
 	$danz = $fdata->get_count; // evt. $danz limitieren, Index startet mit 1
-	$minid = min($minid + $danz, $ipar_obj->overview->max_id+1) 
+	$minid = min($minid + $danz, $ipar_obj->overview->max_id+1);
 
 	for ($i = 0; $i < $danz; $i++) {
 		$typ = $fdata->get_data[$i]->type;
