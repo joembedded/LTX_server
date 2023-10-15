@@ -7,7 +7,7 @@
  *
  * Beispielaufrufe (ggfs. $dbg) setzen):
  *
- * Fuer einfache CMDs per URL:
+ * Fuer einfache CMDs per URL (z.B. interne Aufrufe): k kann auch S_API_KEY sein!
 
 //Basis-Aufruf / Ausgabe Version
 http://localhost/ltx/sw/w_php/w_pcp.php?cmd
@@ -20,9 +20,11 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=details
 
 // Daten Zeilen aus DB ausgeben (opt. limits minid/maxid)
 http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=getdata&minid=1800 
+http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k='S_API_KEY'&cmd=getdata&minid=1800
 
 // Parameter 'iparam.lxp' zu diesem Device mit Beschreibung ausgeben
 http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparam
+http://localhost/ltx/sw/w_php/w_pcp.php?s=DDC2FB99207A7E7E&k='S_API_KEY'&cmd=iparam
 
 // Parameter 'iparam.lxp' zu diesem Device aendern 
 http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamchange&iparam[5]=NeuMeriva&iparam[6]=3601
@@ -61,7 +63,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.09 05.10.2023");
+define('VERSION', "LTX V1.10 14.10.2023");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -127,6 +129,11 @@ $pkanbeschr = array( // SIZE eines Kanals ist absolut FIX
 	"Xbytes[$32]"
 );
 
+$parLastChanIdx=-1; 
+$parChan0Idx=-1;
+$parChanSize=-1;
+$parLastChanNo=-1;
+
 
 // ------ Write LogFile (carefully and out-of-try()/catch()) -------- (similar to lxu_xxx.php)
 function add_logfile()
@@ -167,12 +174,12 @@ function add_logfile()
 	}
 }
 
-
 try {
 	// Check Access-Token for this Device
 	function checkAccess($lmac, $ckey)
 	{
 		global $fpath;
+		if($ckey == S_API_KEY) return true;	// S_API_KEY valid for ALL
 		$quota = @file("$fpath/$lmac/quota_days.dat", FILE_IGNORE_NEW_LINES);
 		if (isset($quota[2]) && strlen($quota[2])) {
 			$qpar = explode(' ', trim(preg_replace('/\s+/', ' ', $quota[2])));
@@ -216,12 +223,12 @@ try {
 	// Pruefen einer Parameterdatei - return NULL (OK) oder Status - (wie in BlueShell: BlueBlx.cs)
 	function checkiparam($par)
 	{
-		global $parLastChanIdx, $parLastChanNo, $parChanSize, $pkanbeschr, $p100beschr;
+		global $parLastChanIdx, $parLastChanNo, $parChanSize, $pkanbeschr, $parChan0Idx;
 
-		// 1. Teil Pruefen der Gemeinsamen Parameter
-		if ($par[0] !== '@100') return "301 File Format (No valid 'iparam.lxp', ID must be '@100')";
 		$parLastChanIdx=-1; // unset incompat. to global
 		$parChan0Idx=-1;
+		// 1. Teil Pruefen der Gemeinsamen Parameter
+		if ($par[0] !== '@100') return "301 File Format (No valid 'iparam.lxp', ID must be '@100')";
 		for ($i = 1; $i < count($par); $i++) {	// Scan for last parameter in Src
 			if (@$par[$i][0] == '@') {
 				$parLastChanIdx = $i;
@@ -257,7 +264,7 @@ try {
 		if(strlen($par[19])>79) return "320 Configuration Command Len"; 
 
 		$pidx = $parChan0Idx;
-		if($pidx<count($p100beschr)) return "600: Missing Channel #0 (at least 1 channel required)";
+		if($pidx< 19 ) return "600: Missing Channel #0 (at least 1 channel required)"; // Min. iparam
 		$chan = 0;
 		for(;;){
 			if (@$par[$pidx][0] != '@' || intval(substr($par[$pidx],1)!=$chan))	return "615 Unexpected Line in Channel #$chan";
@@ -273,8 +280,8 @@ try {
 			if(nisfloat($par[$pidx+9])) return "610 Factor for Channel #$chan (Format requires Decimal Point)";
 			if(nisfloat($par[$pidx+10])) return "611 Alarm_Hi for Channel #$chan (Format requires Decimal Point)";
 			if(nisfloat($par[$pidx+11])) return "612 Alarm_Low for Channel #$chan (Format requires Decimal Point)";
-			if(nverify($par[$pidx+12],0,65535)) return "613 MeasBits  for Channel #$chan";
-			if(strlen($par[$pidx+13])>32) return "614 XBytes Lenfor Channel #$chan";
+			if(nverify($par[$pidx+12],0,65535)) return "613 MeasBits for Channel #$chan";
+			if(strlen($par[$pidx+13])>32) return "614 XBytes Len for Channel #$chan";
 			if($pidx == $parLastChanIdx ) break;
 			$chan++;
 			$pidx +=  $parChanSize;
@@ -292,7 +299,9 @@ try {
 	$cmd = @$_REQUEST['cmd'];
 	if (!isset($cmd)) $cmd = "";
 	$ckey = @$_REQUEST['k'];	// s always MAC (k: API-Key, r: Reason)
-	$xlog = "(cmd:'$cmd', k:'$ckey')";
+	if($ckey == S_API_KEY) $xlog = "(cmd:'$cmd')"; // internal
+	else $xlog = "(cmd:'$cmd', k:'$ckey')";
+	
 
 	// --- cmd PreStart - CMD vorfiltern ---
 	switch ($cmd) {
@@ -410,6 +419,13 @@ try {
 				$ridx++;
 				$lcnt++;
 			}
+			$ipov = array(); // Parameter Overview
+			$ipov['chan0_idx'] =  $parChan0Idx; // Index Channel 0
+			$ipov['chan_anz'] = $parLastChanNo+1; // Anzahl Channels
+			$ipov['lines_per_chan'] =  $parChanSize; // Lines per channel
+
+			$retResult['iparam_meta'] = $ipov;
+
 			$retResult['iparam'] = $vkarr;
 			break;
 

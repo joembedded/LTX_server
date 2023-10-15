@@ -659,7 +659,7 @@ function scanRawDataToVisibleData() {
   // Pass 1 End
 
   // Now all used channels are known
-  channelUnits[0] = 'Time'
+  channelUnits[0] = 'Time(local)'
   channelUnits[1] = 'Events'
   if (channelVisible[1] === undefined) channelVisible[1] = true
   totalUsedChannels = 2 // Channel 0/1 always reserved

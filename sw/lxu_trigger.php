@@ -1,16 +1,15 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.30-SQL
+ * trigger for LTrax V1.31-SQL
  *
- * 14.08.2023 - (C)JoEmbedded.com
+ * 14.10.2023 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
  * Tested with mySQL and MariaDB
  *
  * Last used Err: 106
- *
  * 
  ***************************************************************/
 
@@ -76,13 +75,13 @@ try {
 	$api_key = @$_GET['k'];				// max. 41 Chars KEY
 	$mac = strtoupper(@$_GET['s']); 		// exactly 16 UC Chars. api_key and mac identify device
 	$reason = intval(@$_GET['r']);				// Opt. Reason (ALARMS) (as in device_info.dat also)
+	$vpnf = @$_GET['v']; 				// If set direct formward
 	// reason&256: SEND Contact 512|1024:Timeout (reason&16: oder $fcnt>0: Data neu)
 	$now = time();						// one timestamp for complete run
 	$mttr_t0 = microtime(true);           // Benchmark trigger
 	$xlog = "(Trigger:$reason)";		// Assume only Trigger/Service
 
 	if (!isset($mac) || strlen($mac) != 16) {
-		if (strlen($mac) > 24) exit();		// URL Attacked?
 		exit_error("MAC Len");
 	}
 
@@ -322,6 +321,7 @@ try {
 
 	if (strlen($units)) $insert_sql .= "units='$units',";
 	if (strlen($laval)) $insert_sql .= "vals='$laval',";
+
 	if (isset($cookie)) {
 		$insert_sql .= "cookie='$cookie',";
 		$par = @file(S_DATA . "/$mac/files/iparam.lxp", FILE_IGNORE_NEW_LINES); // Current name?
@@ -529,7 +529,7 @@ try {
 					if (strlen($deva['name'])) $from .= " '" . $deva['name'] . "'";
 					$subj = "$from (Mail $mailno)";
 					$script = $_SERVER['PHP_SELF'];	// /xxx.php
-					$lp = strpos($script, "sw");
+					$lp = strpos($script, "sw"); // Path
 					$sroot = substr($script, 0, $lp - 1);
 					if (HTTPS_SERVER != null) $sec = "https://" . HTTPS_SERVER;
 					else $sec = "http://" . $_SERVER['HTTP_HOST'];
@@ -637,7 +637,22 @@ try {
 		fclose($log);
 	}
 
-	// 4.th Part PUSH (opt.) Reduce CURL TIMEOUT  to 10 sec
+	// 4a. 'v' pushes ALWAYS to vpnf/ipush.php
+	if(isset($vpnf)){ // Testfile schreiben
+		if(isset($quota[2]) && strlen($quota[2])){
+			$xlog .= "(Quota-Push set, ConfigCmd ignored')";
+		}else{
+			$script = $_SERVER['PHP_SELF'];	// /xxx.php
+			$lp = strpos($script, "sw"); // Path
+			$sroot = substr($script, 0, $lp - 1);
+			if (HTTPS_SERVER != null) $sec = "https://" . HTTPS_SERVER;
+			else $sec = "http://" . $_SERVER['HTTP_HOST'];
+			$urlt = $sec . $sroot. "/sw/vpnf/ipush.php ".S_API_KEY;
+			$quota=array('','',$urlt); // 0,1 nicht mehr benoetigt
+		}
+	}
+
+	// 4b.th Part PUSH (opt.) Reduce CURL TIMEOUT  to 10 sec
 	if (isset($quota[2]) && strlen($quota[2])) {
 		$qpar = explode(' ', trim(preg_replace('/\s+/', ' ', $quota[2])));
 		if (count($qpar) && $qpar[0] != '*') { // No Push for '*'

@@ -485,7 +485,7 @@
             // Pass 1 End
 
             // Now all used channels are known
-            channelUnits[0] = 'Time'
+            channelUnits[0] = 'Time(local)'
             channelUnits[1] = 'Events'
             if (channelVisible[1] === undefined) channelVisible[1] = true
             totalUsedChannels = 2 // Channel 0/1 always reserved
@@ -727,9 +727,13 @@
             if (!(flags & 2)) ltxt = 'MAC: ' + sMac + ' Name: ' + sName + ' Lines:' + anzl + ' Channels:' + (totalUsedChannels - 2) + '\n'
 
             if (gmtOffset !== null) {
-                ltxt += 'Times: GMT'
-                if (gmtOffset >= 0) ltxt += '+'
-                ltxt += (gmtOffset / 3600) + '\n'
+                var hx = 'GMT'
+                if (gmtOffset >= 0) hx += '+'
+                hx += (gmtOffset / 3600) + '\n'
+                channelUnits[0] = 'Time(' + hx + ')'
+                ltxt += 'Times:' + hx
+            } else {
+                channelUnits[0] = 'Time(local)'
             }
 
             for (var i = 0; i < totalUsedChannels; i++) {

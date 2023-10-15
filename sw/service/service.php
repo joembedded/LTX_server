@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 15.08.2023
+ * 15.10.2023
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -20,7 +20,6 @@
  * Bsp: https://server.xxx/.../sw/service/service.php?k=APIKEY&v=1&d=2
  * Removes all devices with age > 2days (maybe in n turns)
  *
- * TODO: Deal with quota PUSH
  ***************************************************************/
 
 error_reporting(E_ALL);
@@ -334,10 +333,10 @@ function check_guest_devices($rep){
 function rmrf($dir) {
     foreach (glob($dir) as $file) {
         if (is_dir($file)) { 
-            rmrf("$file/*");
-            rmdir($file);
+            @rmrf("$file/*");
+            @rmdir($file);
         } else {
-            unlink($file);
+            @unlink($file);
         }
     }
 }
@@ -347,6 +346,15 @@ function check_legacy($rep){
 	global $vis,$xlog;
 	$dir = "../".S_DATA;
 	if($vis) echo "---Legacy Info---<br>\n";
+    
+	// Clean stemp
+	foreach (glob("$dir/stemp/*.*") as $file) {
+        $age = $now - filemtime($file);
+		//echo("File: $file, Age: $age <br>\n");
+		if ($age > 7200) { //2 hours
+		  @unlink($file);
+		}
+    }
 
 	$list = scandir($dir);
 	$anz = 0;
