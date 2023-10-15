@@ -153,6 +153,7 @@ $okreply = "OK";
 $configCmd = trim($ipar_obj->iparam[19]->line);
 $pdevi = @file($dpath . "/ppinfo.dat", FILE_IGNORE_NEW_LINES);
 $minid = intval(@$pdevi[0]);
+if(!$minid) $minid=1;	// Index statet bei 1
 
 if ($dbg) echo "ConfigCmd: '$configCmd' minid:$minid\n";
 
@@ -192,8 +193,8 @@ if ($prot !== false) {
 	}
 	$xlines = array($xhdr."\n");	// Exportierte Daten
 
-	$danz = $fdata->get_count; // evt. $danz limitieren, Index startet mit 1
-	$minid = min($minid + $danz, $ipar_obj->overview->max_id+1);
+	$danz = $fdata->get_count; // evt. $danz limitieren, Index startet mit 1 $ipar_obj->overview->max_id+1
+	$minid = $minid + $danz;
 
 	for ($i = 0; $i < $danz; $i++) {
 		$typ = $fdata->get_data[$i]->type;
