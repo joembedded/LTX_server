@@ -4,7 +4,7 @@
 	http://localhost/ltx/sw/w_php/w_pcp.php?s=DDC2FB99207A7E7E&k=S_API_KEY&cmd=getdata&minid=80
 
 	ConfCmd: PROTOCOL FORMAT STATIONID  URL PORT USER PW 
-    Bsp:     FTPSSL CSV1 Bach123 s246.goserver.host 21 web28f3 qfile57
+	Bsp:     FTPSSL CSV1 Bach123 s246.goserver.host 21 web28f3 qfile57
 
 	Protocol:
 		FTP: unencrypted FTP (normally Port 21)
