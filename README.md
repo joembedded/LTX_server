@@ -9,12 +9,15 @@ This file is simple text ('EDT'-Format) and might become quite large over time ;
 The input script 'sw\ltu_trigger.php' will add the data.
 
 In case of "LTX_Server" all new data will be written to the database. There is a quota limit in
-'./sw/conf/api_key.inc.php' ("DB_QUOTA" with default "3650\n100000000"). A file 'quota_days.dat' with 2-3 lines
-will automatically be written for each new logger, 1.st line are days (here 3650), 2.nd line is lines (in the database).
+'./sw/conf/api_key.inc.php' ("DB_QUOTA" with default "90\n1000"). A file 'quota_days.dat' with 2-3 lines
+will automatically be written for each new logger, 1.st line are days (here 90), 2.nd line is lines (in the database, so even a small DB can hold thousands of devices).
 The optional 3.rd line is an URL where to send a PUSH notification on new data (only used for LTX_Server).
 The input script 'sw\ltu_trigger.php' will automatically remove older data.
-Change e.g. to "90\n1000" to allow only the last 90 days or max. 1000 lines per device (so even a small DB can hold thousands of devices).
+Change e.g. to "365\n100000" to allow only the last 365 days or max. 100000 lines per device.
 The file 'quota_days.dat' my be set to individual values per logger at any time.
+Optionally enable '//define ("MAXUPLMEM", 50000);' By default max. 20k are uploaded for files with Autosync (e.g. logger data) per transmission.
+For are transmission intervals at high loggong intervals it should be increased to get always all data.
+
 
 
 ![LTX Gdraw tool](./docs_raw2edit/G-Draw.jpg "LTX Gdraw tool")

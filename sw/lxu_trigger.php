@@ -79,7 +79,7 @@ try {
 	// reason&256: SEND Contact 512|1024:Timeout (reason&16: oder $fcnt>0: Data neu)
 	$now = time();						// one timestamp for complete run
 	$mttr_t0 = microtime(true);           // Benchmark trigger
-	$xlog = "(Trigger:$reason)";		// Assume only Trigger/Service
+	$xlog = "(trigger:$reason)";		// Assume only Trigger/Service
 
 	if (!isset($mac) || strlen($mac) != 16) {
 		exit_error("MAC Len");
@@ -102,7 +102,7 @@ try {
 	}
 	usort($flist, "flcmp");	// Now Compared by Filenames
 	$fcnt = count($flist) - 2;   // Without . and ..
-	if ($fcnt > 0) $xlog .= "(Import)"; // Now: real import
+	if ($fcnt > 0) $xlog .= "(import)"; // Now: real import
 	// foreach($flist as $fl) echo "$fl\n"; exit();
 	$cpath = S_DATA . "/$mac/cmd";		// Path (UPPERCASE recommended, must exist)
 
@@ -620,7 +620,7 @@ try {
 	}
 
 	if ($ign_cnt) $xlog = "($file_cnt Files, $ign_cnt ignored)" . $xlog;
-	else $xlog = "($file_cnt Files)" . $xlog;
+	else $xlog .= "($file_cnt Files)";
 
 	// Save ERROR WARNING ALARM File
 	if (count($info_wea)) {

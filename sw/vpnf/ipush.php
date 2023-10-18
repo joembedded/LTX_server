@@ -256,6 +256,7 @@ if ($prot !== false) {
 		file_put_contents("$dpath/cmd/okreply.cmd", "Error:Unkn.Format");
 		exit_error("Unkn.Format('$format')");
 	}
+	$defext = "csv";	// Default Extension 
 	$station = wildcard2name(strtok(" "));
 	$fhost = strtok(" ");
 	$fport = intval(strtok(" "));
@@ -312,8 +313,9 @@ if ($prot !== false) {
 	file_put_contents($tempfile, $xlines); // Fkt OK for array
 
 	$sslflag = ($prot == "FTPSSL");
-	$sfile = $station . ".dat";
-	transfer_ftp($prot, $tempfile, $sdir, $sfile, $fhost, $sslflag, $fport, $fuser, $fpassword);
+	if(strpos( $station, '.')== false) $station .= '.'.$defext;
+
+	transfer_ftp($prot, $tempfile, $sdir, $station, $fhost, $sslflag, $fport, $fuser, $fpassword);
 	@unlink($tempfile);
 	$okreply = "$prot:OK";
 } else {
