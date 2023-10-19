@@ -66,6 +66,98 @@ try {
 		return $res; // OK: true
 	}
 
+// -- $B64-Functions / Decompress -
+// Only allowed token 111 and tokens 0..89
+// HK-Values etc. in plain!
+function get_u16($valstr)
+{
+	$ui16 = unpack('n', $valstr)[1];
+	return $ui16;
+}
+
+function get_ef32($valstr)
+{
+	$hval = intval(unpack('N', $valstr)[1]);
+	if (($hval >> 24) == 0xFD) {
+		$errno = $hval & 0xFFFFFF;
+		return get_errstr($errno);
+	}
+	return round(decode_f32($hval), 8); // Float max. 8 Digits
+}
+function get_errstr($errno)
+{ // wie measure.c
+	switch ($errno) {
+		case 1:
+			return 'NoValue';
+		case 2:
+			return 'NoReply';
+		case 3:
+			return 'OldValue';
+			// 4,5
+		case 6:
+			return 'ErrorCRC';
+		case 7:
+			return 'DataError';
+		case 8:
+			return 'NoCachedValue';
+		default:
+			return "Err$errno";
+	}
+}
+function decode_f32($bin) // U32 -> Float IEEE 754
+{
+	$sign = ($bin & 0x80000000) > 0 ? -1 : 1;
+	$exp = (($bin & 0x7F800000) >> 23);
+	$mantis = ($bin & 0x7FFFFF);
+
+	if ($mantis == 0 && $exp == 0) {
+		return 0;
+	}
+	if ($exp == 255) {
+		if ($mantis == 0) return INF;
+		if ($mantis != 0) return NAN;
+	}
+	if ($exp == 0) { // denormalisierte Zahl
+		$mantis /= 0x800000;
+		return $sign * pow(2, -126) * $mantis;
+	} else {
+		$mantis |= 0x800000;
+		$mantis /= 0x800000;
+		return $sign * pow(2, $exp - 127) * $mantis;
+	}
+}
+
+$deltatime = 0; // Zeilenuebergreifend
+function decodeB64($ostr)
+{ // ENTRY - On Error return false
+	global $deltatime;
+	$dwbytes = base64_decode($ostr); // Bytes decodiert
+	$dwlen = strlen($dwbytes);
+	$odstr = "";	// Ausgabestring - LTX-Konform
+	$idx = 0;
+	while ($dwlen-- > 0) {
+		$tok = ord($dwbytes[$idx++]);
+		if ($tok == 111) { // Deltatime am Anf un dnur merken
+			if ($dwlen < 2) break;
+			$deltatime = get_u16(substr($dwbytes, $idx, 2));
+			$idx += 2;
+			$dwlen -= 2;
+			continue;
+		}
+		if (!strlen($odstr)) $odstr = "+$deltatime";
+		if ($tok <= 89) { // 0-89 F32 Kanaele
+			if ($dwlen < 4) break;
+			$vals = get_ef32(substr($dwbytes, $idx, 4));
+			$idx += 4;
+			$dwlen -= 4;
+			$odstr .= " $tok:$vals";
+		} else break;
+	}
+	if ($dwlen > 0) return false; // Something left?
+	// echo "('$ostr' => '$odstr')\n"; // Dbg
+	return $odstr;
+}
+
 	// ----------------MAIN----------------
 	$dbg = 0;	// Debug-Level if >0, see docu
 
@@ -209,7 +301,18 @@ try {
 			}
 		}
 
-		foreach ($lines as $line) {
+		// ALt: foreach ($lines as $line) { 
+		$anzdata = count($lines); // Now with uncompress
+		for ($cnt = 0; $cnt < $anzdata; $cnt++) {
+			$line = $lines[$cnt];
+			if ($line[0] === '$') { // Decompress BASE64 line
+				$odstr = decodeB64(substr($line, 1));
+				if ($odstr !== false) {	// Uebernehmen
+					$line = '!'.$odstr;
+					$lines[$cnt] = $line;
+				}
+			}
+
 			if ($line[0] == '!') {
 				if ($line[1] == 'U') {		// Units follow
 					if ($line[2] == ' ') $units = $line;		// Unit-line. Keep!

@@ -7,6 +7,7 @@ In case of "LTX_Legacy" all data will be sent to directories and ALL device's ne
 be added to a file '.../out_total/total.edt' for the device. 
 This file is simple text ('EDT'-Format) and might become quite large over time ;-)
 The input script 'sw\ltu_trigger.php' will add the data.
+Note: using "CS_VIEW.PHP' for graphs requires PHP's gdlib extension enabled.
 
 In case of "LTX_Server" all new data will be written to the database. There is a quota limit in
 './sw/conf/api_key.inc.php' ("DB_QUOTA" with default "90\n1000"). A file 'quota_days.dat' with 2-3 lines
@@ -15,8 +16,8 @@ The optional 3.rd line is an URL where to send a PUSH notification on new data (
 The input script 'sw\ltu_trigger.php' will automatically remove older data.
 Change e.g. to "365\n100000" to allow only the last 365 days or max. 100000 lines per device.
 The file 'quota_days.dat' my be set to individual values per logger at any time.
-Optionally enable '//define ("MAXUPLMEM", 50000);' By default max. 20k are uploaded for files with Autosync (e.g. logger data) per transmission.
-For are transmission intervals at high loggong intervals it should be increased to get always all data.
+Optionally enable '//define ("MAXUPLMEM", 50000);': By default max. 20k are uploaded for files with Autosync (e.g. logger data) per transmission.
+For are transmission intervals at high logging intervals it should be increased to get always all data.
 
 
 
@@ -63,3 +64,7 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V1.78 15.08.2023 Device Timouts in service.php
 - V1.79 05.10.2023 Added CommandConfig as new Parameter in 'iparam.lxp'
 - V2.00 15.10.2023 Direct FTP/FTPSSL-Push via CommandConfig
+- V2.01 18.10.2023 Cosmetics and FTP-push (only 'LTX_Server')
+- V2.10 19.10.2023 Decoding of compressed lines (starting with '$'+Base64) added
+
+
