@@ -1,5 +1,5 @@
 -- SQL statments for initialising login.php and device database
--- 06.02.2023 JoEmbedded.de
+-- 02.11.2023 JoEmbedded.de (New: -- x removed (only 1 ROLE/TOKEN used, Rest: spare!);
 -- LTX Table Structure 
 
 -- for Tabelle `users`:
@@ -73,32 +73,32 @@ CREATE TABLE IF NOT EXISTS `devices` (
   
   `role0` int unsigned DEFAULT 0,
   `token0` varchar(16) COLLATE utf8_unicode_ci,
-  `role1` int unsigned DEFAULT 0,
-  `token1` varchar(16) COLLATE utf8_unicode_ci,
-  `role2` int unsigned DEFAULT 0,
-  `token2` varchar(16) COLLATE utf8_unicode_ci,
-  `role3` int unsigned DEFAULT 0,
-  `token3` varchar(16) COLLATE utf8_unicode_ci,
+-- x   `role1` int unsigned DEFAULT 0,
+-- x   `token1` varchar(16) COLLATE utf8_unicode_ci,
+-- x   `role2` int unsigned DEFAULT 0,
+-- x   `token2` varchar(16) COLLATE utf8_unicode_ci,
+-- x   `role3` int unsigned DEFAULT 0,
+-- x   `token3` varchar(16) COLLATE utf8_unicode_ci,
   
   `email0` varchar(255) COLLATE utf8_unicode_ci,
   `cond0` varchar(255) COLLATE utf8_unicode_ci,
   `em_date0` timestamp NULL DEFAULT NULL,
   `em_cnt0` int unsigned DEFAULT 0,
 
-  `email1` varchar(255) COLLATE utf8_unicode_ci,
-  `cond1` varchar(255) COLLATE utf8_unicode_ci,
-  `em_date1` timestamp NULL DEFAULT NULL,
-  `em_cnt1` int unsigned DEFAULT 0,
+-- x   `email1` varchar(255) COLLATE utf8_unicode_ci,
+-- x   `cond1` varchar(255) COLLATE utf8_unicode_ci,
+-- x   `em_date1` timestamp NULL DEFAULT NULL,
+-- x   `em_cnt1` int unsigned DEFAULT 0,
 
-  `email2` varchar(255) COLLATE utf8_unicode_ci,
-  `cond2` varchar(255) COLLATE utf8_unicode_ci,
-  `em_date2` timestamp NULL DEFAULT NULL,
-  `em_cnt2` int unsigned DEFAULT 0,
+-- x   `email2` varchar(255) COLLATE utf8_unicode_ci,
+-- x   `cond2` varchar(255) COLLATE utf8_unicode_ci,
+-- x   `em_date2` timestamp NULL DEFAULT NULL,
+-- x   `em_cnt2` int unsigned DEFAULT 0,
 
-  `email3` varchar(255) COLLATE utf8_unicode_ci,
-  `cond3` varchar(255) COLLATE utf8_unicode_ci,
-  `em_date3` timestamp NULL DEFAULT NULL,
-  `em_cnt3` int unsigned DEFAULT 0,
+-- x   `email3` varchar(255) COLLATE utf8_unicode_ci,
+-- x   `cond3` varchar(255) COLLATE utf8_unicode_ci,
+-- x   `em_date3` timestamp NULL DEFAULT NULL,
+-- x   `em_cnt3` int unsigned DEFAULT 0,
 
   PRIMARY KEY (`id`), UNIQUE (`mac`), INDEX(`mac`), INDEX(`owner_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

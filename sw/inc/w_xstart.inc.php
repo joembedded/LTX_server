@@ -66,7 +66,8 @@ if (isset($user_id) && !strlen($token)) {	// User not SET, check Token
 	if ($device['token0'] == $token) {
 		$auth = 0;
 		break;
-	}	// Other 4 Tokens - spaeter Role noch uebernehmen
+	}	
+	/* Other 3 Tokens - Spare
 	if ($device['token1'] == $token) {
 		$auth = 1;
 		break;
@@ -79,6 +80,7 @@ if (isset($user_id) && !strlen($token)) {	// User not SET, check Token
 		$auth = 3;
 		break;
 	}
+	*/
 	echo "#ERROR: Access denied";
 	exit();
 }

@@ -66,5 +66,6 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.00 15.10.2023 Direct FTP/FTPSSL-Push via CommandConfig
 - V2.01 18.10.2023 Cosmetics and FTP-push (only 'LTX_Server')
 - V2.10 19.10.2023 Decoding of compressed lines (starting with '$'+Base64) added
+- V2.20	02.11.2023 Legacy CSView UTF-8 cosmetics and removed in Database 'token/mail/cond..1-3' (see ...sql_docu.txt)
 
 

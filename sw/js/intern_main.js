@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.61 (05.10.2023)";
+var prgVersion = "V0.62 (24.10.2023)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -54,6 +54,7 @@ var editOrgDeviceParam; // Device Parameter after Callback (Array, Orignal)
 var editMAC; // MAC of current device
 var editName; // Name of current device
 var editIdx; // Index in Data 
+var editIndexChan0; // Index "@0" (by Design >=19)
 var editAktChan; // Actual ChannelNo
 var editAktIdx; // Actual Index of Editet Channel in editDeviceParam.
 var editSCookie; // Plain Date instead of Unix
@@ -1410,7 +1411,7 @@ function edParamChanDown() {
 	event.preventDefault();
 }
 // Callback for Search
-function edParamIdxFind(aline, idx) { // Find Index of Current Param
+function edParamIdxFind(aline) { // Find Index of Current Param
 	//console.log("A[" + idx + "]='" + aline + "' ");
 	//console.log(typeof aline);
 	if (aline !== undefined && aline.charAt(0) == '@' && aline.length > 1) {
@@ -1455,7 +1456,6 @@ function edParamChanUpDownloc(dir) {
 		if (idx0 < 19) { // V1.0
 			ownAlert("FATAL ERROR:", "Parameter File invalid (F)");
 		}
-
 		editAktChan = 1;
 		idx1 = editDeviceParam.findIndex(edParamIdxFind); // Mit C1: Idx k1
 		if (idx1 < 0) { // 1 Channel: Not Found: Calculate
@@ -1516,7 +1516,9 @@ function edParamFormFill() { // Fill Parameters with act. chan
 
 	document.getElementById("parMinTemp").value = editDeviceParam[17];
 	document.getElementById("parConfig0").value = editDeviceParam[18];
-	document.getElementById("parCmdConfig").value = editDeviceParam[19];
+
+	// Zusatzparameter 
+	document.getElementById("parCmdConfig").value = (editIndexChan0>19)?editDeviceParam[19]:''
 	
 	edParamChanUpDownloc(0);
 }
@@ -1599,8 +1601,10 @@ function editParamMainGet() {
 	getv = $("#parConfig0").val();
 	editDeviceParam[18] = getv;
 
-	getv = $("#parCmdConfig").val();
-	editDeviceParam[19] = getv.replace("@", "?").replace("#", "?")
+	if(editIndexChan0>19){	// Zusatzparameter NUR bei Bedarf uebernehmen
+		getv = $("#parCmdConfig").val();
+		editDeviceParam[19] = getv.replace("@", "?").replace("#", "?")
+	}
 
 	return true;
 
@@ -1739,6 +1743,7 @@ function editParamCallback() {
 		editOrgDeviceParam[i] = editDeviceParam[i]; // Keep Original
 	}
 	editAktChan = 0;
+	editIndexChan0 = editDeviceParam.findIndex(edParamIdxFind); // Mit C0: Idx K0
 	edParamFormFill();
 	modal_show("modalEditParameter");
 }

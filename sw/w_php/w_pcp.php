@@ -109,7 +109,7 @@ $p100beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"Net_Mode (0:Off 1:OnOff 2:On_5min 3:Online)",
 	"ErrorPolicy (O:None 1:RetriesForAlarms, 2:RetriesForAll)",
 	"MinTemp_oC[-40..10]",
-	"Config0_U31 (B0-B30)",
+	"Config0_U31 (B0:OffPer.Inet:On/Off B1,2:BLE:On/Mo/Li/MoLi B3:EnDS B4:CE:Off/On B5:Live:Off/On)",
 	"Configuration_Command[$79]",	
 );
 $pkanbeschr = array( // SIZE eines Kanals ist absolut FIX
