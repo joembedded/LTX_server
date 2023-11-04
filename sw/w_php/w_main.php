@@ -356,14 +356,18 @@ try {
 				$user_row['fw_key'] = "*";
 				if ($user_row['cookie'] !== null)	$user_row['sCookie'] = date('Y-m-d H:i:s', $user_row['cookie']);
 				else $user_row['sCookie'] = "(unknown)";
-				$statement = $pdo->prepare("SELECT COUNT(*) AS anz FROM m$mac"); // Seems not to work as PDO Arg.
-				$qres = $statement->execute();
 
-				if ($qres == false) $danz = "(No Data)";
-				else {
-					$row2 = $statement->fetch();
-					$danz = $row2['anz'];
+				$danz =  "(No Data)";
+				if ($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount() !== 0) { // No Table?
+
+					$statement = $pdo->prepare("SELECT COUNT(*) AS anz FROM m$mac"); // Seems not to work as PDO Arg.
+					$qres = $statement->execute();
+					if ($qres !== false) {
+						$row2 = $statement->fetch();
+						$danz = $row2['anz'];
+					}
 				}
+
 				$user_row['available_cnt'] = $danz; // Add extra-Info
 				$ret['device'] = $user_row;
 			}
@@ -478,7 +482,7 @@ try {
 			if ($quota !== false) {
 				$dinfo[] = "quotal\t" . @$quota[1];	// Add Lines
 				$dinfo[] = "quotad\t" . @$quota[0];	// Add Days
-				if(count($quota)>2){
+				if (count($quota) > 2) {
 					$dinfo[] = "quotap\t" . htmlspecialchars($quota[2]);	// WheretoPush
 				}
 			}
@@ -538,7 +542,7 @@ try {
 			$fname2 = $fpath . "/cmd/okreply.cmd";
 			@unlink($fname);
 			@unlink($fname2);
-			
+
 			$xlog .= "(Clear Device DB)";
 			add_logfile();
 			$status = "0 OK";
@@ -634,6 +638,8 @@ try {
 				$fname = $fpath . "/log.txt";
 				$fname2 = $fpath . "/_log_old.txt";
 			} else if ($typ == 1) {
+				include("../../legacy/mcclist.inc.php");
+
 				$fname = $fpath . "/conn_log.txt";
 				$fname2 = $fpath . "/_conn_log_old.txt";
 			} else {
@@ -659,10 +665,54 @@ try {
 			// Fill 
 			$lres = array();
 			$lidx0 = count($logall) - 1 - $pos0;
+			$cpcache = array();
+			$cellid = 1;
+			$acts = array("No/unkn.", "GSM", "GPRS", "EDGE", "LTE_M", "LTE_NB", "LTE");
 			for ($i = 0; $i < $anz; $i++) {
 				if ($lidx0 < 0) break;
 				//echo $lidx0; echo ": '".$logall[$lidx0]."'<br>";
-				$lres[] = $logall[$lidx0];
+				$line = $logall[$lidx0];
+				if ($typ == 1) { // Interpret Connections
+
+					$mccx = strpos($line, "mcc:");
+					$nline = substr($line, 0, $mccx);
+					$siga = explode(' ', substr($line, $mccx));
+					$asig = array();
+					foreach ($siga as $sigv) {
+						$tmp = explode(":", $sigv);
+						$asig[$tmp[0]] = $tmp[1];
+					}
+					$nline .= $asig['dbm'] . " dbm  &nbsp; ";
+					$act = @$asig['act'];
+					$mcc = @$asig['mcc'];
+					$net = @$asig['net'];
+					$cid = @$asig['cid'];
+					$lac = @$asig['lac'];
+
+					$ha = "$mcc:$net:$lac:$cid:$act";
+					if (!isset($cpcache[$ha])) {
+						$tcid = $cpcache[$ha]=$cellid++;
+						$nline .= " (";
+						if ($act) {
+							$actn = @$acts[$act];
+							$nline .= "$actn-";
+						}
+						$nline .= "$mcc-$net-$lac-$cid) ";
+						$sqs = 'k=' . G_API_KEY . "&s=$mac&lnk=1&mcc=$mcc&net=$net&lac=$lac&cid=$cid";
+						if ($asig['ta'] != 255) {
+							$nline .= "Ca. " . ($asig['ta'] * 500 + 500) . " mtr arround";
+						} else $nline .= " Arround";
+						$nline .= " <a href=\"" . CELLOC_SERVER_URL . "?$sqs\" target=\"_blank\" title=\"Estimated Position of Cell Tower\">[Here]</a>";
+						if ($mcc) {
+							$country = @$mcca[intval($mcc)];
+							if (!$country) $country = $mcca[intval($mcc[0])]; // Fallback
+							$nline .= " (<i>$country</i>)";
+						}
+					} 
+					$line = $nline." Cell($tcid)";
+
+				}
+				$lres[] = $line;
 				$lidx0--;
 			}
 			$ret['lres'] = $lres;	// Return result

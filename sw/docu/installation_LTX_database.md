@@ -59,8 +59,9 @@ The file 'quota_days.dat' my be set/edited to individual values per logger at an
  8. Peridocally (e.g. each day) call './sw/service/service.php' to clean/check up Database!
     A Mail will be sent to the (Admin) with a short summary.
 	(Note: optionally $_SERVER['SERVER_NAME'], $_SERVER['REMOTE_ADDR'], etc.  must be set in 'service.php' for CRON, see comments at beginning of 'service.php').
-	(Hint: often the CRON command is a system call like "/bin/php ./JoEmbedded_WordPress/ltx/sw/service/service.php")
+	(Hint: often the CRON command is a system call like "/bin/php ./JoEmbedded_Run/ltx/sw/service/service.php")
     (Hint: Manual call / tests for 'service.php' via './sw/service/index.php')
+	(Hint: As URL: e.g. "http(s)://myltx.com/ltx/sw/service/service.php")
 	
 ***
 
