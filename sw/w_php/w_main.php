@@ -682,7 +682,7 @@ try {
 						$tmp = explode(":", $sigv);
 						$asig[$tmp[0]] = $tmp[1];
 					}
-					$nline .= $asig['dbm'] . " dbm  &nbsp; ";
+					$dbm = @$asig['dbm'];
 					$act = @$asig['act'];
 					$mcc = @$asig['mcc'];
 					$net = @$asig['net'];
@@ -690,6 +690,8 @@ try {
 					$lac = @$asig['lac'];
 
 					$ha = "$mcc:$net:$lac:$cid:$act";
+					if($dbm!=0) $nline .= " $dbm dbm ";
+
 					if (!isset($cpcache[$ha])) {
 						$tcid = $cpcache[$ha]=$cellid++;
 						$nline .= " (";
