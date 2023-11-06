@@ -1,5 +1,4 @@
 <?php
-
 /***********************************************************
  * w_pcp.php - push-cmd-pull worker fuer einzelne Logger LTX
  *
