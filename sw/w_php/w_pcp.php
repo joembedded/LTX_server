@@ -147,10 +147,11 @@ function add_logfile()
 	if (!isset($mac)) $mac = "UNKNOWN_MAC";
 	if ($dbg) $xlog .= "(DBG:$dbg)";
 
+	$dstr=gmdate("d.m.y H:i:s ", $now) . "UTC ";
 	$log = @fopen("$fpath/log/pcplog.txt", 'a');
 	if ($log) {
 		while (!flock($log, LOCK_EX)) usleep(10000);  // Lock File - Is a MUST
-		fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC " . $_SERVER['REMOTE_ADDR']);        // Write file
+		fputs($log,  $dstr. $_SERVER['REMOTE_ADDR']. " PCP");        // Write file
 		if (strlen($mac)) fputs($log, " MAC:$mac"); // mac only for global lock
 		fputs($log, " $xlog\n");        // evt. add extras
 		flock($log, LOCK_UN);
@@ -166,8 +167,7 @@ function add_logfile()
 		$log = fopen("$fpath/$mac/pcplog.txt", 'a');
 		if (!$log) return;
 		while (!flock($log, LOCK_EX)) usleep(10000);  // Lock File - Is a MUST
-		fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC");
-		fputs($log, " $xlog\n");        // evt. add extras
+		fputs($log, $dstr."PCP $xlog\n");        // evt. add extras
 		flock($log, LOCK_UN);
 		fclose($log);
 	}
