@@ -2,17 +2,21 @@
 /***********************************************************
  * w_rad.php - push-cmd-pull worker fuer RemoteADmin 
  *
+// ----------- FRAGMENT --------------
+// ----------- FRAGMENT --------------
+// ----------- FRAGMENT --------------
+// ----------- FRAGMENT --------------
+
  * Entwickler: Juergen Wickenhaeuser, joembedded@gmail.com
  *
  * Beispielaufrufe (ggfs. $dbg) setzen):
  *
- * Fuer einfache CMDs per URL (z.B. interne Aufrufe): k kann auch S_API_KEY sein!
-
+ * Fuer einfache CMDs per URL (z.B. interne Aufrufe): k kann auch S_API_KEY sein
+ * Es wird die selbe LogDatei wie w_pcp verwendet.
 
 ---Die Idee ist, dass ueber dieses Script alles Remote ADmin Aufgaben der LTX-CLoud
 geloest werden koennen. Genau Funktionalitaet, z.B. Onboaring, Credits, etc..
 ist noch zu klaeren---
-
 
 //Basis-Aufruf / Ausgabe Version
 http://localhost/ltx/sw/w_php/w_rad.php?cmd
@@ -61,19 +65,20 @@ $xlog = ""; // Log-String
 function add_logfile()
 {
 	global $xlog, $dbg, $mac, $now, $fpath;
-	if (@filesize("$fpath/log/radlog.txt") > 100000) {	// Main LOG
-		@unlink("$fpath/log/_radlog_old.txt");
-		rename("$fpath/log/radlog.txt", "$fpath/log/_radlog_old.txt");
-		$xlog .= " (Main 'radlog.txt' -> '_radlog_old.txt')";
+	if (@filesize("$fpath/log/pcplog.txt") > 100000) {	// Main LOG
+		@unlink("$fpath/log/_pcplog_old.txt");
+		rename("$fpath/log/pcplog.txt", "$fpath/log/_pcplog_old.txt");
+		$xlog .= " (Main 'pcplog.txt' -> '_pcplog_old.txt')";
 	}
 
 	if (!isset($mac)) $mac = "UNKNOWN_MAC";
 	if ($dbg) $xlog .= "(DBG:$dbg)";
 
-	$log = @fopen("$fpath/log/radlog.txt", 'a');
+	$dstr=gmdate("d.m.y H:i:s ", $now) . "UTC ";
+	$log = @fopen("$fpath/log/pcplog.txt", 'a');
 	if ($log) {
 		while (!flock($log, LOCK_EX)) usleep(10000);  // Lock File - Is a MUST
-		fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC " . $_SERVER['REMOTE_ADDR']);        // Write file
+		fputs($log,  $dstr. $_SERVER['REMOTE_ADDR']. " RAD");        // Write file
 		if (strlen($mac)) fputs($log, " MAC:$mac"); // mac only for global lock
 		fputs($log, " $xlog\n");        // evt. add extras
 		flock($log, LOCK_UN);
@@ -81,16 +86,15 @@ function add_logfile()
 	}
 	// User Logfile - Text
 	if (strlen($mac) == 16 && file_exists("$fpath/$mac")) {
-		if (@filesize("$fpath/$mac/radlog.txt") > 50000) {	// Device LOG
-			@unlink("$fpath/$mac/_radlog_old.txt");
-			rename("$fpath/$mac/radlog.txt", "$fpath/$mac/_radlog_old.txt");
+		if (@filesize("$fpath/$mac/pcplog.txt") > 50000) {	// Device LOG
+			@unlink("$fpath/$mac/_pcplog_old.txt");
+			rename("$fpath/$mac/pcplog.txt", "$fpath/$mac/_pcplog_old.txt");
 		}
 
-		$log = fopen("$fpath/$mac/radlog.txt", 'a');
+		$log = fopen("$fpath/$mac/pcplog.txt", 'a');
 		if (!$log) return;
 		while (!flock($log, LOCK_EX)) usleep(10000);  // Lock File - Is a MUST
-		fputs($log, gmdate("d.m.y H:i:s ", $now) . "UTC");
-		fputs($log, " $xlog\n");        // evt. add extras
+		fputs($log, $dstr."RAD $xlog\n");        // evt. add extras
 		flock($log, LOCK_UN);
 		fclose($log);
 	}

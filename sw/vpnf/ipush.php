@@ -3,7 +3,7 @@
 	http://localhost/ltx/sw/vpnf/ipush.php?s=DDC2FB99207A7E7E&k=S_API_KEY
 	http://localhost/ltx/sw/w_php/w_pcp.php?s=DDC2FB99207A7E7E&k=S_API_KEY&cmd=getdata&minid=80
 
-	Version 1.1 - 17.10.2023 - JoWi
+	Version 1.2 - 16.11.2023 - JoWi
 
 	ConfCmd: PROTOCOL FORMAT STATIONID  URL PORT USER PW 
 	Bsp:     FTPSSL CSV1 Bach123 s246.goserver.host 21 web28f3 qfile57
@@ -15,6 +15,8 @@
 	Format: 
 		CSV0: All lines as CSV (including '<>' meta lines)
 		CSV1: Only data lines as CSV
+		ZRXP: Simple standart ZRXP Format *todo*
+		MIS: MIS Format *todo*
 
 	StationId: 
 		String,1-8 characters, used as filename-prefix for upload 
