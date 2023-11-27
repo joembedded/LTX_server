@@ -3,24 +3,34 @@
 	http://localhost/ltx/sw/vpnf/ipush.php?s=DDC2FB99207A7E7E&k=S_API_KEY
 	http://localhost/ltx/sw/w_php/w_pcp.php?s=DDC2FB99207A7E7E&k=S_API_KEY&cmd=getdata&minid=80
 
-	Version 1.2 - 16.11.2023 - JoWi
+	Version 1.3 - 27.11.2023 - JoWi
+	####
+	####
+	#### MIS gerade in Arbeit -> convert2mis(). IN Zeile 451 dann stoppen!
+	####
+	####
 
-	ConfCmd: PROTOCOL FORMAT STATIONID  URL PORT USER PW 
-	Bsp:     FTPSSL CSV1 Bach123 s246.goserver.host 21 web28f3 qfile57
+	ConfCmd: PROTOCOL FORMAT[/DIR] STATIONID  URL PORT USER PW 
+	Bsp:     FTPSSL CSV Bach123 s246.goserver.host 21 web28f3 qfile57
+	Bsp:     FTPSSL CSV/mydir Bach123 s246.goserver.host 21 web28f3 qfile57
 
 	Protocol:
 		FTP: unencrypted FTP (normally Port 21)
 		FTPSSL FTP with explizit encryption (normally Port 21)
 
-	Format: 
-		CSV0: All lines as CSV (including '<>' meta lines)
-		CSV1: Only data lines as CSV
-		ZRXP: Simple standart ZRXP Format *todo*
-		MIS: MIS Format *todo*
+	Format (optional subformat after '-'): 
+		CSV: Basic CSV Format - All lines as CSV (including '<>' meta lines, Separator: ';')
+		CSV-0: Only data lines as CSV, else like Basic Format
+		ZRXP: Simple standard ZRXP Format
+		MIS: Simple MIS Format *##### inArbeit #####*
+
+	Dir: Main directory in FTP, optionally followed Format after '/'
+		e.g. CSV-0/mydir
 
 	StationId: 
 		String,1-8 characters, used as filename-prefix for upload 
 		(e.g. 'Bach123' writes files 'Bach123_20231015181223.txt')
+		StationID kann aich .EXT enthalten, siehe 'wildcard2name()'
 	
 	URL / PORT / USER: FTP credentials
 */
@@ -33,7 +43,7 @@ include("../inc/db_funcs.inc.php"); // Init DB
 
 set_time_limit(600); // 10 Min runtime
 
-define('VERSION', "V0.10 10.10.2023");
+define('VERSION', "V1.3 27.11.2023");
 
 // --- Functons --------
 function exit_error($err)
@@ -81,7 +91,7 @@ function add_logfile()
 	fputs($log, " $xlog\n");        // evt. add extras
 	flock($log, LOCK_UN);
 	fclose($log);
-echo "LOG nach $logpath\n";
+	echo "LOG nach $logpath\n";
 }
 
 /* Name evtl. mappen. Baut Namen um.
@@ -201,6 +211,138 @@ function get_pcp($xcmd) // xcmd ohne cmd, aber Parameter URL codiert, e.g. ipara
 	if (!isset($obj->status) || strcmp(substr($obj->status, 0, 4), "0 OK")) exit_error("CurlResult:'" . trim($result) . "'");
 	return $obj;
 }
+//------- Konvertierungen -------------------
+// --- CSV Formate ---
+function convert2csv($subf)
+{
+	global $fdata, $xlines; // Input - Output
+
+	$funits = explode(' ', $fdata->overview->units);
+	$fuarr = array();
+	$frema = array();	// Reverse search
+
+	$xhdr = "TIME(UTC)";
+	foreach ($funits as $fkuv) {
+		$fka = @explode(':', $fkuv);
+		$kan = intval(@$fka[0]);
+		$val = @$fka[1];
+		$fuarr[$kan] = $val;
+		$frema[] = $kan;
+		$xhdr .= ";$val($kan)";
+	}
+	$xlines = array($xhdr . "\n");	// Exportierte Daten
+
+	$danz = $fdata->get_count; // evt. $danz limitieren, Index startet mit 1 $ipar_obj->overview->max_id+1
+	for ($i = 0; $i < $danz; $i++) {
+		$typ = $fdata->get_data[$i]->type;
+		$lcont = $fdata->get_data[$i]->line;
+		if ($typ == 'msg' && @$lcont[0] == '<' && $subf !== "0") {
+			$xline = $fdata->get_data[$i]->calc_ts . ";" . $lcont;
+			$xlines[] = $xline . "\n";
+		} else if ($typ == 'val') {
+			$xline = $fdata->get_data[$i]->calc_ts;
+			$larr = explode(' ', $lcont);
+			$pox = 0;
+			foreach ($larr as $lcuv) {
+				$kerw = $frema[$pox++]; // Erwarteter Kanal hier
+				$lka = @explode(':', $lcuv);
+				$kist = intval(@$lka[0]); // Was ist (evtl. schon weiter)
+				while ($kerw < $kist && $pox < 100) { // Sicherheitsgrenze
+					$xline .= ";";
+					$kerw = $frema[$pox++];
+				}
+				$val = @$lka[1];
+				$xline .= ";$val";
+			}
+			$xlines[] = $xline . "\n";
+		}
+	}
+}
+
+// --- ZXRP Format ---
+function convert2zxrp()
+{
+	global $fdata, $xlines; // Input - Output
+	global $station; // Als Serial
+	global $tzo;	// Timezone
+
+	$dsno = $station;	// Destination Serial No (**NOCH FIX**, steht im File und im Dateinamen???)
+	$chans = explode(' ', $fdata->overview->units);
+	$anz_kans = count($chans);
+	$anz_lines = count($fdata->get_data);
+	$xlines = array();
+	$xlines[] = "#TZUTC0|*|\n";	// Timezone UTC
+	for ($kan = 0; $kan < $anz_kans; $kan++) {
+		$kex = explode(':', $chans[$kan]);
+		$kno = $kex[0];	// Kanal-Nummer
+		$kunit = $kex[1];	// Kanal-Unit
+		$klcnt = 0;
+		for ($i = 0; $i < $anz_lines; $i++) {
+			$lobj = $fdata->get_data[$i];
+			if ($lobj->type != 'val') continue;	// Ignore Messages, etc..
+			$lex = explode(' ', $lobj->line); // Line in KAN:VAL - Array
+			for ($ik = 0; $ik < count($lex); $ik++) {
+				$lik = explode(':', $lex[$ik]);
+				if (!strcmp($lik[0], $kno)) {
+					if (!$klcnt) { // Header wenn neu
+						$xlines[] = "\n";
+						$xlines[] = "#REXCHANGE$dsno" . "_KANAL$kno|*|\n";
+						$xlines[] = "##CCHANNEL_KANAL$kno|*|CCHANNELNO$kno|*|CUNIT$kunit|*|\n";
+						$klcnt = 3;
+					}
+					$dtsec = date_create($lobj->calc_ts, $tzo)->getTimestamp();
+					$ldtcomp = gmdate("YmdHis", $dtsec);
+					$xlines[] = $ldtcomp . "\t" . $lik[1] . "\n";
+					$klcnt++;
+					break;
+				}
+			}
+		}
+	}
+}
+
+// ---  MIS Format ---
+function convert2mis()
+{
+	global $fdata, $xlines; // Input - Output
+	global $station; // Als Serial
+	global $tzo;	// Timezone
+
+	$dsno = $station;	// Destination Serial No (**NOCH FIX**, steht im File und im Dateinamen???)
+	$chans = explode(' ', $fdata->overview->units);
+	$anz_kans = count($chans);
+	$anz_lines = count($fdata->get_data);
+
+	$xlines = array();
+	$xlines[] = "Ueberschrift: Station $dsno\n";	// z.B. Station oder Timezone UTC
+
+	for ($kan = 0; $kan < $anz_kans; $kan++) { // Fuer jeden Kanal die Liste durchchecken, wie ZXRP
+		$kex = explode(':', $chans[$kan]);
+		$kno = $kex[0];	// Kanal-Nummer
+		$kunit = $kex[1];	// Kanal-Unit
+		$klcnt = 0;
+		for ($i = 0; $i < $anz_lines; $i++) {
+			$lobj = $fdata->get_data[$i];
+			if ($lobj->type != 'val') continue;	// Ignore Messages, etc..
+			$lex = explode(' ', $lobj->line); // Line in KAN:VAL - Array
+			for ($ik = 0; $ik < count($lex); $ik++) {
+				$lik = explode(':', $lex[$ik]);
+				if (!strcmp($lik[0], $kno)) {
+					if (!$klcnt) { // Header wenn neu
+						$xlines[] = "HeaderFuerKanal $kno:$kunit\n";
+						$klcnt = 1;
+					}
+					$dtsec = date_create($lobj->calc_ts, $tzo)->getTimestamp();
+					$ldtcomp = gmdate("YmdHis", $dtsec);
+					$xlines[] = $ldtcomp . "\t" . $lik[1] . "\n";  // Datum Irgendwelche Werte einbauen
+					$klcnt++;
+					break;
+				}
+			}
+		}
+	}
+
+}
 
 //------------- MAIN ---------------
 header("Content-Type: text/plain; charset=UTF-8");
@@ -225,7 +367,7 @@ if (@file_exists("$dpath/cmd/dbg.cmd")) {
 if (!$dbg && (!isset($api_key) || strcmp($api_key, S_API_KEY))) {
 	exit_error("API Key");
 }
-if ($dbg){
+if ($dbg) {
 	$xlog .= $_SERVER['REQUEST_URI'] . ' ';
 	echo "*** ipush.php " . VERSION . " ***\n";
 }
@@ -242,7 +384,7 @@ if (!$minid) $minid = 1;	// Index statet bei 1
 
 if ($dbg) {
 	echo "ConfigCmd: '$configCmd' minid:$minid\n";
-	$xlog.="(ConfigCmd:'$configCmd' minid:$minid)";
+	$xlog .= "(ConfigCmd:'$configCmd' minid:$minid)";
 }
 
 $prot = strtok($configCmd, " ");
@@ -251,75 +393,71 @@ if ($prot !== false) {
 		file_put_contents("$dpath/cmd/okreply.cmd", "Error:Unkn.Protocol");
 		exit_error("Unkn.Protocol('$prot')");
 	}
+
+	// format: FULLFORMAT/dir - FULLFORMAT: CSV CSV
 	$formatarr = explode('/', strtok(" "));
-	$format = @$formatarr[0];
-	$sdir = @$formatarr[1];
-	if ($format !== "CSV0" && $format !== "CSV1") {
-		file_put_contents("$dpath/cmd/okreply.cmd", "Error:Unkn.Format");
-		exit_error("Unkn.Format('$format')");
-	}
-	$defext = "csv";	// Default Extension 
 	$station = wildcard2name(strtok(" "));
 	$fhost = strtok(" ");
 	$fport = intval(strtok(" "));
 	$fuser = strtok(" ");
 	$fpassword = strtok(" ");
 
-	//echo "Protocol: '$prot' Format: '$format' Station: '$station' Host:$fhost:$fport $fuser/$fpassword\n";
+	$fullformat = @$formatarr[0];
+	$sdir = @$formatarr[1]; // NULL if not set.
+	$format = strtok($fullformat, '-'); // Main Format
+	$subformat = strtok('-'); // 'false' if not set.
+	// 1. Format/Subformat -  Nur pruefen
+	switch ($format) {
+		case 'CSV':	// OK: CSV and CSV-0
+			$defext = "csv";
+			if ($subformat !== false && $subformat !== '0') unset($format);
+			break;
+		case 'ZRXP':	// Legacy ZRXP
+			$defext = "zrxp";
+			if ($subformat !== false) unset($format); // Keine Subformate
+			break;
+		case 'MIS':	// Legacy MIS
+			$defext = "mis";
+			if ($subformat !== false) unset($format); // Keine Subformate
+			break;
+		default:
+			unset($format);
+	}
+	if (!isset($format)) {
+		file_put_contents("$dpath/cmd/okreply.cmd", "Error:Unkn.Format");
+		exit_error("Unkn.Format('$fullformat')");
+	}
+
+	//echo "Protocol: '$prot' Format: '$format'/'$subformat' Station: '$station' Host:$fhost:$fport $fuser/$fpassword\n";
+
 	$fdata = get_pcp("getdata&minid=$minid");
-
-	$funits = explode(' ', $fdata->overview->units);
-	$fuarr = array();
-	$frema = array();	// Reverse search
-
-	$xhdr = "TIME(UTC)";
-	foreach ($funits as $fkuv) {
-		$fka = @explode(':', $fkuv);
-		$kan = intval(@$fka[0]);
-		$val = @$fka[1];
-		$fuarr[$kan] = $val;
-		$frema[] = $kan;
-		$xhdr .= ";$val($kan)";
+	// 2. Konvertieren
+	switch ($format) {
+		case 'CSV':
+			convert2csv($subformat);
+			break;
+		case 'ZRXP':	// Legacy ZRXP
+			convert2zxrp();
+			break;
+		case 'MIS':	// Legacy MIS
+			convert2mis();
+			break;
 	}
-	$xlines = array($xhdr . "\n");	// Exportierte Daten
 
-	$danz = $fdata->get_count; // evt. $danz limitieren, Index startet mit 1 $ipar_obj->overview->max_id+1
-	$minid = $minid + $danz;
+	$tanz = count($xlines);
+	$xlog .= "($tanz Data Lines)";
 
-	for ($i = 0; $i < $danz; $i++) {
-		$typ = $fdata->get_data[$i]->type;
-		$lcont = $fdata->get_data[$i]->line;
-		if ($typ == 'msg' && @$lcont[0] == '<' && $format == "CSV0") {
-			$xline = $fdata->get_data[$i]->calc_ts . ";" . $lcont;
-			$xlines[] = $xline . "\n";
-		} else if ($typ == 'val') {
-			$xline = $fdata->get_data[$i]->calc_ts;
-			$larr = explode(' ', $lcont);
-			$pox = 0;
-			foreach ($larr as $lcuv) {
-				$kerw = $frema[$pox++]; // Erwarteter Kanal hier
-				$lka = @explode(':', $lcuv);
-				$kist = intval(@$lka[0]); // Was ist (evtl. schon weiter)
-				while ($kerw < $kist && $pox < 100) { // Sicherheitsgrenze
-					$xline .= ";";
-					$kerw = $frema[$pox++];
-				}
-				$val = @$lka[1];
-				$xline .= ";$val";
-			}
-			$xlines[] = $xline . "\n";
-		}
-	}
-	$xlog .= "($danz Data Lines)";
-	//print_r($xlines);
+	//print_r($xlines);  die("*#####DBG END#####*"); // #### DBG: Output & Stop ####
+
 	file_put_contents($tempfile, $xlines); // Fkt OK for array
 
 	$sslflag = ($prot == "FTPSSL");
-	if(strpos( $station, '.')== false) $station .= '.'.$defext;
+	if (strpos($station, '.') == false) $station .= '.' . $defext;
 
 	transfer_ftp($prot, $tempfile, $sdir, $station, $fhost, $sslflag, $fport, $fuser, $fpassword);
 	@unlink($tempfile);
 	$okreply = "$prot:OK";
+	$minid = $minid + $fdata->get_count;
 } else {
 	$minid = $ipar_obj->overview->max_id + 1;	// Ignore
 }
