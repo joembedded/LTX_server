@@ -3,26 +3,26 @@
 	http://localhost/ltx/sw/vpnf/ipush.php?s=DDC2FB99207A7E7E&k=S_API_KEY
 	http://localhost/ltx/sw/w_php/w_pcp.php?s=DDC2FB99207A7E7E&k=S_API_KEY&cmd=getdata&minid=80
 
-	Version 1.3 - 27.11.2023 - JoWi
-	####
-	####
-	#### MIS gerade in Arbeit -> convert2mis(). IN Zeile 451 dann stoppen!
-	####
-	####
+	Version 1.4 - 28.11.2023 - JoWi
+	Info: Wie testen: 
+	- ppinfo.dat eines Loggers auf ein paar Zeilen unterhalb der vorhandenen stellen
+	- $dbg auf 2 setzen (bei --main--)
+	- ipush per URL aufrufen (S_API_KEY aus conf)
+	- iparam.lxp des Loggers manuell conig-Zeile editieren
 
 	ConfCmd: PROTOCOL FORMAT[/DIR] STATIONID  URL PORT USER PW 
 	Bsp:     FTPSSL CSV Bach123 s246.goserver.host 21 web28f3 qfile57
 	Bsp:     FTPSSL CSV/mydir Bach123 s246.goserver.host 21 web28f3 qfile57
 
 	Protocol:
-		FTP: unencrypted FTP (normally Port 21)
+		FTP unencrypted FTP (normally Port 21)
 		FTPSSL FTP with explizit encryption (normally Port 21)
 
-	Format (optional subformat after '-'): 
-		CSV: Basic CSV Format - All lines as CSV (including '<>' meta lines, Separator: ';')
-		CSV-0: Only data lines as CSV, else like Basic Format
-		ZRXP: Simple standard ZRXP Format
-		MIS: Simple MIS Format *##### inArbeit #####*
+	Format (optional subformat after ':'): 
+		CSV Basic CSV Format - All lines as CSV (including '<>' meta lines, Separator: ';')
+		CSV0 Only data lines as CSV, else like Basic Format
+		ZRXP Simple standard ZRXP Format
+		MIS Simple MIS Format 
 
 	Dir: Main directory in FTP, optionally followed Format after '/'
 		e.g. CSV-0/mydir
@@ -43,7 +43,7 @@ include("../inc/db_funcs.inc.php"); // Init DB
 
 set_time_limit(600); // 10 Min runtime
 
-define('VERSION', "V1.3 27.11.2023");
+define('VERSION', "V1.4 28.11.2023");
 
 // --- Functons --------
 function exit_error($err)
@@ -216,12 +216,17 @@ function get_pcp($xcmd) // xcmd ohne cmd, aber Parameter URL codiert, e.g. ipara
 function convert2csv($subf)
 {
 	global $fdata, $xlines; // Input - Output
+	global $tzutc, $devutc_off;	// Timezones-Info
 
 	$funits = explode(' ', $fdata->overview->units);
 	$fuarr = array();
 	$frema = array();	// Reverse search
+	
+	$xhdr = "TIME(UTC";
+	if($devutc_off>0)  $xhdr .= '+'. round($devutc_off/3600,2);
+	else if($devutc_off<0) $xhdr .= '-'. round(-$devutc_off/3600,2);
+	$xhdr .=")";
 
-	$xhdr = "TIME(UTC)";
 	foreach ($funits as $fkuv) {
 		$fka = @explode(':', $fkuv);
 		$kan = intval(@$fka[0]);
@@ -236,11 +241,16 @@ function convert2csv($subf)
 	for ($i = 0; $i < $danz; $i++) {
 		$typ = $fdata->get_data[$i]->type;
 		$lcont = $fdata->get_data[$i]->line;
-		if ($typ == 'msg' && @$lcont[0] == '<' && $subf !== "0") {
-			$xline = $fdata->get_data[$i]->calc_ts . ";" . $lcont;
+
+		$dtsec = date_create($fdata->get_data[$i]->calc_ts, $tzutc)->getTimestamp();
+		// Standard-Zeitformat, bezogen auf Device-UTC-Offset
+		$ltstr = gmdate("d.m.y H:i:s",$dtsec + $devutc_off);
+
+		if ($typ == 'msg' && @$lcont[0] == '<' && $subf !== "CSV0") {
+			$xline = $ltstr . ";" . $lcont;
 			$xlines[] = $xline . "\n";
 		} else if ($typ == 'val') {
-			$xline = $fdata->get_data[$i]->calc_ts;
+			$xline = $ltstr;
 			$larr = explode(' ', $lcont);
 			$pox = 0;
 			foreach ($larr as $lcuv) {
@@ -264,14 +274,21 @@ function convert2zxrp()
 {
 	global $fdata, $xlines; // Input - Output
 	global $station; // Als Serial
-	global $tzo;	// Timezone
+	global $tzutc, $devutc_off;	// Timezones-Info
 
-	$dsno = $station;	// Destination Serial No (**NOCH FIX**, steht im File und im Dateinamen???)
+	$dsno = $station;	// Destination Serial No 
 	$chans = explode(' ', $fdata->overview->units);
 	$anz_kans = count($chans);
 	$anz_lines = count($fdata->get_data);
 	$xlines = array();
-	$xlines[] = "#TZUTC0|*|\n";	// Timezone UTC
+	$xhdr = "\n";	// Leerzeile am Anfang!
+	$xhdr = "#TZUTC";
+	if($devutc_off>0)  $xhdr .= '+'. round($devutc_off/3600,2);
+	else if($devutc_off<0) $xhdr .= '-'. round(-$devutc_off/3600,2);
+	else $xhdr .= '0';	// 0 Special zxrp
+	$xhdr .="|*|\n";	// Timezone
+
+	$xlines[] = $xhdr;
 	for ($kan = 0; $kan < $anz_kans; $kan++) {
 		$kex = explode(':', $chans[$kan]);
 		$kno = $kex[0];	// Kanal-Nummer
@@ -290,8 +307,8 @@ function convert2zxrp()
 						$xlines[] = "##CCHANNEL_KANAL$kno|*|CCHANNELNO$kno|*|CUNIT$kunit|*|\n";
 						$klcnt = 3;
 					}
-					$dtsec = date_create($lobj->calc_ts, $tzo)->getTimestamp();
-					$ldtcomp = gmdate("YmdHis", $dtsec);
+					$dtsec = date_create($lobj->calc_ts, $tzutc)->getTimestamp();
+					$ldtcomp = gmdate("YmdHis", $dtsec + $devutc_off); // Corrected Timestamp
 					$xlines[] = $ldtcomp . "\t" . $lik[1] . "\n";
 					$klcnt++;
 					break;
@@ -306,17 +323,20 @@ function convert2mis()
 {
 	global $fdata, $xlines; // Input - Output
 	global $station; // Als Serial
-	global $tzo;	// Timezone
+	global $tzutc, $devutc_off;	// Timezones-Info
 
-	$dsno = $station;	// Destination Serial No (**NOCH FIX**, steht im File und im Dateinamen???)
+	$dsno = $station;	// Destination Serial No 
 	$chans = explode(' ', $fdata->overview->units);
 	$anz_kans = count($chans);
 	$anz_lines = count($fdata->get_data);
-
 	$xlines = array();
-	$xlines[] = "Ueberschrift: Station $dsno\n";	// z.B. Station oder Timezone UTC
 
-	for ($kan = 0; $kan < $anz_kans; $kan++) { // Fuer jeden Kanal die Liste durchchecken, wie ZXRP
+	$xhdr = "<TIMEZONE>UTC";
+	if($devutc_off>0)  $xhdr .= '+'. round($devutc_off/3600,2);
+	else if($devutc_off<0) $xhdr .= '-'. round(-$devutc_off/3600,2);
+	$xhdr .="</TIMEZONE>\n";	// Timezone
+	$xlines[] = $xhdr;
+	for ($kan = 0; $kan < $anz_kans; $kan++) {
 		$kex = explode(':', $chans[$kan]);
 		$kno = $kex[0];	// Kanal-Nummer
 		$kunit = $kex[1];	// Kanal-Unit
@@ -329,27 +349,30 @@ function convert2mis()
 				$lik = explode(':', $lex[$ik]);
 				if (!strcmp($lik[0], $kno)) {
 					if (!$klcnt) { // Header wenn neu
-						$xlines[] = "HeaderFuerKanal $kno:$kunit\n";
-						$klcnt = 1;
+						if($kno>=90) $sbez = "HK$kno($kunit)"; // HK-Channels
+						else $sbez = "$kno($kunit)"; // Normal
+						$xhdr="<STATION>$dsno</STATION><SENSOR>$sbez</SENSOR><DATEFORMAT>YYYYMMDD</DATEFORMAT>\n";
+						$xlines[] = $xhdr;
+						$klcnt = 3;
 					}
-					$dtsec = date_create($lobj->calc_ts, $tzo)->getTimestamp();
-					$ldtcomp = gmdate("YmdHis", $dtsec);
-					$xlines[] = $ldtcomp . "\t" . $lik[1] . "\n";  // Datum Irgendwelche Werte einbauen
+
+					$dtsec = date_create($lobj->calc_ts, $tzutc)->getTimestamp();
+					$ldtcomp = gmdate("Ymd;His", $dtsec + $devutc_off); // Corrected Timestamp
+					$xlines[] = $ldtcomp . ";" . $lik[1] . "\n";
 					$klcnt++;
 					break;
 				}
 			}
 		}
 	}
-
 }
 
 //------------- MAIN ---------------
 header("Content-Type: text/plain; charset=UTF-8");
 
-$dbg = 0;
+$dbg = 0;	// 1:Log Debg, 2:Output&Stop
 $xlog = "(ipush)";
-$tzo = timezone_open('UTC'); 		// Oder LOKAL - Wie ists mit Sommer-Winterzeit?
+$tzutc = timezone_open('UTC'); 		// LTX uses UTC
 $now = time();						// one timestamp for complete run
 
 $mtmain_t0 = microtime(true);         // for Benchmark 
@@ -381,10 +404,13 @@ $configCmd = trim($ipar_obj->iparam[19]->line);
 $pdevi = @file($dpath . "/ppinfo.dat", FILE_IGNORE_NEW_LINES);
 $minid = intval(@$pdevi[0]);
 if (!$minid) $minid = 1;	// Index statet bei 1
-
 if ($dbg) {
-	echo "ConfigCmd: '$configCmd' minid:$minid\n";
 	$xlog .= "(ConfigCmd:'$configCmd' minid:$minid)";
+}
+
+$devutc_off= intval($ipar_obj->iparam[11]->line); // Device UTC offset (sec)
+if($devutc_off<-43200 || $devutc_off>43200){
+	$xlog .= "(Illegal UTC offset, ignored!)";
 }
 
 $prot = strtok($configCmd, " ");
@@ -404,13 +430,14 @@ if ($prot !== false) {
 
 	$fullformat = @$formatarr[0];
 	$sdir = @$formatarr[1]; // NULL if not set.
-	$format = strtok($fullformat, '-'); // Main Format
-	$subformat = strtok('-'); // 'false' if not set.
+	$format = strtok($fullformat, ':'); // Main Format
+	$subformat = strtok(':'); // 'false' if not set.
 	// 1. Format/Subformat -  Nur pruefen
 	switch ($format) {
-		case 'CSV':	// OK: CSV and CSV-0
+		case 'CSV':	// OK: CSV and CSV0
+		case 'CSV0':	
 			$defext = "csv";
-			if ($subformat !== false && $subformat !== '0') unset($format);
+			if ($subformat !== false) unset($format); // Keine Subformate
 			break;
 		case 'ZRXP':	// Legacy ZRXP
 			$defext = "zrxp";
@@ -428,13 +455,12 @@ if ($prot !== false) {
 		exit_error("Unkn.Format('$fullformat')");
 	}
 
-	//echo "Protocol: '$prot' Format: '$format'/'$subformat' Station: '$station' Host:$fhost:$fport $fuser/$fpassword\n";
-
 	$fdata = get_pcp("getdata&minid=$minid");
 	// 2. Konvertieren
 	switch ($format) {
-		case 'CSV':
-			convert2csv($subformat);
+		case 'CSV':	// OK: CSV and CSV0
+		case 'CSV0':	
+			convert2csv($format); // CSV or CSV0
 			break;
 		case 'ZRXP':	// Legacy ZRXP
 			convert2zxrp();
@@ -447,7 +473,12 @@ if ($prot !== false) {
 	$tanz = count($xlines);
 	$xlog .= "($tanz Data Lines)";
 
-	//print_r($xlines);  die("*#####DBG END#####*"); // #### DBG: Output & Stop ####
+	if($dbg>1){
+		echo "---DBG START---\n";
+		echo "--- Log: '$xlog'\n";
+		foreach($xlines as $l) echo $l;
+		die("---DBG STOP---"); 
+	}
 
 	file_put_contents($tempfile, $xlines); // Fkt OK for array
 
