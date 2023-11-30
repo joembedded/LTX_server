@@ -1,9 +1,9 @@
 <?php
+define('VERSION', "V1.5 30.11.2023");
 /* ipush.php - internal immerdiate push 
 	http://localhost/ltx/sw/vpnf/ipush.php?s=DDC2FB99207A7E7E&k=S_API_KEY
 	http://localhost/ltx/sw/w_php/w_pcp.php?s=DDC2FB99207A7E7E&k=S_API_KEY&cmd=getdata&minid=80
 
-	Version 1.4 - 28.11.2023 - JoWi
 	Info: Wie testen: 
 	- ppinfo.dat eines Loggers auf ein paar Zeilen unterhalb der vorhandenen stellen
 	- $dbg auf 2 setzen (bei --main--)
@@ -43,7 +43,6 @@ include("../inc/db_funcs.inc.php"); // Init DB
 
 set_time_limit(600); // 10 Min runtime
 
-define('VERSION', "V1.4 28.11.2023");
 
 // --- Functons --------
 function exit_error($err)
@@ -91,7 +90,6 @@ function add_logfile()
 	fputs($log, " $xlog\n");        // evt. add extras
 	flock($log, LOCK_UN);
 	fclose($log);
-	echo "LOG nach $logpath\n";
 }
 
 /* Name evtl. mappen. Baut Namen um.
@@ -370,13 +368,13 @@ function convert2mis()
 //------------- MAIN ---------------
 header("Content-Type: text/plain; charset=UTF-8");
 
-$dbg = 0;	// 1:Log Debg, 2:Output&Stop
+$dbg = 0;	//0:Off 1:Log Debg, 2:Output&Stop
 $xlog = "(ipush)";
 $tzutc = timezone_open('UTC'); 		// LTX uses UTC
 $now = time();						// one timestamp for complete run
-
 $mtmain_t0 = microtime(true);         // for Benchmark 
 
+try{
 $mac = @$_REQUEST['s'];
 if (!isset($mac) || strlen($mac) != 16) exit_error("MAC Len");
 $api_key = @$_GET['k'];				// max. 41 Chars KEY
@@ -501,5 +499,11 @@ $mtrun = round((microtime(true) - $mtmain_t0) * 1000, 4);
 $xlog .= "(Run:$mtrun msec)"; // Script Runtime
 
 echo "*IPUSH(DBG:$dbg) RES: ('$xlog')*\n"; // Always
+
+} catch (Exception $e) {
+	$errm = $e->getMessage();
+	exit_error($errm);
+}
+
 add_logfile($xlog); // Regular exit, entry in logfile should be first
 //
