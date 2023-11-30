@@ -394,7 +394,9 @@ if ($dbg) {
 }
 
 // --- START ---
-$tempfile  = '../' . S_DATA . "/stemp/$mac.ftp"; // unique_string - working file
+$tempfile  = '../' . S_DATA . "/stemp";
+if (!file_exists($tempfile)) mkdir($tempfile);
+$tempfile  .= "/$mac.ftp"; // unique_string - working file
 $ipar_obj = get_pcp("iparam"); // No Return on Error
 if ($ipar_obj->iparam_meta->chan0_idx < 20) exit_error("No ConfigCommand in iparam");
 $okreply = "OK";
