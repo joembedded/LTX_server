@@ -24,6 +24,13 @@ http://localhost/ltx/sw/w_php/w_rad.php?cmd
 // Listet alle Devices zu diesem Key auf
 http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=list 
 
+// Quota lesen (alle Zeilen)
+http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=quotaget&s=DDC2FB99207A7E7E
+
+// Daten in 'quota' zu diesem Device aendern (nur was geaendert werden muss schicken)
+http://localhost/ltx/sw/w_php/w_rad.php?s=26FEA299F444F836&k=ABC&cmd=quotachange&quota[2]=neuerserver%20XXX (%20: SPACE)
+
+
  * Parameter - Koennen per POST oder URL uebergeben werden
  * cmd: Kommando
  * k: AccessKey (aus 'quota_days.dat') (opt.)
@@ -32,16 +39,20 @@ http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=list
  * cmd:
  * '':		Version
  * list:	Alle MACs mit Zugriff auflisten (nur 'k' benoetigt)
+ * quotaget: quota zu einer MAC holen
+ * quotachange: quota (einzelne Eintraege oder alles) zu einer MAC aendern
  * 
  * Status-Returns:
  * 0:	OK
  * 100: Keine Tabelle mMAC fuer diese MAC
  * 101: Keine Parameter gefunden fuer diese MAC
  * 102: Unbekanntes Kommando cmd
+ * 103: Write Quota
+ * 104: Index Error bei quota
  * ...
  */
 
-define('VERSION', "RAD V0.01 06.11.2023");
+define('VERSION', "RAD V0.10 06.12.2023");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -130,6 +141,19 @@ try {
 		if(!is_numeric($str)) return true;
 		return false;
 	}
+
+	// Pruefen ob quota OK (max. 3 Zeilen)
+	function checkquota($quota){
+		if(!isset($quota) || $quota == false) return "400 'quota_days.dat' not found";
+		if(count($quota)>3) return "401 'quota_days.dat' overdue lines";
+		$qd = intval(@$quota[0]);
+		if(!$qd || $qd>365000) return "402 'quota_days.dat' Days";
+		$ql = intval(@$quota[1]);
+		if($ql<100 ) return "403 'quota_days.dat' Lines<100";
+		// Serverzeile ohne Pruefung
+		return null;	// OK
+	}
+
 	//=========== MAIN ==========
 	$retResult = array();
 
@@ -204,8 +228,55 @@ try {
 			$retResult['details'] = $devres;
 			break;
 
+		case 'quotaget':
+			// Original holen und pruefen
+			$quota = @file("$fpath/$mac/quota_days.dat", FILE_IGNORE_NEW_LINES);
+			$chkres = checkquota($quota);
+			if($chkres != null) { 
+				$status = $chkres;
+				break;
+			}
+			$retResult['quota'] = $quota;
+			break;
+
+		case 'quotachange':
+			// Erstmal Original holen und pruefen
+			$quota = @file("$fpath/$mac/quota_days.dat", FILE_IGNORE_NEW_LINES);
+
+			$nqlist = $_REQUEST['quota'];
+			foreach ($nqlist as $npk => $npv) {
+				$idx = intval($npk);
+				if ($idx < 0 || $idx > 2) { 
+					$status = "104 Index Error";
+					break;
+				}
+			}
+			if (isset($status)) break;
+			// Nun alles OK, Alte Werte durch neue ersetzen
+			foreach ($nqlist as $npk => $npv) {
+				$idx = intval($npk);
+				$quota[$idx] = $npv;
+			}
+			// geaenderte Quota vor Schreiben pruefen
+			$chkres = checkquota($quota);
+			if($chkres != null) { 
+				$status = $chkres;
+				break;
+			}
+			// Schreiben
+			$nqstr = implode("\n", $quota) . "\n";
+			$ilen = strlen($nqstr);
+			$slen = file_put_contents("$fpath/$mac/quota_days.dat", $nqstr);
+			if ($ilen == $slen) {
+				$xlog .= "('quota_days.dat' changed)";
+			} else {
+				$xlog .= "(ERROR: Write 'quota_days.dat':$slen/$ilen Bytes)";
+				$status = "103 Write 'quota_days.dat'";
+			}
+			break;
+	
 /****************************************************************
-* AB hier eigene CMDS *todo* 
+* AB hier weitere eigene CMDS *todo* 
 ****************************************************************/
 
 		default:
@@ -223,7 +294,7 @@ try {
 	else echo $ares;
 } catch (Exception $e) {
 	$errm = "#ERROR: '" . $e->getMessage() . "'";
-	exit("$errm\n");
+	echo $errm;
 	$xlog .= "($errm)";
 }
 

@@ -588,7 +588,7 @@ try {
 	else echo $ares;
 } catch (Exception $e) {
 	$errm = "#ERROR: '" . $e->getMessage() . "'";
-	exit("$errm\n");
+	echo $errm;
 	$xlog .= "($errm)";
 }
 
