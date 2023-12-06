@@ -39,6 +39,7 @@ http://localhost/ltx/sw/w_php/w_rad.php?s=26FEA299F444F836&k=ABC&cmd=quotachange
  * cmd:
  * '':		Version
  * list:	Alle MACs mit Zugriff auflisten (nur 'k' benoetigt)
+ * details: Details zu einer MAC (quasi geich wie w_pcp.php)
  * quotaget: quota zu einer MAC holen
  * quotachange: quota (einzelne Eintraege oder alles) zu einer MAC aendern
  * 
