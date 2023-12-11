@@ -55,7 +55,9 @@ http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=sysparamunpend&s=DDC2FB99207A7
  * sysparamget: sys_param.lxp holen
  * sysparamchange: sys_param.lxp aendern, ggf. neue Zeilen ergaenzen
  * sysparamunpend: ggfs. pending sys_param.lxp loeschen
- * 
+ *
+ * *todo* dapikey schreiben *todo*
+ *
  * Status-Returns:
  * 0:	OK
  * 100: Keine Tabelle mMAC fuer diese MAC
