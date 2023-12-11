@@ -74,4 +74,4 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.22 05.11.2023 Max. upload limit depending on Network, set defines(MAXM_xx) in 'api_key.inc.php!
 - V2.23 25.11.2023 If DAPIKEY_SERVER defined: indivdual external D_API_KEY check for each NEW device  (only once)
 - V2.24 28.11.2023 Additional FTP-Export formats (sw/vpnf/ipush.php)
-- V2.25 07.12.2023 Added 'quotaget/quotachange' in sw/php/w_rad.php (more cmd: *todo*)
+- V2.25 11.12.2023 Added 'quotaget/quotachange' in sw/php/w_rad.php (more cmd: *todo*)

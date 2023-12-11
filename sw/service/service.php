@@ -499,7 +499,7 @@ if (!isset($status)) $status = "0 OK";
 
 $cont = str_replace(")(",")\n(",$xlog);
 echo "*** Result: ***<pre>",$cont,"</pre>";
-echo "*** Mailed to: '$admin_mail' **<br>";
+echo "*** Mail (if run in background) to: '$admin_mail' **<br>";
 echo "*** Service: '$status' ***<br>\n"; // Always
 add_logfile();
 
