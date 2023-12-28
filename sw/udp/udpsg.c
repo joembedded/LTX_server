@@ -40,7 +40,6 @@
 
 #define VERSION  "V1.10 16.12.2023"
 
-
 #ifdef _MSC_VER	// MS VC
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -76,7 +75,7 @@ typedef int SOCKET;
 #else // GCC
 #define CALLSCRIPT "http://joembedded.eu/ltx/sw/udp/payload_minimal.php?p="
 #endif
-#define CALLSCRIPT_MAXRUN_MS	1500 // Recommended: <2 sec
+#define CALLSCRIPT_MAXRUN_MS	3000 // Recommended: <5sec
 #define MAX_CLIENTS	10		// Maximum Number to UPD similar
 //-----------------------------------------
 
@@ -244,8 +243,10 @@ int run_curl(int anz) {
 		char* pc = url + sprintf(url, "%s", callscript);
 		for (int di = 0; di < pcli->rcv_len; di++) {
 			uint8_t c = (pcli->rx_buffer[di]) & 255;
-			pc += sprintf(pc, "%02X", c);
+			*pc++ = "0123456789abcdef"[(c >> 4)];
+			*pc++ = "0123456789abcdef"[(c&15)];
 		}
+		*pc = 0;
 		pcli->tx_len = 0;	// No Reply
 		pcli->tx_replybuf[0] = 0;
 		if (_verbose) {
