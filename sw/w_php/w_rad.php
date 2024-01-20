@@ -55,6 +55,9 @@ http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=sysparamunpend&s=DDC2FB99207A7
  * sysparamget: sys_param.lxp holen
  * sysparamchange: sys_param.lxp aendern, ggf. neue Zeilen ergaenzen
  * sysparamunpend: ggfs. pending sys_param.lxp loeschen
+ * onboard: Device anlegen und die wichtigsten Files schreiben, nicht aber z.B. iparam.lxp oder sys_param.lxp. 
+ *          Es wird nichts ueberschrieben, hoechstens ergaenzt.
+ * remove: Alle Daten des Device entfernen, inkl. Daten, Users und Guests
  *
  * *todo* dapikey schreiben *todo*
  *
@@ -69,10 +72,10 @@ http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=sysparamunpend&s=DDC2FB99207A7
  * 106: Index Error bei sys_param.lxp
  * 107: No changes in sys_param.lxp
  * 108: Write Error sys_param.lxp
- * ...
+  * ...
  */
 
-define('VERSION', "RAD V0.11 07.12.2023");
+define('VERSION', "RAD V0.12 20.01.2024");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -245,6 +248,17 @@ try {
 		return $par;
 	}
 
+	// Subfct. - Remove Directory
+	function rmrf($dir) {
+		foreach (glob($dir) as $file) {
+			if (is_dir($file)) { 
+				@rmrf("$file/*");
+				@rmdir($file);
+			} else {
+				@unlink($file);
+			}
+		}
+	}
 
 	//=========== MAIN ==========
 	$retResult = array();
@@ -286,6 +300,7 @@ try {
 
 		default: // Alle anderen CMDs sind Geratespezifsich
 			// Im Normalfall erstmal feststellen ob Zugriff auf einzelnen Logger erlaubt
+			// Logger muss in 'devices' angelegt sein! Rest (Owner, Files, nur wenn explizit gefragt)
 			$mac = @$_REQUEST['s'];	// s ist immer die MAC, muss bekannt sein
 			if (!isset($mac)) $mac = "";
 			if (strlen($mac) != 16) {
@@ -300,14 +315,14 @@ try {
 			// Default-Infos fuer diese Teil
 			$statement = $pdo->prepare("SELECT * FROM devices WHERE mac = ?");
 			$qres = $statement->execute(array($mac));
-			if ($qres == false) throw new Exception("MAC $mac not in 'devices'");
+			if ($qres == false) throw new Exception("Select MAC $mac in 'devices'");
 			$devres = $statement->fetch(); // $devres[]: 'device(mac)'!
-
 			$ovv = array();	// Overview zu dieser MAC
 			$ovv['mac'] = $mac;
 			$ovv['db_now'] = $pdo->query("SELECT NOW() as now")->fetch()['now']; // *JETZT* als Datum UTC - Rein zurInfo
-
 			$retResult['overview'] = $ovv;
+
+			
 	} // --- cmd PreEnde ---
 
 	// --- cmd Main Start - CMD auswerten ---
@@ -316,10 +331,35 @@ try {
 		case 'list': // Liste schon fertig
 			break;
 
-		case 'details':	// Einfach ALLES fuer diese MAC
-			$retResult['details'] = $devres;
+		case 'details':	// Einfach ALLES was wichtig ist fuer diese MAC checken
+			$warncnt=0;
+			if($devres === false) { // Device MUSS in 'devices' gelistet sein
+				$retResult['warning_'.($warncnt++)] = "MAC not in 'devices'";
+			}else{
+				$retResult['details'] = $devres;
+			}
+			if (!file_exists("$fpath/$mac")){
+				$retResult['warning_'.($warncnt++)] = "No directory for MAC";
+			}else{
+				if (!file_exists("$fpath/$mac/date0.dat"))
+					$retResult['warning_'.($warncnt++)] = "File 'MAC/date.dat' not found";
+				if (!file_exists("$fpath/$mac/device_info.dat"))
+					$retResult['warning_'.($warncnt++)] = "File 'MAC/device_info.dat' not found";
+				if (!file_exists("$fpath/$mac/quota_days.dat"))
+					$retResult['warning_'.($warncnt++)] = "File 'MAC/quota_days.dat' not found";
+				if (!file_exists("$fpath/$mac/files")){
+					$retResult['warning_'.($warncnt++)] = "Directory 'MAC/files' not found";
+				}else{
+				if (!file_exists("$fpath/$mac/files/iparam.lxp"))
+					$retResult['warning_'.($warncnt++)] = "File 'MAC/files/iparam.lxp' not found";
+				if (!file_exists("$fpath/$mac/files/sys_param.lxp"))
+					$retResult['warning_'.($warncnt++)] = "File 'MAC/files/sys_param.lxp' not found";
+				}
+			}
+
 			break;
 
+		// Ab hier: device directory muss vorhanden sein, wird nicht extra getestet
 		case 'quotaget':
 			// Original holen und pruefen
 			$quota = @file("$fpath/$mac/quota_days.dat", FILE_IGNORE_NEW_LINES);
@@ -380,7 +420,7 @@ try {
 			foreach ($par as $p) {
 				$info = @$infoarr[$lcnt];
 				if(!isset($info)) $info = "(Undef.)"; // Unkown
-				$info .= " (Line $lcnt)"; // Juer jede Zeile: Erklaere Bedeutung
+				$info .= " (Line $lcnt)"; // Fuer jede Zeile: Erklaere Bedeutung
 				$vkarr[] = array('line' => $p, 'info' => $info); // Line, Value, Text
 				$lcnt++;
 			}
@@ -453,6 +493,71 @@ try {
 				$xlog .= "(Remove pending Hardware-Parameter'sys_param.lxp')";
 				break;
 	
+			case 'onboard': // Init/Add (most important) files for new device
+				$infocnt=0;
+				if($devres === false) { // wenn nicht in 'devices' gelistet
+					$qres = $pdo->exec("INSERT INTO devices ( mac ) VALUES ( '$mac' )");
+					$new_id = $pdo->lastInsertId();
+					$xlog .= "((Re-)Added in 'devices' (ID:$new_id))";
+					$retResult['info_'.($infocnt++)] = "(Re-)Added in 'devices' (ID:$new_id)";
+				}
+				if (!file_exists("$fpath/$mac")){
+					mkdir("$fpath/$mac");  // MainDirectory
+					$xlog .= "(MAC directory created)";
+					$retResult['info_'.($infocnt++)] = "MAC directory created";
+				}
+				if (!file_exists("$fpath/$mac/files")){
+					mkdir("$fpath/$mac/files");  
+					$xlog .= "(Directory 'MAC/files' created)";
+					$retResult['info_'.($infocnt++)] = "Directory 'MAC/files' created";
+				}
+				if (!file_exists("$fpath/$mac/cmd")){
+					mkdir("$fpath/$mac/cmd");  
+					$xlog .= "(Directory 'MAC/cmd' created)";
+					$retResult['info_'.($infocnt++)] = "Directory 'MAC/cmd' created";
+				}
+				if (!file_exists("$fpath/$mac/put")){
+					mkdir("$fpath/$mac/put");  
+					$xlog .= "(Directory 'MAC/put' created)";
+					$retResult['info_'.($infocnt++)] = "Directory 'MAC/put' created";
+				}
+
+				if (!file_exists("$fpath/$mac/date0.dat")){
+					file_put_contents("$fpath/$mac/date0.dat", time()); // Note initial date
+					$xlog .= "('MAC/date0.dat' created)";
+					$retResult['info_'.($infocnt++)] = "'MAC/date0.dat' created";
+				}
+				if (!file_exists("$fpath/$mac/quota_days.dat")){
+					file_put_contents("$fpath/$mac/quota_days.dat", DB_QUOTA); 
+					$xlog .= "('MAC/quota_days.dat' (Default) created)";
+					$retResult['info_'.($infocnt++)] = "'MAC/quota_days.dat' (Default) created";
+				}
+				if (!file_exists("$fpath/$mac/device_info.dat")){
+					file_put_contents("$fpath/$mac/device_info.dat", ""); // Write DUMMY
+					$xlog .= "(Dummy 'MAC/device_info.dat' created)";
+					$retResult['info_'.($infocnt++)] = "Dummy 'MAC/device_info.dat' created";
+				}
+
+				// No iparam.lxp, no sys_param.lxp
+				break;
+
+			case 'remove': // Remove all device data
+				$infocnt=0;
+				if($devres !== false) { // wenn in 'devices' gelistet
+					$pdo->query("DELETE FROM devices WHERE mac = '$mac'");
+					$pdo->query("DELETE FROM guest_devices WHERE mac = '$mac'");
+					if($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount()>0){
+						$pdo->query("DROP TABLE m$mac");
+					}
+					$xlog.="(Removed device from DB)";
+					$retResult['info_'.($infocnt++)] = "Removed device from DB";
+				}
+				if (file_exists("$fpath/$mac")){
+					rmrf("$fpath/$mac");
+					$xlog.="(Removed device directory and files)";
+					$retResult['info_'.($infocnt++)] = "Removed device directory and files";
+				}
+				break;
 
 			/****************************************************************
 			 * AB hier weitere eigene CMDS *todo* 

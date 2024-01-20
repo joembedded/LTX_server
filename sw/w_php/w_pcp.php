@@ -62,7 +62,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.10 14.10.2023");
+define('VERSION', "LTX V1.11 14.01.2024");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -351,12 +351,13 @@ try {
 			$ovv['mac']=$mac;   
 			$ovv['db_now'] = $pdo->query("SELECT NOW() as now")->fetch()['now']; // *JETZT* als Datum UTC - Rein zurInfo
 
-			$statement = $pdo->prepare("SELECT MIN(id) as minid, MAX(id) as maxid FROM m$mac");
-			$qres = $statement->execute();
-			if ($qres == false) {
+			if ($pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount() === 0){
 				$maxid = $minid = -1; // No Data
 				$status = "100 No Data for MAC"; // Error 100
-			} else {
+			}else{
+				$statement = $pdo->prepare("SELECT MIN(id) as minid, MAX(id) as maxid FROM m$mac");
+				$qres = $statement->execute();
+				if ($qres == false) throw new Exception("No table'm$mac'");
 				$mm = $statement->fetch();
 				$maxid = $mm['maxid'];
 				$minid = $mm['minid'];
@@ -528,6 +529,8 @@ try {
 			break;
 
 		case 'getdata':
+			if (isset($status)) break;
+
 			// $minid und $maxid noch von oben, evtl. ueberschreiben
 			$xlog .= "([";
 			if (isset($_REQUEST['minid'])) {
