@@ -76,4 +76,5 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.24 28.11.2023 Additional FTP-Export formats (sw/vpnf/ipush.php)
 - V2.25 11.12.2023 Added 'quotaget/quotachange' in sw/php/w_rad.php 
 - V2.26 20.01.2024 Added onboarding/remove commands in sw/php/w_rad.php (more cmd: *todo*) (see LTX_PushPull.pdf, V1.11)
+- V2.27 22.01.2024 Optim. onboarding/remove commands
 
