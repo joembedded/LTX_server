@@ -75,7 +75,7 @@ http://localhost/ltx/sw/w_php/w_rad.php?k=ABC&cmd=sysparamunpend&s=DDC2FB99207A7
   * ...
  */
 
-define('VERSION', "RAD V0.12 20.01.2024");
+define('VERSION', "RAD V0.13 23.01.2024");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -501,10 +501,13 @@ try {
 					$xlog .= "((Re-)Added in 'devices' (ID:$new_id))";
 					$retResult['info_'.($infocnt++)] = "(Re-)Added in 'devices' (ID:$new_id)";
 				}
+
+				$newdev = false;
 				if (!file_exists("$fpath/$mac")){
 					mkdir("$fpath/$mac");  // MainDirectory
 					$xlog .= "(MAC directory created)";
-					$retResult['info_'.($infocnt++)] = "MAC directory created";
+					$retResult['info_'.($infocnt++)] = "MAC directory created (cmd: get Dir. and get 'sys_param.lxp')";
+					$newdev = true; // Dir neu angelegt
 				}
 				if (!file_exists("$fpath/$mac/files")){
 					mkdir("$fpath/$mac/files");  
@@ -515,6 +518,17 @@ try {
 					mkdir("$fpath/$mac/cmd");  
 					$xlog .= "(Directory 'MAC/cmd' created)";
 					$retResult['info_'.($infocnt++)] = "Directory 'MAC/cmd' created";
+					if ($newdev == true) {
+						file_put_contents("$fpath/$mac/cmd/getdir.cmd", "123");	// 3 Tries to get Directoy
+					}
+				}
+				if (!file_exists("$fpath/$mac/get")){
+					mkdir("$fpath/$mac/get");  
+					$xlog .= "(Directory 'MAC/get' created)";
+					$retResult['info_'.($infocnt++)] = "Directory 'MAC/get' created";
+					if ($newdev == true) {
+						file_put_contents("$fpath/$mac/get/sys_param.lxp", "123");	// 3 Tries to get sys_param.lxp
+					}
 				}
 				if (!file_exists("$fpath/$mac/put")){
 					mkdir("$fpath/$mac/put");  
