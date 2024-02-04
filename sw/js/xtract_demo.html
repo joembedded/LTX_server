@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <!--
-    xtract_demo.html - V0.1 - 28.01.2023
+    xtract_demo.html - V0.2 - 01.02.2024
 
     Die LTX-Logger arbeiten zeilenorieniert und speichern Daten im .EDT-Format
     .EDT-Dateien oder Teile davon koennen aus verschiedenen Quellen stammen, z.B.
@@ -19,6 +19,10 @@
     V0.1: Bisher nur IndexDB, Aufruf z.B. 
         http://localhost/ltx/sw/js/xtract_demo.html?st=CFA091D23F3D0F27_xtract.edt oder
         http://localhost/ltx/sw/js/xtract_demo.html?st=CFA091D23F3D0F27_xtract.edt&sn=GIZMO (mit Name)
+	
+	V0.2:	
+		Fehler bei Bit32 bei floats behoben
+	
 
 -->
 
@@ -292,9 +296,9 @@
             return rstr
         }
 
-        function decodeF32(bin) // U32 -> Float IEEE 754
-        {
-            let sign = (bin & 0x80000000) > 0 ? -1 : 1
+		function decodeF32(bin) // U32 -> Float IEEE 754 Achtung!!!JS: (0x80000000 & 0x80000000) = -2147483648
+		{
+			let sign = (bin >= 0x80000000) ? -1 : 1
             let exp = ((bin & 0x7F800000) >> 23)
             let mantis = (bin & 0x7FFFFF)
 
