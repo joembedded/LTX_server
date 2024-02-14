@@ -1,5 +1,5 @@
 * Anmerkungen zu den SQL Rows *
-* 02.11.2023 JoEmbedded.de 
+* 14.02.2024 JoEmbedded.de 
 * New: -- x removed (only 1 ROLE/TOKEN used, Rest (1-3): spare!)
 
 *********** Globals ***********************************
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS mMAC (
   `id` int unsigned AUTO_INCREMENT,						== Zeilennummer absolut zaehlt immer hoeher
   `line_ts` timestamp DEFAULT CURRENT_TIMESTAMP,		Einfuegzeitstempel (Server) in DB
   `calc_ts` timestamp DEFAULT NULL,						Kalkulierter Geraete-Zeitstempel (wie LINE), kann 0 sein wenn fehlend
-  `dataline` varchar(255) COLLATE utf8_unicode_ci NOT NULL, Originalline mit expandiertem Zeitstempel
+  `dataline` varchar(8191) COLLATE utf8_unicode_ci NOT NULL, Originalline mit expandiertem Zeitstempel, siehe (*)
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -129,3 +129,7 @@ CREATE TABLE IF NOT EXISTS mMAC (
 $pdo->exec("SET @@session.time_zone = '+00:00'"); -todo- Set Database to Timezone of Browser
 Test: SELECT TIMEDIFF(NOW(), UTC_TIMESTAMP); -> Ergibt 2:00:00 fuer Sommerzeit
 
+
+(*): 'varchar' (theoretisch) MariaDB: max. 65532, MySQL: max 65535! 
+     Strato (unbekannte DB): max 21840, ab 21846 wird automatisch 'mediumtext' gewaehlt,
+	 zwischen 21810 und 21845 erzeugt Strato ein Fehlermedlung! Daher auf 'verbreitete' Groesse limitiert!

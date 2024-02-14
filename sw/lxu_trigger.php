@@ -1,9 +1,9 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.31-SQL
+ * trigger for LTrax V1.32-SQL
  *
- * 14.10.2023 - (C)JoEmbedded.com
+ * 14.02.2024 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
@@ -133,6 +133,8 @@ function decodeB64($ostr)
 	global $deltatime;
 	$dwbytes = base64_decode($ostr); // Bytes decodiert
 	$dwlen = strlen($dwbytes);
+	$tok = ord($dwbytes[0]);
+	if($tok>=132) return "<XDATA '".$ostr.">"; // Embedded Data
 	$odstr = "";	// Ausgabestring - LTX-Konform
 	$idx = 0;
 	while ($dwlen-- > 0) {
@@ -221,7 +223,7 @@ function decodeB64($ostr)
 			`id` int unsigned AUTO_INCREMENT,
 			`line_ts` timestamp DEFAULT CURRENT_TIMESTAMP,
 			`calc_ts` timestamp NULL DEFAULT NULL,
-			`dataline` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+			`dataline` varchar(65500) COLLATE utf8_unicode_ci NOT NULL,
 			PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 		if ($qres === false) exit_error("(ERROR 104:" . $pdo->errorInfo()[2] . ")"); // Can not Create Table
