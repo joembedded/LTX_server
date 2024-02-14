@@ -1,5 +1,5 @@
 -- SQL statments for initialising login.php and device database
--- 02.11.2023 JoEmbedded.de (New: -- x removed (only 1 ROLE/TOKEN used, Rest: spare!);
+-- 14.02.2024 JoEmbedded.de (New: -- x removed (only 1 ROLE/TOKEN used, Rest: spare!);
 -- LTX Table Structure 
 
 -- for Tabelle `users`:
