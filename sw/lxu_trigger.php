@@ -223,7 +223,7 @@ function decodeB64($ostr)
 			`id` int unsigned AUTO_INCREMENT,
 			`line_ts` timestamp DEFAULT CURRENT_TIMESTAMP,
 			`calc_ts` timestamp NULL DEFAULT NULL,
-			`dataline` varchar(65500) COLLATE utf8_unicode_ci NOT NULL,
+			`dataline` varchar(8191) COLLATE utf8_unicode_ci NOT NULL,
 			PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 		if ($qres === false) exit_error("(ERROR 104:" . $pdo->errorInfo()[2] . ")"); // Can not Create Table
