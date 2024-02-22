@@ -134,7 +134,7 @@ function decodeB64($ostr)
 	$dwbytes = base64_decode($ostr); // Bytes decodiert
 	$dwlen = strlen($dwbytes);
 	$tok = ord($dwbytes[0]);
-	if($tok>=132) return "<XDATA '".$ostr.">"; // Embedded Data
+	if($tok>=132) return "<XDATA '".$ostr."'>"; // Embedded Data
 	$odstr = "";	// Ausgabestring - LTX-Konform
 	$idx = 0;
 	while ($dwlen-- > 0) {
