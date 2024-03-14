@@ -157,7 +157,7 @@ function decodeB64($ostr)
 	}
 	if ($dwlen > 0) return false; // Something left?
 	// echo "('$ostr' => '$odstr')\n"; // Dbg
-	return $odstr;
+	return '!'.$odstr;
 }
 
 	// ----------------MAIN----------------
@@ -310,7 +310,7 @@ function decodeB64($ostr)
 			if ($line[0] === '$') { // Decompress BASE64 line
 				$odstr = decodeB64(substr($line, 1));
 				if ($odstr !== false) {	// Uebernehmen
-					$line = '!'.$odstr;
+					$line = $odstr;
 					$lines[$cnt] = $line;
 				}
 			}
