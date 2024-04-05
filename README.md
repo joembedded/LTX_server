@@ -78,4 +78,5 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.26 20.01.2024 Added onboarding/remove commands in sw/php/w_rad.php (more cmd: *todo*) (see LTX_PushPull.pdf, V1.11)
 - V2.27 22.01.2024 Optim. onboarding/remove commands
 - V2.28 14.03.2024 ErrorFix (lxu_trigger.php)
+- V2.29 06.04.2024 Cosmetics
 
