@@ -1,9 +1,9 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.32-SQL
+ * trigger for LTrax V1.33-SQL
  *
- * 14.02.2024 - (C)JoEmbedded.com
+ * 17.04.2024 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
@@ -339,7 +339,8 @@ function decodeB64($ostr)
 						$warn_new++;	// Warning: Strange Times
 						if (strlen($xlog) < 128) $xlog .= "(WARNING: Unknown Time)";
 						if (count($info_wea) < 20) $info_wea[] = "WARNING: Unknown Time";
-					}
+						$uxtstr = "T:$unixt";
+					}else $uxtstr = gmdate("d.m.y H:i:s",$unixt);
 					// Check Values
 					$anz = count($tmp);
 					for ($i = 1; $i < $anz; $i++) {
@@ -349,11 +350,11 @@ function decodeB64($ostr)
 						$val = @$ds[1];
 						if (!isset($val)) {
 							$err_new++;	// ERROR: No Value for Channel  
-							if (count($info_wea) < 20) $info_wea[] = "ERROR(T:$unixt): Channel #$key: No Value";
+							if (count($info_wea) < 20) $info_wea[] = "ERROR($uxtstr): Channel #$key: No Value";
 						}
 						if (isset($lina[$key])) {	// Can not set twice per line!
 							$err_new++;	// ERROR: Channel '$key' already used ('$iv' ignored) in Line
-							if (count($info_wea) < 20) $info_wea[] = "ERROR(T:$unixt): Channel #$key: Channel already used";
+							if (count($info_wea) < 20) $info_wea[] = "ERROR($uxtstr): Channel #$key: Channel already used";
 						} else {
 							$lvala[$key] = $val;	// Save last channel
 							$lina[$key] = $val;	// Allocate Channel for this line
@@ -361,13 +362,13 @@ function decodeB64($ostr)
 								$val = substr($val, 1);
 								if (!is_numeric($val)) {
 									$err_new++;	// ERROR: Not Numeric Value
-									if (count($info_wea) < 20) $info_wea[] = "ERROR(T:$unixt): Channel #$key: '$val'";
+									if (count($info_wea) < 20) $info_wea[] = "ERROR($uxtstr): Channel #$key: '$val'";
 								}
 								$alarm_new++; 	// Count ALARMS
-								if (count($info_wea) < 20) $info_wea[] = "ALARM(T:$unixt): Channel #$key";
+								if (count($info_wea) < 20) $info_wea[] = "ALARM($uxtstr): Channel #$key";
 							} else if (!is_numeric($val)) {
 								$err_new++; // ERROR: Not Numeric Value
-								if (count($info_wea) < 20) $info_wea[] = "ERROR(T:$unixt): Channel #$key: '$val'";
+								if (count($info_wea) < 20) $info_wea[] = "ERROR($uxtstr): Channel #$key: '$val'";
 							}
 						}
 					}
