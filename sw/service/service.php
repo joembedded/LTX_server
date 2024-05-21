@@ -1,7 +1,7 @@
 <?php
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 15.10.2023
+ * 15.05.2024
  *
  * Service-Functions - WORK
  * Call with k=Legcay-Key
@@ -403,6 +403,7 @@ if (isset($_REQUEST['k'])) {
 	$api_key = $_REQUEST['k']; // max. 41 Chars KEY
 	$_SESSION['key'] = L_KEY;
 } else $api_key = @$_SESSION['key'];
+if(!isset($api_key)) $api_key = "";
 
 $cmd = @$_REQUEST['cmd'];				// Command
 $vis = @$_REQUEST['v'];					// Visibility
