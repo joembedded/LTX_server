@@ -80,3 +80,5 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.28 14.03.2024 ErrorFix (lxu_trigger.php)
 - V2.29 06.04.2024 Cosmetics
 - V2.30 17.04.2024 Cosmetics
+- V2.31 13.05.2024 Drivers for SWARM (product shut down) and ASTROCAST removed
+- V2.32 21.05.2024 Added drivers form ORBCOMM OGx

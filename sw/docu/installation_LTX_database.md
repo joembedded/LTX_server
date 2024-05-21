@@ -1,6 +1,6 @@
 ### Installation of LTX Database (File: './sw/docu/installation_LTX_database') ###
 
-### 16.08.2023 Jo ###
+### 21.05.2025 Jo ###
 
 LTX can be installed WITH (named as "LTX_Server") Database and WITHOUT (named as "LTX_Legacy").
 
@@ -56,12 +56,16 @@ The file 'quota_days.dat' my be set/edited to individual values per logger at an
 
  7. Make a test transmition
  
- 8. Peridocally (e.g. each day) call './sw/service/service.php' to clean/check up Database!
+ 8. Periodicaly (e.g. each day) call './sw/service/service.php' to clean/check up Database!
     A Mail will be sent to the (Admin) with a short summary.
 	(Note: optionally $_SERVER['SERVER_NAME'], $_SERVER['REMOTE_ADDR'], etc.  must be set in 'service.php' for CRON, see comments at beginning of 'service.php').
 	(Hint: often the CRON command is a system call like "/bin/php ./JoEmbedded_Run/ltx/sw/service/service.php")
     (Hint: Manual call / tests for 'service.php' via './sw/service/index.php')
 	(Hint: As URL: e.g. "http(s)://myltx.com/ltx/sw/service/service.php")
+
+ 9. Only for ORBCOMM: Periodicaly (e.g. each minute) call './sw/lxs_obc_v1.php?k=S_API_KEY'  to poll for(serve) satellite messages.
+   (same scheme as 8., S_API_KEY from 'api_key.inc.php')
+ 
 	
 ***
 
