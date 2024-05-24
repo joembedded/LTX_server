@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.63 (04.11.2023)";
+var prgVersion = "V0.65 (24.05.2024)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -882,7 +882,7 @@ function generateDetails(idx) {
 	if (adev.lat != null && adev.lng != null) {
 		var gpslink = mapUrl + "&q=" + adev.lat + "," + adev.lng + "&z=12";
 		var gdate = new Date(Date.parse(adev.last_gps + " GMT")); // UTC
-		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> Cell Position from " + gdate.toLocaleString().replace(" ", "&nbsp;");
+		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> Cell/GNSS Position from " + gdate.toLocaleString().replace(" ", "&nbsp;");
 		if (adev.rad > 0) footer += ", Accuracy: " + adev.rad + "m";
 		footer += "</b></a></div>";
 	}
@@ -1210,7 +1210,7 @@ function edInfoFill() {
 		var infoStr = "<div>" +
 			"<div>Device Type: <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
 			"<div>Active Days: <b>" + activeDays + "</b></div>" +
-			"<div>Total Data (up/down in kB): <b>" + Math.floor(infoObj.total_in / 1024) + "/" + Math.floor(infoObj.total_out / 1024) + "</b></div>";
+			"<div>Total Data (up/down in kB): <b>" + (infoObj.total_in / 1024).toFixed(1) + "/" + (infoObj.total_out / 1024).toFixed(1) + "</b></div>";
 		if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
 		infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
 		infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";

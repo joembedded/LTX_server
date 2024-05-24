@@ -54,7 +54,7 @@ try {
 		$ret['user_id'] = $user_id;
 	}
 
-	$xlog = "(User:$user_id)"; // 
+	$xlog = "(W_Main)(User:$user_id)"; // 
 	$mac = @$_REQUEST['mac'];	// Ensure if MAC is set, it is OK
 	if (isset($mac)) {		// CMD mit MAC always require ROLE
 		$role = 0;	// Assume Role as 0
@@ -439,7 +439,7 @@ try {
 					$statement = $pdo->prepare("UPDATE devices SET name = ? WHERE mac = ?");
 					$statement->execute(array(@$par[5], $mac));
 				}
-				$xlog .= "(New Hardware-Parameter 'iparam.lxp':$ilen)";
+				$xlog .= "(New Hardware-Parameter 'iparam.lxp':$ilen Bytes)";
 			} else {
 				$xlog .= "(ERROR: Write 'iparam.lxp':$slen/$ilen Bytes)";
 				$status = "-117 ERROR: Write Parameter:$slen/$ilen Bytes";

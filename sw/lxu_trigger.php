@@ -387,6 +387,11 @@ function decodeB64($ostr)
 							$info_wea[] = "ERROR: Cookie($cookie)";
 							$err_new++;
 						}
+					} else if(!strncmp($line, "<GNSS ", 6)){ // Rare Device Position
+						$tmp = explode(' ',$line);
+						$device_lat = floatval($tmp[2]);
+						$device_lng = floatval($tmp[3]);
+						$device_nrad = 0;	// Unknown
 					} else if (strpos($line, "<RESET") !== false || strpos($line, "ERROR")) {
 						$info_wea[] = "WARNING: '" . trim($line, "<>") . "'";
 						$warn_new++;
@@ -530,16 +535,19 @@ function decodeB64($ostr)
 						$xlog .= "(ERROR: CELLOC: $einfo)";
 						$sqlps->execute(array($now, "<ERROR: CELLOC: $einfo>"));
 					} else {
-						$nlat = $obj->lat;
-						$nlon = $obj->lon;
-						$nrad = $obj->accuracy;
-						$insert_sql .= "lat = $nlat, lng = $nlon, rad = $nrad, last_gps=NOW(),";
-						$xlog .= "(Automatic Pos. $nlat,$nlon,$nrad)";
-						$trigger_fb .= "#C $nlat $nlon $nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
-						$sqlps->execute(array($now, "<CELLOC $nlat $nlon $nrad>"));
+						$device_lat = floatval($obj->lat);
+						$device_lng = floatval($obj->lon);
+						$device_nrad = $obj->accuracy;
+						$sqlps->execute(array($now, "<CELLOC $device_lat $device_lng $device_nrad>"));
 					}
 				}
 			}
+		}
+
+		if(isset($device_lat) && $device_lat != 0 && $device_lng != 0){ // Set by GNSS(Device) or CELLOC(Server)
+			$insert_sql .= "lat = $device_lat, lng = $device_lng, rad = $device_nrad, last_gps=NOW(),";
+			$xlog .= "(Automatic Pos. $device_lat,$device_lng,$device_nrad)";
+			$trigger_fb .= "#C $device_lat $device_lng $device_nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
 		}
 
 		$las = $deva['las']; //
