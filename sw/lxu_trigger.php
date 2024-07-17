@@ -1,9 +1,9 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.33-SQL
+ * trigger for LTrax V1.34-SQL
  *
- * 17.04.2024 - (C)JoEmbedded.com
+ * 12.06.2024 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
@@ -387,11 +387,12 @@ function decodeB64($ostr)
 							$info_wea[] = "ERROR: Cookie($cookie)";
 							$err_new++;
 						}
-					} else if(!strncmp($line, "<GNSS ", 6)){ // Rare Device Position
+					} else if(!strncmp($line, "<GNSS ", 6)){ // Rare Device Position (poss: no time, no data)
 						$tmp = explode(' ',$line);
 						$device_lat = floatval($tmp[2]);
 						$device_lng = floatval($tmp[3]);
 						$device_nrad = 0;	// Unknown
+						if ($unixt == 0) $unixt = $now;
 					} else if (strpos($line, "<RESET") !== false || strpos($line, "ERROR")) {
 						$info_wea[] = "WARNING: '" . trim($line, "<>") . "'";
 						$warn_new++;
@@ -399,7 +400,7 @@ function decodeB64($ostr)
 				}
 			}
 			if ($unixt == 0) $unixt = NULL;
-			$line_time = $unixt;	// Might be 0:Works on MySQL, >0 MariaDB 
+			$line_time = $unixt;	// Might be 0:Works on MySQL, >0 or NULL MariaDB
 			if ($dbg) echo "$line_cnt: '$line'\n";
 			$qres = $sqlps->execute(array($line_time, $line));
 			if ($qres == false) {	// Write failed
