@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.65 (24.05.2024)";
+var prgVersion = "V0.66 (06.09.2024)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -114,77 +114,77 @@ var cklUserRoles = [ // Place for Options
 var cklMaskRoles = 0x70F; // Invisibles
 
 var cklHKFlags = [{
-		typ: "HK Battery"
-	},
-	{
-		typ: "HK Temperature"
-	},
-	{
-		typ: "HK Humidity"
-	},
-	{
-		typ: "HK Percent"
-	},
-	{
-		typ: "HK Baro"
-	},
+	typ: "HK Battery"
+},
+{
+	typ: "HK Temperature"
+},
+{
+	typ: "HK Humidity"
+},
+{
+	typ: "HK Percent"
+},
+{
+	typ: "HK Baro"
+},
 ];
 
 var cklActionFlags = [{
-		typ: "Record ON"
-	},
-	{
-		typ: "Value from Cache",
-		class: "jo-parsec"
-	}, // secondary Parameter
-	{
-		typ: "Check Alarms"
-	},
+	typ: "Record ON"
+},
+{
+	typ: "Value from Cache",
+	class: "jo-parsec"
+}, // secondary Parameter
+{
+	typ: "Check Alarms"
+},
 ];
 
 var cklRecFlags = [{
-		typ: "Record ON"
-	},
-	{
-		typ: "Ring Memory (recommended)",
-		class: "jo-parsec"
-	},
+	typ: "Record ON"
+},
+{
+	typ: "Ring Memory (recommended)",
+	class: "jo-parsec"
+},
 ];
 
 var optEdBatt = [{
-		opt: "Not watched"
-	},
-	{
-		opt: "&lt 25%"
-	},
-	{
-		opt: "&lt 50%"
-	},
+	opt: "Not watched"
+},
+{
+	opt: "&lt 25%"
+},
+{
+	opt: "&lt 50%"
+},
 ];
 
 var optNetModes = [{
-		opt: "Net OFF (!)"
-	},
-	{
-		opt: "ON only for Transfer"
-	},
-	{
-		opt: "Smart ON/OFF"
-	},
-	{
-		opt: "Stay ONLINE"
-	},
+	opt: "Net OFF (!)"
+},
+{
+	opt: "ON only for Transfer"
+},
+{
+	opt: "Smart ON/OFF"
+},
+{
+	opt: "Stay ONLINE"
+},
 ];
 
 var optErrorPolicy = [{
-		opt: "Off (No Retries)"
-	},
-	{
-		opt: "Retries for ALARMS)"
-	},
-	{
-		opt: "Retries for All"
-	},
+	opt: "Off (No Retries)"
+},
+{
+	opt: "Retries for ALARMS)"
+},
+{
+	opt: "Retries for All"
+},
 ];
 
 // --- Functions -----------
@@ -541,7 +541,7 @@ function user_poll(jcmd) {
 		var latency = parseFloat(data.status.substr(data.status.indexOf("(") + 1));
 		console.log("Latency: " + latency); // <-- LATENCY
 		// --Updates--
-		if(data.dbnow != undefined) lastSeenTimestamp = parseInt(data.dbnow); // UNIX Time of Database
+		if (data.dbnow != undefined) lastSeenTimestamp = parseInt(data.dbnow); // UNIX Time of Database
 		lastSyncTimestamp = Date.now(); // Fuer Sync
 		deltaLastSync = 0;
 
@@ -627,7 +627,7 @@ function user_poll(jcmd) {
 							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; Raw Data</b></a>";
 						gpsinfo += "<a class='jo-mac' href='../legacy/device_lx.php?s=" + adev.mac +
 							"' target='_blank'><b><i class='fas fa-file w3-text-blue'></i>&nbsp; Legacy Data</b></a>";
-														
+
 					}
 
 					hstr += " Age:&nbsp;<span id='devLiCon" + i + "'></span>" +
@@ -666,7 +666,7 @@ function user_poll(jcmd) {
 				adev.timeout_warn = parseInt(adev.timeout_warn);
 				adev.timeout_alarm = parseInt(adev.timeout_alarm);
 				adev.last_seen_ux = Math.floor(Date.parse(adev.last_seen + " GMT") / 1000); // DB is UTC
-								
+
 
 				deviceWList[idx] = adev;
 				// new Lines
@@ -1103,7 +1103,7 @@ function infoPosUpdateSelect() { // Update Type of Pos.Selection
 function infoEstimatePos() {
 	document.getElementById("infoCellular").innerHTML = ""
 
-	if(cellObj == undefined) return
+	if (cellObj == undefined) return
 	// If cached Data: use
 	if (cellObj.eRad != undefined && cellObj.eLat != undefined && cellObj.eLon != undefined) {
 		document.getElementById("infoAccuracy").value = cellObj.eRad;
@@ -1215,13 +1215,13 @@ function edInfoFill() {
 		infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
 		infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
 		infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b>, Push: <b>"
-		if(infoObj.quotap !==undefined && infoObj.quotap.length>0) infoStr += "'"+ infoObj.quotap+"'"
+		if (infoObj.quotap !== undefined && infoObj.quotap.length > 0) infoStr += "'" + infoObj.quotap + "'"
 		else infoStr += "(NOT SET)"
 		infoStr += "</b></div>";
 
 		infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 		var fw_cookieStr;
-		if(infoObj.fw_cookie !== undefined){
+		if (infoObj.fw_cookie !== undefined) {
 			var fw_csec = parseInt(infoObj.fw_cookie)
 			if (fw_csec < 1526030617 || fw_csec > 0xF0000000) fw_cookieStr = "<span class='w3-yellow'>WARNING: Bootloader Release unknown!</span>";
 			else {
@@ -1237,7 +1237,7 @@ function edInfoFill() {
 			infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 		}
 		infoStr += "</div>";
-		
+
 		document.getElementById("infoInfo").innerHTML = infoInfo;
 		document.getElementById("infoDetailsContent").innerHTML = infoStr;
 
@@ -1500,12 +1500,14 @@ function edParamFormFill() { // Fill Parameters with act. chan
 
 	// Inputs
 	document.getElementById("parName").value = editDeviceParam[5];
-	document.getElementById("parPeriodMeasure").value = editDeviceParam[6];
-	document.getElementById("parPeriodOffset").value = editDeviceParam[7];
-	document.getElementById("parPeriodAlarm").value = editDeviceParam[8];
+
+	setPeriodUnit("parPeriodMeasure", "unitPeriodMeasure", editDeviceParam[6])	// Neu
+	setPeriodUnit("parPeriodOffset", "unitPeriodOffset", editDeviceParam[7])
+	setPeriodUnit("parPeriodAlarm", "unitPeriodAlarm", editDeviceParam[8])
+	setPeriodUnit("parPeriodInternet" ,"unitPeriodInternet", editDeviceParam[9])
+	setPeriodUnit("parPeriodInternetAlarm", "unitPeriodInternetAlarm", editDeviceParam[10])
+
 	document.getElementById("parUTCOffset").value = editDeviceParam[11];
-	document.getElementById("parPeriodInternet").value = editDeviceParam[9];
-	document.getElementById("parPeriodInternetAlarm").value = editDeviceParam[10];
 
 	generate_checks("divRecFlags", cklRecFlags, editDeviceParam[12], 0xFF, 0); // 3 is Mask
 	generate_checks("divHKFlags", cklHKFlags, editDeviceParam[13], editDeviceParam[3], 0); // 3 is Mask
@@ -1518,8 +1520,8 @@ function edParamFormFill() { // Fill Parameters with act. chan
 	document.getElementById("parConfig0").value = editDeviceParam[18];
 
 	// Zusatzparameter 
-	document.getElementById("parCmdConfig").value = (editIndexChan0>19)?editDeviceParam[19]:''
-	
+	document.getElementById("parCmdConfig").value = (editIndexChan0 > 19) ? editDeviceParam[19] : ''
+
 	edParamChanUpDownloc(0);
 }
 // Get Parameters from MAIN-Part
@@ -1528,32 +1530,41 @@ function editParamMainGet() {
 	getv = $("#parName").val()
 	editDeviceParam[5] = getv.replace("@", "?").replace("#", "?")
 
-	getv = $("#parPeriodMeasure").val();
+	getv = getPeriodUnit("parPeriodMeasure", "unitPeriodMeasure") // Neu
 	if (getv < 60) {
-		ownAlert("ERROR:", "Measure Period >= 60 s");
+		ownAlert("ERROR:", "Measure Period >= 60 sec");
+		return false;
+	} else if (getv > 86400) {
+		ownAlert("ERROR:", "Measure Period <= 12 hr");
 		return false;
 	}
 	editDeviceParam[6] = getv; // Period
 
-	getv = $("#parPeriodOffset").val();
-	if (getv >= parseInt(editDeviceParam[6])) {
+	getv = getPeriodUnit("parPeriodOffset", "unitPeriodOffset")
+	if (getv < 0) {
+		ownAlert("ERROR:", "Period Offset < 0");
+		return false;
+	} else if (getv >= parseInt(editDeviceParam[6])) {
 		ownAlert("ERROR:", "Period Offset >= Period");
 		return false;
 	}
 	editDeviceParam[7] = getv; // PeriodOffset
 
-	getv = $("#parPeriodAlarm").val();
-	if (getv != 0 && getv > parseInt(editDeviceParam[6])) {
+	getv = getPeriodUnit("parPeriodAlarm", "unitPeriodAlarm")
+	if (getv < 0) {
+		ownAlert("ERROR:", "Alarm Period < 0");
+		return false;
+	} else if (getv != 0 && getv > parseInt(editDeviceParam[6])) {
 		ownAlert("ERROR:", "Alarm Period > Period");
 		return false;
 	}
 	editDeviceParam[8] = getv; // AlarmPeriod
 
-	getv = $("#parUTCOffset").val();
-	editDeviceParam[11] = getv; // UTC Offset
-
-	getv = $("#parPeriodInternet").val();
-	if (getv != 0 && getv < parseInt(editDeviceParam[6])) {
+	getv = getPeriodUnit("parPeriodInternet", "unitPeriodInternet")
+	if (getv < 0) {
+		ownAlert("ERROR:", "Internet Period < 0");
+		return false;
+	} else if (getv != 0 && getv < parseInt(editDeviceParam[6])) {
 		ownAlert("ERROR:", "Internet Period < Period");
 		return false;
 	} else if (getv != 0 && getv < 3600) {
@@ -1561,8 +1572,11 @@ function editParamMainGet() {
 	}
 	editDeviceParam[9] = getv;
 
-	getv = $("#parPeriodInternetAlarm").val();
-	if (getv != 0 && getv < parseInt(editDeviceParam[8])) {
+	getv = getPeriodUnit("parPeriodInternetAlarm", "unitPeriodInternetAlarm")
+	if (getv < 0) {
+		ownAlert("ERROR:", "Internet Alarm Period < 0");
+		return false;
+	} else if (getv != 0 && getv < parseInt(editDeviceParam[8])) {
 		ownAlert("ERROR:", "Internet Alarm Period < Alarm Period");
 		return false;
 	} else if (getv != 0 && getv > parseInt(editDeviceParam[9])) {
@@ -1572,6 +1586,9 @@ function editParamMainGet() {
 		ownAlert("Info:", "Fast Internet Alarm Period (" + getv + "s) OK? See Manual for Battery Live.");
 	}
 	editDeviceParam[10] = getv;
+
+	getv = $("#parUTCOffset").val();
+	editDeviceParam[11] = getv; // UTC Offset
 
 	getv = eval_checks("divRecFlags");
 	if (!getv) {
@@ -1601,7 +1618,7 @@ function editParamMainGet() {
 	getv = $("#parConfig0").val();
 	editDeviceParam[18] = getv;
 
-	if(editIndexChan0>19){	// Zusatzparameter NUR bei Bedarf uebernehmen
+	if (editIndexChan0 > 19) {	// Zusatzparameter NUR bei Bedarf uebernehmen
 		getv = $("#parCmdConfig").val();
 		editDeviceParam[19] = getv.replace("@", "?").replace("#", "?")
 	}
@@ -1736,6 +1753,30 @@ function editParameterSubmit() {
 		}
 	}
 }
+
+// Setzen eines Zeit/Einheit-Blocks
+function setPeriodUnit(idval, idunit, secval) {
+	let unitIdx = 0
+	let valVal = secval
+	if (secval % 3600 == 0) {
+		valVal = secval / 3600
+		unitIdx = 2
+	} else if (valVal % 60 == 0) {
+		valVal = secval / 60
+		unitIdx = 1
+	}
+	document.getElementById(idval).value = valVal
+	document.getElementById(idunit).selectedIndex = unitIdx
+}
+// Setzen lesen Zeit/Einheit-Blocks mit Range-Check - MUSS string zurueckgeben
+function getPeriodUnit(idval, idunit) {
+	let unitIdx = document.getElementById(idunit).selectedIndex
+	let valVal = document.getElementById(idval).value
+	if (unitIdx == 1) valVal *= 60
+	else if (unitIdx == 2) valVal *= 3600
+	return valVal.toString();
+}
+
 
 function editParamCallback() {
 	editOrgDeviceParam = [];
