@@ -11,6 +11,7 @@
 	<link rel="stylesheet" href="fontawesome/css/all.min.css">
 	<script src="jquery/jquery.min.js"></script>
 	<script src="js/intern_main.js"></script>
+	<script src="js/intmain_i18n.js"></script>
 	<script>
 		if (typeof $ === 'undefined') {
 			alert("ERROR: Missing Scripts!");
@@ -26,8 +27,8 @@
 	<div id="versInfo" class="jo-versinfo">Va.b (x.m.yyyy)</div>
 
 	<!-- Top container with Menu on small screens -->
-	<div id="topBar" title="Show Menue" class="w3-bar w3-dark-grey" style="position: sticky; top: 0; z-index:4">
-		<button class="w3-bar-item w3-button w3-hide-large" onclick="w3_open();"><i class="fas fa-bars"></i></button>
+	<div id="topBar" class="w3-bar w3-dark-grey" style="position: sticky; top: 0; z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large" onclick="w3_open()"><i class="fas fa-bars"></i></button>
 
 		<a title="Top of Page" href="#" class="w3-bar-item w3-button "><i class="fas fa-home"></i></a>
 		<a title="End of Page" href="#page_end" class="w3-bar-item w3-button"><i
@@ -39,6 +40,13 @@
 					class="fas fa-bell"></i>
 				<span id="globalBell" class="w3-badge">0</span>
 			</button>
+
+			<select title="Language" id="idLang" class="w3-bar-item w3-button w3-dark-grey" style="padding: 10px;"
+				onchange="changedLanguage()">
+				<option>EN</option>
+				<option>DE</option>
+			</select>
+
 			<span id="userNameTitle" title="User Name" class="w3-bar-item w3-blue jo-hide-small">(unknown)</span>
 			<a href="login.php?a=logout" class="w3-bar-item w3-button" title="Logout"><i
 					class="fas fa-sign-out-alt"></i></a>
@@ -50,8 +58,9 @@
 
 		<div class="w3-container w3-row">
 			<div class="w3-col w3-bar">
-				<h3> Hello <span id="userNameNav" class="w3-blue w3-padding-small">(unknown)</span></h3>
-				Welcome to LTX1!<br>
+				<h3> <span ll="hello">Hello</span> <span id="userNameNav"
+						class="w3-blue w3-padding-small">(unknown)</span></h3>
+				<span ll="welcome">Welcome to LTX!</span><br>
 				<span id="welcomeInfo"></span>
 			</div>
 		</div>
@@ -59,7 +68,7 @@
 		<hr>
 
 		<div class="w3-container w3-grey">
-			<h6>Menue</h6>
+			<h6 ll="menue">Menue</h6>
 		</div>
 
 
@@ -70,29 +79,22 @@
 				onclick="w3_close()" title="close menu"><i class="fas fa-times fa-fw"></i> Close Menue</button>
 
 			<!-- Admin parts disabled by default -->
-			<button class="sadmin w3-bar-item w3-button w3-padding" style="display: none" onclick="legacyMainShow()"><i
-					class="fas fa-user-circle fa-fw w3-text-blue"></i> Legacy
-				Admin...</button>
+			<button class="sadmin w3-bar-item w3-button w3-padding" style="display: none" onclick="legacyMainShow()">
+				<i	class="fas fa-user-circle fa-fw w3-text-blue"></i> Legacy	Admin...</button>
 
-			<button class="w3-bar-item w3-button w3-padding" onclick="editUserShow()"><i
-					class="fas fa-user fa-fw w3-text-blue"></i> User
-				Profile</button>
-			<button class="cadmin w3-bar-item w3-button w3-padding" onclick="addDevice(0)"><i
-					class="fas fa-file-medical fa-fw w3-text-green"></i>
-				Add own Device</button>
-			<button class="cadmin w3-bar-item w3-button w3-padding" onclick="addDevice(1)"><i
-					class="fas fa-file-medical fa-fw w3-text-orange"></i>
-				Add Guest Device</button>
-			<button class="cadmin w3-bar-item w3-button w3-padding" onclick="removeDevice()"><i
-					class="fas fa-trash-alt fa-fw"></i>
-				Remove Device</button>
+			<button class="w3-bar-item w3-button w3-padding" onclick="editUserShow()">
+				<i	class="fas fa-user fa-fw w3-text-blue"></i> 
+				<span ll="userprofile">User Profile</span></button>
+			<button class="cadmin w3-bar-item w3-button w3-padding" onclick="addDevice(0)">
+				<i 	class="fas fa-file-medical fa-fw w3-text-green"></i>
+				<span ll="addowndevice">Add own Device</span></button>
+			<button class="cadmin w3-bar-item w3-button w3-padding" onclick="addDevice(1)">
+				<i		class="fas fa-file-medical fa-fw w3-text-orange"></i>
+				<span ll="addguestdevice">Add Guest Device</span></button>
+			<button class="cadmin w3-bar-item w3-button w3-padding" onclick="removeDevice()">
+				<i	class="fas fa-trash-alt fa-fw"></i>
+				<span ll="removedevice">Remove Device</span></button>
 			<hr>
-			<!--
-	<button class="w3-bar-item w3-button w3-padding" onclick="new_view()"><b>Fenster</b></button>
-	<button class="w3-bar-item w3-button w3-padding" onclick="ownAlert('ALARM!','Test-Alarm-Box',undefined,10)"><b>Alert</b></button>
-	<button class="w3-bar-item w3-button w3-padding" onclick="test()"><b>Test</b></button>
-	<button class="w3-bar-item w3-button w3-padding" onclick="modal_show('modalEditParameter')"><b>Parameter</b></button>
--->
 
 		</div>
 	</nav>
@@ -185,7 +187,7 @@
 				<span class="w3-button w3-display-topright w3-light-gray"
 					onclick="modal_close('modalEditUser')"><b>X</b></span>
 
-				<h2>User Profile</h2>
+				<h2 ll="userprofile">User Profile</h2>
 				<p>Edit your Profile</p>
 				<form id="editUserForm">
 					<!-- = Callback-->
@@ -640,7 +642,7 @@
 		<!-- Log-Infos as list Item with optional Color -->
 		<div class="w3-container" style="padding-top:22px">
 			<header>
-				<h5><b><i class="fas fa-info-circle fa-fw"></i> Infos</b>
+				<h5><b><i class="fas fa-info-circle fa-fw"></i> <span ll="infos">Infos</span></b>
 					<span class="w3-right w3-button w3-small" title="Remove all Infos"
 						onclick="$('#loglist').empty()"><b>X</b></span>
 				</h5>
@@ -656,7 +658,8 @@
 			<hr>
 			<header>
 				<h5>
-					<b><i class="fas fa-file-alt fa-fw"></i> Devices <span id="noOfDevices">(?)</span>
+					<b><i class="fas fa-file-alt fa-fw"></i> <span ll="devices">Devices</span> <span
+							id="noOfDevices">(?)</span>
 					</b> <span class="w3-small">Sync:&nbsp;<span id="sync"></span></span>
 					<span class="w3-right w3-button w3-small" title="Unfold/Fold all Devices" onclick="expandDevices()">
 						<i class="fas fa-ellipsis-v"></i></span></b>
