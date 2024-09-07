@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.66 (06.09.2024)";
+var prgVersion = "V0.67 (09.09.2024)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -554,10 +554,10 @@ function user_poll(jcmd) {
 				userID = data.user_id;
 				var info = document.getElementById("welcomeInfo");
 				if (!(userRole & 32768)) { // Demo
-					info.innerHTML = "<b>&nbsp;* Limited Rights *&nbsp;</b>";
+					info.innerHTML = "<b>&nbsp;* "+ll('limitedrights')+" *&nbsp;</b>";
 					info.style.background = 'yellow';
 				} else if (userRole & 65536) { // ADMIN
-					info.innerHTML = "<b>&nbsp;* Administrator Rights*&nbsp;</b>";
+					info.innerHTML = "<b>&nbsp;* "+ll('adminrights')+"*&nbsp;</b>";
 					info.style.background = 'red';
 					$(".cadmin").css("display", "none"); // Disable Normal user items
 					$(".sadmin").css("display", "block"); // Only Main User
@@ -615,10 +615,10 @@ function user_poll(jcmd) {
 					if ((adev.units !== null && adev.units.includes(":Lat") && adev.units.includes(":Lng")) || (adev.posflags > 0)) {
 						if (isguest) { // Access with token
 							gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000&k=" + adev.token +
-								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; Position View</b></a>";
+								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; "+ll('positionview')+"</b></a>";
 						} else {
 							gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000" +
-								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; Position View</b></a>";
+								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; "+ll('positionview')+"</b></a>";
 						}
 					}
 					if (userRole & 65536) {
@@ -630,7 +630,7 @@ function user_poll(jcmd) {
 
 					}
 
-					hstr += " Age:&nbsp;<span id='devLiCon" + i + "'></span>" +
+					hstr += " "+ll('age')+":&nbsp;<span id='devLiCon" + i + "'></span>" +
 						'<span onclick="macShowDetails(' + i +
 						')" class="w3-button w3-display-topright w3-light-gray"><i class="fas fa-ellipsis-v"></i></span>' + gpsinfo +
 						'</div><div style="display: none" id="devLiDet' +
@@ -679,7 +679,7 @@ function user_poll(jcmd) {
 						cont += " '" + adev.name + "'";
 					}
 
-					cont += ": New&nbsp;Lines&nbsp;Data:&nbsp;" + nlc;
+					cont += ": New&nbsp;"+ll('linesdata')+":&nbsp;" + nlc;
 					var ccol = "w3-white"; // Default white
 					if (adev.warnings_cnt) {
 						cont += ", Warnings:&nbsp;" + adev.warnings_cnt;
@@ -863,7 +863,7 @@ function generateDetails(idx) {
 	var lalarm = adev.alarms_cnt;
 
 	//var hdr="<span>"+adev.lines_cnt+"&nbsp;Total&nbsp;Lines&nbsp;Data</span>&nbsp;";
-	var hdr = "<span>" + adev.anz_lines + "&nbsp;Lines&nbsp;Data</span>&nbsp;";
+	var hdr = "<span>" + adev.anz_lines + "&nbsp;"+ll('linesdata')+"</span>&nbsp;";
 
 	if (lwarn) {
 		if (adev.role & 2) hdr += " <button onclick='removeWarnings(" + idx + ")' class='w3-button w3-padding-small'>Warnings:<span class='w3-yellow w3-badge'>" + lwarn + "</span></button>";
@@ -887,7 +887,7 @@ function generateDetails(idx) {
 		footer += "</b></a></div>";
 	}
 
-	if (deviceXList[idx].isguest) hdr += " <span class='w3-text-orange'>(Guest&nbsp;Device)</span>";
+	if (deviceXList[idx].isguest) hdr += " <span class='w3-text-orange'>("+ll('guestdevice')+")</span>";
 
 	if (adev.role & 1024) footer += "<div><button onclick='editDeviceDetails(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-globe fa-fw w3-text-green'></i>Server</button>";
 	if (adev.role & 512) footer += "<button onclick='editDeviceParameter(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-cog fa-fw w3-text-blue'></i>Hardware</button>";
@@ -1838,7 +1838,7 @@ function edDeviceFormFill() { // And initialise NULL elements
 		"</div>";
 
 	if (isguest) {
-		devinf = "<div class='w3-text-orange'>(Guest Device)</div>" + devinf;
+		devinf = "<div class='w3-text-orange'>("+ll('guestdevice')+")</div>" + devinf;
 	}
 	document.getElementById("edInfo").innerHTML = devinf;
 
@@ -2039,6 +2039,47 @@ function legacyMainShow() { // SpringInLLegacy
 	window.open('../legacy/index.php', '_blank');
 }
 
+// Language changed lng2l holds 2-letter Code 
+function changedLanguage(){
+	const langsel = document.getElementById("idLang")
+	const lng2l = langsel.options[langsel.selectedIndex].text;
+	setCookie("UILanguage", lng2l, 10000) 
+	i18localize(lng2l)
+}
+// Set Languag in 2 letter code. Not existing languages are ignored
+function setLanguage(lng2l){
+	const langsel = document.getElementById("idLang")
+	for (var i = 0; i < langsel.options.length; i++){
+		if(langsel.options[i].text == lng2l) langsel.options[i].selected = true
+	}
+	i18localize(lng2l)
+}
+
+// --- Cookies ---
+// name = value fuer exdays tage
+function setCookie(cname, cvalue, exdays) {
+	const d = new Date();
+	d.setTime(d.getTime() + (exdays*24*60*60*1000));
+	let expires = "expires="+ d.toUTCString();
+	document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/"; // 'path' required
+}
+// Get Cookie value for cname. If noz found: undefined, else String
+function getCookie(cname){
+	let name = cname + "=";
+	let decodedCookie = decodeURIComponent(document.cookie);
+	let ca = decodedCookie.split(';');
+	for(let i = 0; i <ca.length; i++) {
+	  let c = ca[i];
+	  while (c.charAt(0) == ' ') {
+		c = c.substring(1);
+	  }
+	  if (c.indexOf(name) == 0) {
+		return c.substring(name.length, c.length);
+	  }
+	}
+	return undefined;
+}
+
 
 //------ Test ------
 function test() {
@@ -2052,12 +2093,16 @@ function test() {
 } */
 
 function initScripts() {
-	document.getElementById("versInfo").innerText = prgVersion;
-
 	if (location.protocol != "https:" && location.hostname != "localhost") {
 		window.location.assign("login.php");
 		return;
 	}
+
+	document.getElementById("versInfo").innerText = prgVersion;
+
+	// Default Language set from cookie
+	const uiLang = getCookie("UILanguage")
+	if(uiLang != undefined) setLanguage(uiLang)
 
 	$.ajaxSetup({
 		type: 'POST',
