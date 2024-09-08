@@ -1,29 +1,32 @@
 /* Minimalistische Internationalisierung, aehnlich i18n - (C) JoEmbedded.de
-Fuer Details siehe JoEmDash. Dies hier ist nur ein elokale Variante ohne exports
+Fuer Details siehe JoEmDash. Dies hier ist nur eine lokale Variante ohne exports
 
 Es gibt 2 Moeglichkeiten Texte zu uebersetzen:
-1.) Eintrag 'll' in div/span oder irgendenen anderen HTML-Tag setzen
+1a.) Attribut 'll' in div/span oder irgendenen anderen HTML-Tag setzen
   z.B. <span ll="welcome">(Welcome to LTX!)</span> wuerde dann den innerHTML durch 'Welcom...'/'Willkommen...' ersetzen
+
+1b.) Attribut 'llt' in einem Tag setzt nur den 'title', sonst nix.
 
 2.) Per Funktion ll(), z.B.  ll('driverversions') dynamisch generiet (via JS)
 
 Wichtig: Die dynamischen Texte werden erst beim Seitenupdate aktualisiert.
-DIe Üebersetzungstabelle ist aber fuer beide Mglk. verwendbar.
+Die Üebersetzungstabelle ist aber fuer beide Mglk. verwendbar.
+Es ist möglich, keys auch mehrfach zu verwenden (quasi mixed), dann in Teil 1 eintragen.
 
 Die Anzahl der extern verfuegbaren Sprachen in i18_availLang = [] eintragen
 */
 
   // Locale translations. Sucht alle Elemente mit Attribut ll='ident' mit "ident":"Inhalt" , auch in Bloecken
-  const version = 'V0.15 / 01.03.2024' // global
+  const version = 'V0.16 / 08.09.2024' // global
   // List of available Languages (CaseIndependent):
-  const i18_availLang = ['EN - English', 'DE - Deutsch']    // global- 
+  const i18_availLang = ['EN - English', 'DE - Deutsch']    // global - evtl. zum Fuellen eines select verwenden
   const i18_defaultLang = 'en'   // Fallback/Default (Lowercase)
   let i18_currentLang = 'en' // (Lowercase)
 
   const translations = {
     // EN
     en: {
-      // Teil 1: JS-generierte Texte ll('key')
+      // Teil 1: JS-generierte Texte ll('key') und mixed
       "adminrights": "Administrator Rights",
       "limitedrights": "Limited Rights",
       "positionview": "Position View",
@@ -41,6 +44,11 @@ Die Anzahl der extern verfuegbaren Sprachen in i18_availLang = [] eintragen
       "addowndevice": "Add own Device",
       "addguestdevice": "Add Guest Device",
       "removedevice": "Remove Device",
+
+      // Teil 3: Title-Tags llt='key'
+      "topofpage": "Top of Page",
+      "endofpage": "End of Page",
+      "unfolddeviceswithmsgs": "Unfold all Devices with Messages",
     },
 
     // DE
@@ -63,6 +71,12 @@ Die Anzahl der extern verfuegbaren Sprachen in i18_availLang = [] eintragen
       "addowndevice": "Eigenes Gerät hinzufügen",
       "addguestdevice": "Gast-Gerät hinzufügen",
       "removedevice": "Gerät entfernen",
+
+      // Teil 3
+      "topofpage": "Seitenanfang",
+      "endofpage": "Seitenende",
+      "unfolddeviceswithmsgs": "Alle Geräte mit Nachrichten aufklappen",
+
     },
   }
 
@@ -70,7 +84,7 @@ Die Anzahl der extern verfuegbaren Sprachen in i18_availLang = [] eintragen
 function ll(txt){
   const nc = translations[i18_currentLang][txt] // Preset Texts
   if(nc !== undefined) return nc
-  console.log(`ll('${i18_currentLang}:${txt}') not found!`)
+  console.warn(`i18: ll('${i18_currentLang}:${txt}') not found!`)
   return `(??? ${i18_currentLang}:'${txt}')` // NOT FOUND
 }
 
@@ -87,17 +101,25 @@ function i18localize(newLang) {
     console.warn(`i18: New Language:'${newLang}' not found, Fallback:'${pageLang}'`)
   }
 
-  const elements = document.querySelectorAll('[ll]')
   const lnga= translations[pageLang] // Preset Texts
-
+  let elements = document.querySelectorAll('[ll]')
   elements.forEach((element) => {
     const key = element.getAttribute('ll')
     const nc = lnga[key] // Preset Texts
-     //console.log(key,nc) // Dbg - gibt alle key-values aus
+    //console.log('i18: ll',key,nc) // Dbg - gibt alle key-values aus
     if(nc !== undefined) element.innerHTML = nc
-    else console.warn(`i18n.js: Key:'${key}', Language:'${pageLang}' not found!`)
+    else console.warn(`i18: ll('${key}'), Language:'${pageLang}': not found!`)
   })
-  const htmlElement = document.querySelector('html')
+  elements = document.querySelectorAll('[llt]')
+  elements.forEach((element) => {
+    const key = element.getAttribute('llt')
+    const nc = lnga[key] // Preset Texts
+    //console.log('i18: llt',key,nc) // Dbg - gibt alle key-values aus
+    if(nc !== undefined) element.setAttribute('title',nc)
+    else console.warn(`i18: llt('${key}'), Language:'${pageLang}': not found!`)
+  })
+
+  const htmlElement = document.querySelector('html') // Fuer Uebersetzentools
   htmlElement.setAttribute('lang', pageLang)
   i18_currentLang = pageLang
 }
