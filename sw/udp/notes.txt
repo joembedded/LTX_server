@@ -1,3 +1,5 @@
+# INFO: *** UDP Support only experimental (07/2024) ***
+
 # For Server joembedded.eu:
 # =========================
 
