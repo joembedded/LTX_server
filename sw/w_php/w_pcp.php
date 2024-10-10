@@ -62,7 +62,7 @@ http://localhost/ltx/sw/w_php/w_pcp.php?s=26FEA299F444F836&k=ABC&cmd=iparamunpen
  * ...
  */
 
-define('VERSION', "LTX V1.11 14.01.2024");
+define('VERSION', "LTX V1.12 16.09.2024");
 
 error_reporting(E_ALL);
 ini_set("display_errors", true);
@@ -110,6 +110,7 @@ $p100beschr = array( // SIZE der gemeinsamen Parameter hat MINIMALE Groesse
 	"MinTemp_oC[-40..10]",
 	"Config0_U31 (B0:OffPer.Inet:On/Off B1,2:BLE:On/Mo/Li/MoLi B3:EnDS B4:CE:Off/On B5:Live:Off/On)",
 	"Configuration_Command[$79]",	
+	"UTC_starttime_sec[UTC_secs]",	
 );
 $pkanbeschr = array( // SIZE eines Kanals ist absolut FIX
 	"*@ChanNo",  // (*) Neue Kanaele dazufuegen ist erlaubt, sofer aufsteigend und komplett
@@ -414,7 +415,7 @@ try {
 					}
 					$ridx = 0;
 				}
-				$info = $infoarr[$ridx] . " ($erkl, Line $lcnt)"; // Juer jede Zeile: Erklaere Bedeutung
+				$info = @$infoarr[$ridx] . " ($erkl, Line $lcnt)"; // Juer jede Zeile: Erklaere Bedeutung
 				$vkarr[] = array('line' => $p, 'info' => $info); // Line, Value, Text
 				$ridx++;
 				$lcnt++;
