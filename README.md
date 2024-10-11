@@ -83,3 +83,4 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.31 13.05.2024 Drivers for SWARM (product shut down) and ASTROCAST removed
 - V2.32 24.05.2024 Added drivers form ORBCOMM IGWS2 (INMARSAT)
 - V2.33 09.09.2024 Selectable sec/min/hr and startet internationalisation in UI
+- V2.50 11.10.2024 Added German/Englisch translations for 'intern_main.html'
