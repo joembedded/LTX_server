@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.67 (09.09.2024)";
+var prgVersion = "V0.68 (11.10.2024)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -78,112 +78,144 @@ var clearIdx; // Zu loeschendes Device
 
 var cklUserRoles = [ // Place for Options 
 	{
-		typ: "Reset Alarms"
+		typ: "Reset Alarms",
+		ll: "resetalarms"
 	},
 	{
-		typ: "Reset Warnings"
+		typ: "Reset Warnings",
+		ll: "resetwarnings"
 	},
 	{
-		typ: "Reset Errors"
+		typ: "Reset Errors",
+		ll: "reseterrors"
 	},
 	{
-		typ: "Start New Measure"
+		typ: "Start New Measure",
+		ll: "newmeasure"
 	},
 	{
-		typ: "16"
+		typ: "16",
+		ll: "checkbox16"
 	},
 	{
-		typ: "32"
+		typ: "32",
+		ll: "checkbox32"
 	},
 	{
-		typ: "64"
+		typ: "64",
+		ll: "checkbox64"
 	},
 	{
-		typ: "128"
+		typ: "128",
+		ll: "checkbox128"
 	},
 	{
-		typ: "Access 'Details'"
+		typ: "Access 'Details'",
+		ll: "accessdetails"
+
 	},
 	{
-		typ: "Access 'Hardware'"
+		typ: "Access 'Hardware'",
+		ll: "accesshardware"
 	},
 	{
-		typ: "Access 'Server'"
+		typ: "Access 'Server'",
+		ll: "accessserver"
 	},
 ];
 var cklMaskRoles = 0x70F; // Invisibles
 
 var cklHKFlags = [{
-	typ: "HK Battery"
+	typ: "HK Battery",
+	ll: "hkbattery"
 },
 {
-	typ: "HK Temperature"
+	typ: "HK Temperature",
+	ll: "hktemperature"
 },
 {
-	typ: "HK Humidity"
+	typ: "HK Humidity",
+	ll: "hkhumidity"
 },
 {
-	typ: "HK Percent"
+	typ: "HK Percent",
+	ll: "hkpercent"
 },
 {
-	typ: "HK Baro"
+	typ: "HK Baro",
+	ll: "hkbaro"
 },
 ];
 
 var cklActionFlags = [{
-	typ: "Record ON"
+	typ: "Record ON",
+	ll: "recordon"
 },
 {
 	typ: "Value from Cache",
-	class: "jo-parsec"
+	class: "jo-parsec",
+	ll: "valuecache"
 }, // secondary Parameter
 {
-	typ: "Check Alarms"
+	typ: "Check Alarms",
+	ll: "checkalarms"
 },
 ];
 
 var cklRecFlags = [{
-	typ: "Record ON"
+	typ: "Record ON",
+	ll: "recordon"
 },
 {
 	typ: "Ring Memory (recommended)",
-	class: "jo-parsec"
+	class: "jo-parsec",
+	ll: "ringmemory"
 },
 ];
 
 var optEdBatt = [{
-	opt: "Not watched"
+	opt: "Not watched",
+	ll: "notwatched"
 },
 {
-	opt: "&lt 25%"
+	opt: "&lt 25%",
+	ll: "battery25p"
 },
 {
-	opt: "&lt 50%"
+	opt: "&lt 50%",
+	ll: "battery50p"
 },
 ];
 
 var optNetModes = [{
-	opt: "Net OFF (!)"
+	opt: "Net OFF (!)",
+	ll: "netoff"
 },
 {
-	opt: "ON only for Transfer"
+	opt: "ON only for Transfer",
+	ll: "nettransfer"
 },
 {
-	opt: "Smart ON/OFF"
+	opt: "Smart ON/OFF",
+	ll: "netsmart"
 },
 {
-	opt: "Stay ONLINE"
+	opt: "Stay ONLINE",
+	ll: "netonline"
 },
 ];
 
 var optErrorPolicy = [{
-	opt: "Off (No Retries)"
+	opt: "Off (No Retries)",
+	ll: "retryoff"
 },
 {
-	opt: "Retries for ALARMS)"
+	opt: "Retries for ALARMS",
+	ll: "retryforalarms"
 },
 {
-	opt: "Retries for All"
+	opt: "Retries for All",
+	ll: "retryforall"
 },
 ];
 
@@ -199,7 +231,11 @@ function generate_checks(tdiv, tsrc, tist, tmask, tdis) {
 			cbs += "><input class='w3-check' type='checkbox' value='" + tm + "'";
 			if (tist & tm) cbs += " checked";
 			if (tdis & tm) cbs += " disabled";
-			cbs += ">" + tsrc[i].typ + "<br></span>";
+			if (tsrc[i].ll !== undefined){
+				cbs += ">&nbsp;" + ll(tsrc[i].ll) + "<br></span>";
+			}else{
+				cbs += ">&nbsp;" + tsrc[i].typ + "<br></span>";
+			}
 		}
 		tm <<= 1;
 	}
@@ -220,7 +256,11 @@ function generate_drops(tdiv, tsrc, tist) {
 	var sel = document.getElementById(tdiv);
 	var cbs = "";
 	for (var i = 0; i < tsrc.length; i++) {
-		cbs += "<option value='" + i + "'>" + tsrc[i].opt + "</option>";
+		if (tsrc[i].ll !== undefined){
+			cbs += "<option value='" + i + "'>" + ll(tsrc[i].ll) + "</option>";
+		}else{
+			cbs += "<option value='" + i + "'>" + tsrc[i].opt + "</option>";
+		}
 	}
 	sel.innerHTML = cbs;
 	sel.selectedIndex = tist;
@@ -336,7 +376,7 @@ function ownAlertAutoClose() {
 function ownAlert(title, text, link, timeout) {
 	if (text == undefined) {
 		text = title;
-		title = "INFO:";
+		title = ll('infocap')+":";
 	}
 	modalCloseRedir = link;
 	var cont = "<h2>" + title + "</h2>" + text;
@@ -440,8 +480,8 @@ function deltaToTimeString(delta) { // Helper Func
 }
 // Calculate Age String of given Date (from DB);
 function getAgeStr(ls, towarn, toerr, idx) {
-	if (isNaN(ls)) return "(never)";
-	if (deltaLastSync == undefined) return "(unknown)";
+	if (isNaN(ls)) return ll('never');
+	if (deltaLastSync == undefined) return ll('unknown');
 	var delta = deltaLastSync + lastSeenTimestamp - ls; // Database Time - last seeb in Unix-Secs
 	var destr = deltaToTimeString(delta);
 	if (delta < 0 || delta > 87000) destr = "<span class='w3-red'>" + destr + "</span>";
@@ -535,7 +575,7 @@ function user_poll(jcmd) {
 				}
 				rel += "?a=login"; // With Login
 			}
-			ownAlert("ERROR:", data.status + " (" + autoID + ")", rel);
+			ownAlert(ll('errorcap')+":", data.status + " (" + autoID + ")", rel);
 			return;
 		}
 		var latency = parseFloat(data.status.substr(data.status.indexOf("(") + 1));
@@ -571,7 +611,7 @@ function user_poll(jcmd) {
 			if (data.anz_devices != userAnzDevices) { // Check Number of Devices
 				userAnzDevices = data.anz_devices;
 				if (anzW != userAnzDevices) {
-					ownAlert("ERROR:", "Internal: Inconsistent Number of Devices");
+					ownAlert(ll('errorcap')+":", ll('errordevnumber'));
 					lastSeenTimestamp = 0;
 					return;
 				}
@@ -607,8 +647,8 @@ function user_poll(jcmd) {
 					hstr += "</b></a>";
 
 					if (userRole & 65536) {
-						if (adev.owner_id != null) hstr += " (Owner:'" + adev.real_owner_id + "')"; // Just for info
-						else hstr += " (Owner: (none))";
+						if (adev.owner_id != null) hstr += " ("+ll('user')+":'" + adev.real_owner_id + "')"; // Just for info
+						else hstr += " ("+ll('user')+": "+ll('notoken')+")";
 					}
 					var gpsinfo = "";
 
@@ -624,10 +664,9 @@ function user_poll(jcmd) {
 					if (userRole & 65536) {
 						if (gpsinfo == "") gpsinfo += "<br>"
 						gpsinfo += "<a class='jo-mac' href='w_php/w_gdraw_db.php?s=" + adev.mac + "&lim=10000000&mk" +
-							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; Raw Data</b></a>";
+							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; "+ll('rawdata')+"</b></a>";
 						gpsinfo += "<a class='jo-mac' href='../legacy/device_lx.php?s=" + adev.mac +
-							"' target='_blank'><b><i class='fas fa-file w3-text-blue'></i>&nbsp; Legacy Data</b></a>";
-
+							"' target='_blank'><b><i class='fas fa-file w3-text-blue'></i>&nbsp; "+ll('legacydata')+"</b></a>";
 					}
 
 					hstr += " "+ll('age')+":&nbsp;<span id='devLiCon" + i + "'></span>" +
@@ -679,18 +718,18 @@ function user_poll(jcmd) {
 						cont += " '" + adev.name + "'";
 					}
 
-					cont += ": New&nbsp;"+ll('linesdata')+":&nbsp;" + nlc;
+					cont += ": "+ll('newmult')+"&nbsp;"+ll('linesdata')+":&nbsp;" + nlc;
 					var ccol = "w3-white"; // Default white
 					if (adev.warnings_cnt) {
-						cont += ", Warnings:&nbsp;" + adev.warnings_cnt;
+						cont += ", "+ll('warnings')+":&nbsp;" + adev.warnings_cnt;
 						ccol = "w3-yellow";
 					}
 					if (adev.err_cnt) {
-						cont += ", Errors:&nbsp;" + adev.err_cnt;
+						cont += ", "+ll('errors')+":&nbsp;" + adev.err_cnt;
 						ccol = "w3-red";
 					}
 					if (adev.alarms_cnt) {
-						cont += ", Alarms:&nbsp;" + adev.alarms_cnt;
+						cont += ", "+ll('alerts')+":&nbsp;" + adev.alarms_cnt;
 						ccol = "w3-purple";
 					}
 					log_info(cont, ccol);
@@ -713,7 +752,7 @@ function user_poll(jcmd) {
 		} else if (data.locinfo !== undefined) {
 			var cinfo;
 			if (!data.locinfo.startsWith("OK")) {
-				cinfo = "<span class='w3-red'>Info: '" + data.locinfo + "'</span>";
+				cinfo = "<span class='w3-red'>"+ll('information')+": '" + data.locinfo + "'</span>";
 				document.getElementById("infoCellular").innerHTML = cinfo;
 				/*
 							}else{
@@ -751,10 +790,10 @@ function user_poll(jcmd) {
 			// 1 Channel V1.0 Min 33 Lines
 			if (editDeviceParam.length < 33) {
 				console.log(data.iparam);
-				ownAlert("ERROR:", "Parameter invalid (L:" + editDeviceParam.length + ")");
+				ownAlert(ll('errorcap') + ":", ll('invalidparam')+" (L:" + editDeviceParam.length + ")");
 			} else if (editDeviceParam[0].startsWith("@100") == false) {
 				console.log(data.iparam);
-				ownAlert("ERROR:", "Parameter invalid ('#0:" + editDeviceParam[0] + ")");
+				ownAlert(ll('errorcap') + ":", ll('invalidparam')+" ('#0:" + editDeviceParam[0] + ")");
 			} else {
 				editParPending = data.par_pending;
 				editSCookie = data.scookie; // Text
@@ -855,7 +894,7 @@ function generateDetails(idx) {
 			cont += icont;
 		}
 	} else {
-		cont += "(No Data)";
+		cont += ll('nodata');
 	}
 	cont += "</table>";
 	var lwarn = adev.warnings_cnt;
@@ -866,34 +905,34 @@ function generateDetails(idx) {
 	var hdr = "<span>" + adev.anz_lines + "&nbsp;"+ll('linesdata')+"</span>&nbsp;";
 
 	if (lwarn) {
-		if (adev.role & 2) hdr += " <button onclick='removeWarnings(" + idx + ")' class='w3-button w3-padding-small'>Warnings:<span class='w3-yellow w3-badge'>" + lwarn + "</span></button>";
-		else hdr += " <span class='w3-padding-small'>Warnings:<span class='w3-yellow w3-badge'>" + lwarn + "</span></span>";
+		if (adev.role & 2) hdr += " <button onclick='removeWarnings(" + idx + ")' class='w3-button w3-padding-small'>"+ll('warnings')+":<span class='w3-yellow w3-badge'>" + lwarn + "</span></button>";
+		else hdr += " <span class='w3-padding-small'>"+ll('warnings')+":<span class='w3-yellow w3-badge'>" + lwarn + "</span></span>";
 	}
 	if (lerr) {
-		if (adev.role & 4) hdr += " <button onclick='removeErrors(" + idx + ")' class='w3-button w3-padding-small'>Errors:<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></button>";
-		else hdr += " <span class='w3-padding-small'>Errors:<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></span>";
+		if (adev.role & 4) hdr += " <button onclick='removeErrors(" + idx + ")' class='w3-button w3-padding-small'>"+ll('errors')+":<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></button>";
+		else hdr += " <span class='w3-padding-small'>"+ll('errors')+":<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></span>";
 	}
 	if (lalarm) {
-		if (adev.role & 1) hdr += " <button onclick='removeAlarms(" + idx + ")' class='w3-button w3-padding-small'>Alarms:<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></button>";
-		else hdr += " <span class='w3-padding-small'>Alarms:<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></span>";
+		if (adev.role & 1) hdr += " <button onclick='removeAlarms(" + idx + ")' class='w3-button w3-padding-small'>"+ll('alerts')+":<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></button>";
+		else hdr += " <span class='w3-padding-small'>"+ll('alerts')+":<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></span>";
 	}
 
 	var footer = "";
 	if (adev.lat != null && adev.lng != null) {
 		var gpslink = mapUrl + "&q=" + adev.lat + "," + adev.lng + "&z=12";
 		var gdate = new Date(Date.parse(adev.last_gps + " GMT")); // UTC
-		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> Cell/GNSS Position from " + gdate.toLocaleString().replace(" ", "&nbsp;");
+		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> "+ll('cellposition')+" " + gdate.toLocaleString().replace(" ", "&nbsp;");
 		if (adev.rad > 0) footer += ", Accuracy: " + adev.rad + "m";
 		footer += "</b></a></div>";
 	}
 
 	if (deviceXList[idx].isguest) hdr += " <span class='w3-text-orange'>("+ll('guestdevice')+")</span>";
 
-	if (adev.role & 1024) footer += "<div><button onclick='editDeviceDetails(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-globe fa-fw w3-text-green'></i>Server</button>";
-	if (adev.role & 512) footer += "<button onclick='editDeviceParameter(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-cog fa-fw w3-text-blue'></i>Hardware</button>";
-	if (adev.role & 256) footer += "<button onclick='editDeviceInfo(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-info-circle w3-text-teal'></i> Details</button>";
-	if (adev.role & (7 + 256)) footer += "<button onclick='showDeviceWEA(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-bell fa-fw w3-text-red'></i> Notes</button>";
-	if (adev.role & 8) footer += "<button onclick='clearDeviceData(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-trash-alt fa-fw'></i> Clear</button>";
+	if (adev.role & 1024) footer += "<div><button onclick='editDeviceDetails(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-globe fa-fw w3-text-green'></i>"+ll('serversettings')+"</button>";
+	if (adev.role & 512) footer += "<button onclick='editDeviceParameter(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-cog fa-fw w3-text-blue'></i>"+ll('loggersettings')+"</button>";
+	if (adev.role & 256) footer += "<button onclick='editDeviceInfo(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-info-circle w3-text-teal'></i>"+ll('information')+"</button>";
+	if (adev.role & (7 + 256)) footer += "<button onclick='showDeviceWEA(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-bell fa-fw w3-text-red'></i>"+ll('messages')+"</button>";
+	if (adev.role & 8) footer += "<button onclick='clearDeviceData(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-trash-alt fa-fw'></i>"+ll('cleardata')+"</button>";
 
 	footer += "</div>";
 	return "<div class='w3-border-bottom'>" + hdr + "</div>" + cont + footer;
@@ -989,7 +1028,7 @@ function editDeviceInfo(idx) {
 	document.getElementById("infoLon").value = h;
 
 	h = "";
-	if (deviceWList[idx].last_gps) h = "Last updated: <b>" + deviceWList[idx].last_gps.replace(" ", "&nbsp;") + "</b>";
+	if (deviceWList[idx].last_gps) h = ll('lastupdated')+": <b>" + deviceWList[idx].last_gps.replace(" ", "&nbsp;") + "</b>";
 	document.getElementById("infoCellular").innerHTML = h;
 
 	editMAC = deviceWList[idx].mac;
@@ -1017,7 +1056,7 @@ function showWEAPos(dir) {
 
 function showWEAFill() {
 	var hltab = "<table class='w3-table-all'>";
-	hltab += "<tr><th>Notes " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
+	hltab += "<tr><th>"+ll('messages')+" " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
 
 	for (var i = 0; i < logRaw.length; i++) {
 		var line = logRaw[i];
@@ -1164,9 +1203,9 @@ function edInfoFill() {
 	else if (infoObj.reason & 32) reas += "<span class='w3-purple w3-badge'> (old) ALARM </span>";
 
 	var infoInfo = "<div>" +
-		"<div>Last Contact: <b>" + deltaToTimeString(lage) + "</b> ago</div>";
-	if (infoObj.expmore > 0) infoInfo += "<div><span class='w3-yellow'><i class='fas fa-exclamation-circle'></i> Last Contact incomplete or pending!&nbsp;</span></div>";
-	infoInfo += "<div>Reason: <b>" + reas + "</b></div>";
+		"<div>"+ll('lastcontact')+": <b>" + deltaToTimeString(lage) + "</b> ago</div>";
+	if (infoObj.expmore > 0) infoInfo += "<div><span class='w3-yellow'><i class='fas fa-exclamation-circle'></i> "+ll('lastcontactpending')+"&nbsp;</span></div>";
+	infoInfo += "<div>"+ll('reason')+": <b>" + reas + "</b></div>";
 	infoInfo += "</div>";
 
 	// GeooPos
@@ -1199,7 +1238,7 @@ function edInfoFill() {
 				qual = "Poor";
 				squal += "red'>";
 			} // Poor or none
-			squal += cellObj.dbm + " dbm</span></b> (" + qual + ")";
+			squal += cellObj.dbm + " dBm</span></b> (" + qual + ")";
 		}
 	} else squal = "(Unknown)"
 
@@ -1208,18 +1247,18 @@ function edInfoFill() {
 	// Collapsed Info
 	if (infoObj !== undefined) {
 		var infoStr = "<div>" +
-			"<div>Device Type: <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
-			"<div>Active Days: <b>" + activeDays + "</b></div>" +
-			"<div>Total Data (up/down in kB): <b>" + (infoObj.total_in / 1024).toFixed(1) + "/" + (infoObj.total_out / 1024).toFixed(1) + "</b></div>";
-		if (activeDays > 0) infoStr += "<div>Average Data (up/down in kB/Day): <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
-		infoStr += "<div>Today (up/down in Bytes): <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
-		infoStr += "<div>Connections (total/OK): <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
-		infoStr += "<div>Quota (Days/Lines): <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b>, Push: <b>"
+			"<div>"+ll('devicetype')+": <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
+			"<div>"+ll('activedays')+": <b>" + activeDays + "</b></div>" +
+			"<div>"+ll('totaldata')+": <b>" + (infoObj.total_in / 1024).toFixed(1) + "/" + (infoObj.total_out / 1024).toFixed(1) + "</b></div>";
+		if (activeDays > 0) infoStr += "<div"+ll('averagedata')+": <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
+		infoStr += "<div>"+ll('todaybytes')+": <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
+		infoStr += "<div>"+ll('connectionstotal')+": <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
+		infoStr += "<div>"+ll('quotadays')+": <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b>, "+ll('push')+": <b>"
 		if (infoObj.quotap !== undefined && infoObj.quotap.length > 0) infoStr += "'" + infoObj.quotap + "'"
-		else infoStr += "(NOT SET)"
+		else infoStr += +ll('notset')
 		infoStr += "</b></div>";
 
-		infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
+		infoStr += "<div stotaldatatyle='font-size: 7px'>&nbsp;</div>";
 		var fw_cookieStr;
 		if (infoObj.fw_cookie !== undefined) {
 			var fw_csec = parseInt(infoObj.fw_cookie)
@@ -1228,8 +1267,8 @@ function edInfoFill() {
 				var fwcs = new Date(fw_csec * 1000)
 				fw_cookieStr = "ID: " + fw_csec.toString(16).toUpperCase() + " (" + fwcs.toUTCString() + ")"
 			}
-			infoStr += "<div>Firmware: <b>V" + infoObj.fw_ver / 10 + " " + fw_cookieStr + "</b></div>"; // if undefined: NaN
-			infoStr += "<div>Disk (size/available in kB): <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
+			infoStr += "<div>"+ll('firmware')+": <b>V" + infoObj.fw_ver / 10 + " " + fw_cookieStr + "</b></div>"; // if undefined: NaN
+			infoStr += "<div>"+ll('disksize')+": <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
 
 			infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 			infoStr += "<div>SIM ICCID: <b>" + infoObj.imsi + "</b></div>";
@@ -1301,8 +1340,8 @@ function infoShowLogPos(dir) {
 
 function editInfFillLog() {
 	var hltab = "<table class='w3-table-all'>";
-	if (!logId) hltab += "<tr><th>Main Logfile Entries " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
-	else if (logId == 1) hltab += "<tr><th>Connection Logfile Entries " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
+	if (!logId) hltab += "<tr><th>"+ll('mainlogfile')+" " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
+	else if (logId == 1) hltab += "<tr><th>"+ll('connectionlogfile')+" " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
 
 	for (var i = 0; i < logRaw.length; i++) {
 		hltab += "<tr><td>" + logRaw[i] + "</td></tr>";
@@ -1338,7 +1377,7 @@ function getPosCoords() { // and Check
 			return true;
 		}
 	}
-	ownAlert("ERROR: ", "Invalid Latitude/Longitude/Accuracy Format");
+	ownAlert(ll('errorcap')+": ", ll('invalidlatlon'));
 	return false;
 }
 
@@ -1358,9 +1397,9 @@ function infoSavePos() {
 		}
 		var chstr = "MAC:	" + editMAC;
 		if (editName.length > 0) chstr += " '" + editName + "'";
-		chstr += ": Save Position";
+		chstr += ": " + ll('saveposition');
 		log_info(chstr, "w3-pale-blue");
-		document.getElementById("infoCellular").innerHTML = "Last updated: <b>Now (Saved)</b>";
+		document.getElementById("infoCellular").innerHTML = ll('lastupdated')+": <b>"+ll('nowsaved')+"</b>";
 		user_poll({
 			cmd: "savePos",
 			mac: editMAC,
@@ -1372,9 +1411,9 @@ function infoSavePos() {
 function infoClearPos() {
 	var chstr = "MAC:	" + editMAC;
 	if (editName.length > 0) chstr += " '" + editName + "'";
-	chstr += ": Clear Position";
+	chstr += ": "+ll('clearposition');
 	log_info(chstr, "w3-pale-blue");
-	document.getElementById("infoCellular").innerHTML = "Last updated: <b>Now (Cleared)</b>";
+	document.getElementById("infoCellular").innerHTML = ll('lastupdated')+": <b>"+ll('nowcleared')+"</b>";
 	user_poll({
 		cmd: "clearPos",
 		mac: editMAC
@@ -1390,7 +1429,7 @@ function editDeviceParameter(idx) { // Show
 	if (editName == null) editName = "";
 	editIdx = idx;
 	var edname = editName;
-	if (!editName.length) edname = "(undefined)";
+	if (!editName.length) edname = ll('undefined');
 	document.getElementById("parDeviceName").innerText = edname;
 	user_poll({
 		cmd: "getParam",
@@ -1454,7 +1493,7 @@ function edParamChanUpDownloc(dir) {
 		editAktChan = 0;
 		idx0 = editDeviceParam.findIndex(edParamIdxFind); // Mit C0: Idx K0
 		if (idx0 < 19) { // V1.0
-			ownAlert("FATAL ERROR:", "Parameter File invalid (F)");
+			ownAlert(ll('fatalerrorcap')+":", ll('parameterinvalid'));
 		}
 		editAktChan = 1;
 		idx1 = editDeviceParam.findIndex(edParamIdxFind); // Mit C1: Idx k1
@@ -1463,7 +1502,7 @@ function edParamChanUpDownloc(dir) {
 		}
 		editAktChan = oakc;
 		editAktIdx = oakc * (idx1 - idx0) + idx0; // Calculate Index
-		ownAlert("Info:", "Adding new Channel #" + editAktChan);
+		ownAlert(ll('info')+"", ll('addnewchannel') +" #" + editAktChan);
 	}
 	showSecondary(0);
 }
@@ -1473,7 +1512,7 @@ function removePendingParam() {
 
 	var chstr = "MAC:	" + editMAC;
 	if (editName.length > 0) chstr += " '" + editName + "'";
-	chstr += ": Remove waiting Hardware-Parameters";
+	chstr += ": " + ll('removewaitingparams');
 	log_info(chstr, "w3-pale-blue");
 	user_poll({
 		cmd: "removePending",
@@ -1486,14 +1525,14 @@ function removePendingParam() {
 function edParamFormFill() { // Fill Parameters with act. chan
 	//console.log(editDeviceParam);
 	var info = "<div>" +
-		"<div>Device Type: <b>" + editDeviceParam[1] + "</b></div>" +
-		"<div>No. of Channels: <b>" + editDeviceParam[2] + "</b></div>" +
-		"<div>Parameter on Device ('Cookie'): <b>" + editSCookie.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>" + ll('devicetype') + ": <b>" + editDeviceParam[1] + "</b></div>" +
+		"<div>" + ll('nochannels') + ": <b>" + editDeviceParam[2] + "</b></div>" +
+		"<div:> " + ll('parameterondevice') + ": <b>" + editSCookie.replace(" ", "&nbsp;") + "</b></div>" +
 		"</div>";
 
 	if (editParPending) {
-		info += "<div><span class='w3-yellow'><i class='fas fa-exclamation-circle'></i> Parameters still waiting for Transfer!&nbsp;</span><br>" +
-			"<button class='w3-button w3-green' onclick='removePendingParam()'> Remove waiting Parameters</button></div>";
+		info += "<div><span class='w3-yellow'><i class='fas fa-exclamation-circle'></i> " + ll('parameterwaiting') + "&nbsp;</span><br>" +
+			"<button class='w3-button w3-green' onclick='removePendingParam()'> " + ll('parameterremovewaiting') + "</button></div>";
 	}
 
 	document.getElementById("parInfo").innerHTML = info;
@@ -1532,58 +1571,58 @@ function editParamMainGet() {
 
 	getv = getPeriodUnit("parPeriodMeasure", "unitPeriodMeasure") // Neu
 	if (getv < 60) {
-		ownAlert("ERROR:", "Measure Period >= 60 sec");
+		ownAlert(ll('errorcap') + ":", ll('errmeasperiod60sec'));
 		return false;
 	} else if (getv > 86400) {
-		ownAlert("ERROR:", "Measure Period <= 12 hr");
+		ownAlert(ll('errorcap') + ":", ll('errmeasperiod12h'));
 		return false;
 	}
 	editDeviceParam[6] = getv; // Period
 
 	getv = getPeriodUnit("parPeriodOffset", "unitPeriodOffset")
 	if (getv < 0) {
-		ownAlert("ERROR:", "Period Offset < 0");
+		ownAlert(ll('errorcap') + ":", ll('errperiodiffset0'));
 		return false;
 	} else if (getv >= parseInt(editDeviceParam[6])) {
-		ownAlert("ERROR:", "Period Offset >= Period");
+		ownAlert(ll('errorcap') + ":", ll('errperiodoffsetbig'));
 		return false;
 	}
 	editDeviceParam[7] = getv; // PeriodOffset
 
 	getv = getPeriodUnit("parPeriodAlarm", "unitPeriodAlarm")
 	if (getv < 0) {
-		ownAlert("ERROR:", "Alarm Period < 0");
+		ownAlert(ll('errorcap') + ":", "Alarm Period < 0");
 		return false;
 	} else if (getv != 0 && getv > parseInt(editDeviceParam[6])) {
-		ownAlert("ERROR:", "Alarm Period > Period");
+		ownAlert(ll('errorcap') + ":", "Alarm Period > Period");
 		return false;
 	}
 	editDeviceParam[8] = getv; // AlarmPeriod
 
 	getv = getPeriodUnit("parPeriodInternet", "unitPeriodInternet")
 	if (getv < 0) {
-		ownAlert("ERROR:", "Internet Period < 0");
+		ownAlert(ll('errorcap') + ":", ll('errinternetperiod0'));
 		return false;
 	} else if (getv != 0 && getv < parseInt(editDeviceParam[6])) {
-		ownAlert("ERROR:", "Internet Period < Period");
+		ownAlert(ll('errorcap') + ":", ll('errinternetperiodmin'));
 		return false;
 	} else if (getv != 0 && getv < 3600) {
-		ownAlert("Info:", "Fast Internet Period (" + getv + "s) OK? See Manual for Battery Live.");
+		ownAlert(ll('info') + ":", ll('infofastinternetperiod1') + getv + ll('infofastinternetperiod2'));
 	}
 	editDeviceParam[9] = getv;
 
 	getv = getPeriodUnit("parPeriodInternetAlarm", "unitPeriodInternetAlarm")
 	if (getv < 0) {
-		ownAlert("ERROR:", "Internet Alarm Period < 0");
+		ownAlert(ll('errorcap') + ":", ll('erralarmperiod0'));
 		return false;
 	} else if (getv != 0 && getv < parseInt(editDeviceParam[8])) {
-		ownAlert("ERROR:", "Internet Alarm Period < Alarm Period");
+		ownAlert(ll('errorcap') + ":", ll('erralarmperiodmax'));
 		return false;
 	} else if (getv != 0 && getv > parseInt(editDeviceParam[9])) {
-		ownAlert("ERROR:", "Internet Alarm Period > Internet Period");
+		ownAlert(ll('errorcap') + ":",  ll('erralarmperiodmin'));
 		return false;
 	} else if (getv > 0 && getv < 1800) {
-		ownAlert("Info:", "Fast Internet Alarm Period (" + getv + "s) OK? See Manual for Battery Live.");
+		ownAlert(ll('info') + ":", ll('infofastalertperiod1') + getv + ll('infofastalertperiod1'));
 	}
 	editDeviceParam[10] = getv;
 
@@ -1592,7 +1631,7 @@ function editParamMainGet() {
 
 	getv = eval_checks("divRecFlags");
 	if (!getv) {
-		ownAlert("WARNING:", "Record OFF");
+		ownAlert(ll('warningcap') + ":", ll('recordoff'));
 	}
 	editDeviceParam[12] = getv.toString();
 
@@ -1603,9 +1642,9 @@ function editParamMainGet() {
 
 	getv = eval_drops("selNetMode");
 	if (!getv) {
-		ownAlert("STRONG WARNING:", "Internet Transmission set to OFF");
+		ownAlert(ll('strongwarningcap') + ":", ll('warninternetoff'));
 	} else if (getv == 3) {
-		ownAlert("Info:", "Mode 'Stay ONLINE' OK? See Manual for Battery Live.");
+		ownAlert(ll('info') + ":", ll('infostayonline'));
 	}
 
 	editDeviceParam[15] = getv.toString();
@@ -1655,28 +1694,28 @@ function editParamChannelGet() {
 
 	getv = $("#parOffset").val();
 	if (isNaN(Number(getv))) {
-		ownAlert("ERROR:", "'Offset': must be FLOAT");
+		ownAlert(ll('errorcap') + ":", ll('warnfloatoffset'));
 		return false;
 	}
 	editDeviceParam[idx + 8] = getv; // Offset
 
 	getv = $("#parMulti").val();
 	if (isNaN(Number(getv))) {
-		ownAlert("ERROR:", "'Multi': must be FLOAT");
+		ownAlert(ll('errorcap') + ":", ll('warnfloatmulti'));
 		return false;
 	}
 	editDeviceParam[idx + 9] = getv; // Multi
 
 	getv = $("#parAlarmHigh").val();
 	if (isNaN(Number(getv))) {
-		ownAlert("ERROR:", "'Alarm High': must be FLOAT");
+		ownAlert(ll('errorcap') + ":", ll('warnfloatalarmhi'));
 		return false;
 	}
 	editDeviceParam[idx + 10] = getv; // Alarm Hi
 
 	getv = $("#parAlarmLow").val();
 	if (isNaN(Number(getv))) {
-		ownAlert("ERROR:", "'Alarm Low': must be FLOAT");
+		ownAlert(ll('errorcap') + ":", ll('warnfloatalarmlow'));
 		return false;
 	}
 	editDeviceParam[idx + 11] = getv; // Alarm Lo
@@ -1740,7 +1779,7 @@ function editParameterSubmit() {
 
 			var chstr = "MAC:	" + editMAC;
 			if (editName.length > 0) chstr += " '" + editName + "'";
-			chstr += ": Parameter Changes (" + changes + ") saved";
+			chstr += ": " + ll('parameterchanges') + " (" + changes + ") " + ll('saved');
 			log_info(chstr, "w3-pale-blue");
 			user_poll({
 				cmd: "saveParam",
@@ -1824,17 +1863,17 @@ function edDeviceFormFill() { // And initialise NULL elements
 	document.getElementById("edMAC").innerText = editDeviceData.mac;
 
 
-	if (editDeviceData.last_seen == null) editDeviceData.last_seen = "(Never)";
-	if (editDeviceData.last_change == null) editDeviceData.last_change = "(Never)";
+	if (editDeviceData.last_seen == null) editDeviceData.last_seen = ll('never');
+	if (editDeviceData.last_change == null) editDeviceData.last_change = ll('never');
 
 	var devinf = "<div>" +
-		"<div>Total Transfers: <b>" + editDeviceData.transfer_cnt + "</b></div>" +
-		"<div>Total Lines Data: <b>" + editDeviceData.lines_cnt + "</b></div>" +
-		"<div>Lines Data (in Database): <b>" + editDeviceData.available_cnt + "</b></div>" +
-		"<div>Last seen: <b>" + editDeviceData.last_seen.replace(" ", "&nbsp;") + "</b></div>" +
-		"<div>Last Change: <b>" + editDeviceData.last_change.replace(" ", "&nbsp;") + "</b></div>" +
-		"<div>First seen: <b>" + editDeviceData.first_seen.replace(" ", "&nbsp;") + "</b></div>" +
-		"<div>Parameter on Server ('Cookie'): <b>" + editDeviceData.sCookie.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>"+ll('totaltransfers')+": <b>" + editDeviceData.transfer_cnt + "</b></div>" +
+		"<div>"+ll('totallines')+": <b>" + editDeviceData.lines_cnt + "</b></div>" +
+		"<div>"+ll('linesindatabase')+": <b>" + editDeviceData.available_cnt + "</b></div>" +
+		"<div>"+ll('lastseen')+": <b>" + editDeviceData.last_seen.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>"+ll('lastchange')+": <b>" + editDeviceData.last_change.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>"+ll('firstseen')+": <b>" + editDeviceData.first_seen.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>"+ll('parameteronserver')+": <b>" + editDeviceData.sCookie.replace(" ", "&nbsp;") + "</b></div>" +
 		"</div>";
 
 	if (isguest) {
@@ -1906,7 +1945,7 @@ function editDeviceSubmit() {
 		lastSeenTimestamp = 0; // Get ALL
 		userAnzDevices = 0; // Neu zeichnen!
 		var chstr = "MAC:	" + editDeviceData.mac;
-		chstr += ": Server-Setup Changes (" + changecnt + ") saved";
+		chstr += ": "+ll('serverchanges')+" (" + changecnt + ") "+ll('saved');
 		log_info(chstr, "w3-pale-green");
 		user_poll({
 			cmd: "changeDevice",
@@ -1944,8 +1983,8 @@ function edCopyTokenToClipboard(idx) {
 	var cpytxt = `MAC:${editDeviceData.mac}\nTOK${idx}:${clb}`
 	dtok.disabled = true;
 	navigator.clipboard.writeText(cpytxt)
-	if (clb.length != 16) ownAlert("ERROR:", "Token #" + idx + ": (None)");
-	else ownAlert("Copied to Clipboard", "<b>MAC:" + editDeviceData.mac + " <br>TOK" + idx + ":" + clb + "</b><br><br>(Don't forget to 'SAVE CHANGES')");
+	if (clb.length != 16) ownAlert(ll('errorcap')+":", "Token #" + idx + ": "+ ll('notoken'));
+	else ownAlert(ll('copied'), "<b>MAC:" + editDeviceData.mac + " <br>TOK" + idx + ":" + clb + "</b><br><br>("+ll('dontforgettoken')+")");
 }
 
 function checkSaved() { // true if all changed
@@ -1966,10 +2005,10 @@ function checkSaved() { // true if all changed
 function edMailTest0() {
 	var newcontact0 = $("#edDeviceMail0").val();
 	if (checkSaved() != true || newcontact0.length < 5) { // Might later be something else than Mail
-		ownAlert("ERROR:", "Contact invalid or Changes not saved");
+		ownAlert(ll('errorcap')+":", ll('errcontactinvalid'));
 	} else {
-		ownAlert("Test Contact", "Test Message sent to: '" + editDeviceData.email0 + "'");
-		var mcont = "Test 'Contact #0' from User '" + userName + "'";
+		ownAlert(ll('testcontact'), ll('testmessagesent') + ": '" + editDeviceData.email0 + "'");
+		var mcont = ll('testcontactnr0') + " '" + userName + "'";
 		/*
 		var mcont="Test 'Contact #0' for MAC:"+editDeviceData.mac;
 		if(typeof editDeviceData.name == 'string' && editDeviceData.name.length>0){
@@ -1990,7 +2029,7 @@ function edResetCond0() {
 	event.preventDefault();
 
 	if (checkSaved() != true) { // Might later be something else than Mail
-		ownAlert("ERROR:", "Changes not saved");
+		ownAlert(ll('errorcap') + ":", ll('errchangesnotsaved'));
 	} else {
 		user_poll({
 			cmd: "cntReset",
@@ -2112,7 +2151,7 @@ function initScripts() {
 			spinnerVisible = false;
 			var errorMessage = xhr.status + ': ' + xhr.statusText + " - AJAX:'" + error + "'";
 			if (xhr.responseText !== undefined) errorMessage += " <br>" + xhr.responseText;
-			ownAlert("ERROR:", errorMessage);
+			ownAlert(ll('errorcap') + ":", errorMessage);
 		}
 	});
 	document.title = prgName;

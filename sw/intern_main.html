@@ -41,14 +41,14 @@
 				<span id="globalBell" class="w3-badge">0</span>
 			</button>
 
-			<select title="Language" id="idLang" class="w3-bar-item w3-button w3-dark-grey" style="padding: 10px;"
+			<select llt="language" title="Language" id="idLang" class="w3-bar-item w3-button w3-dark-grey" style="padding: 10px;"
 				onchange="changedLanguage()">
 				<option>EN</option>
 				<option>DE</option>
 			</select>
 
-			<span id="userNameTitle" title="User Name" class="w3-bar-item w3-blue jo-hide-small">(unknown)</span>
-			<a href="login.php?a=logout" class="w3-bar-item w3-button" title="Logout"><i
+			<span llt="username" id="userNameTitle" title="Username" class="w3-bar-item w3-blue jo-hide-small">(unknown)</span>
+			<a llt= "logout" href="login.php?a=logout" class="w3-bar-item w3-button" title="Logout"><i
 					class="fas fa-sign-out-alt"></i></a>
 		</div>
 	</div>
@@ -68,7 +68,7 @@
 		<hr>
 
 		<div class="w3-container w3-grey">
-			<h6 ll="menue">Menue</h6>
+			<h6 ll="menu">Menu</h6>
 		</div>
 
 
@@ -76,7 +76,7 @@
 			<!-- Anm.: fa-fw; fixed width -->
 
 			<button id="bsb_close" href="#" class="w3-bar-item w3-button w3-hide-large w3-dark-grey w3-padding-16"
-				onclick="w3_close()" title="close menu"><i class="fas fa-times fa-fw"></i> Close Menue</button>
+				onclick="w3_close()" title="close menu" ll="closemenu"><i class="fas fa-times fa-fw"></i> Close Menu</button>
 
 			<!-- Admin parts disabled by default -->
 			<button class="sadmin w3-bar-item w3-button w3-padding" style="display: none" onclick="legacyMainShow()">
@@ -188,22 +188,22 @@
 					onclick="modal_close('modalEditUser')"><b>X</b></span>
 
 				<h2 ll="userprofile">User Profile</h2>
-				<p>Edit your Profile</p>
+				<p ll="editprofile" >Edit your Profile</p>
 				<form id="editUserForm">
 					<!-- = Callback-->
-					<p><label>Your Username (ID:<span id="aUserID">x</span>, active since: <span
+					<p><label><span ll="username">Your Username</span> (ID:<span id="aUserID">x</span>, <span ll="activesince">active since</span>: <span
 								id="aUserCreated">d</span>)</label>
-						<input id="aUserName" class="w3-input w3-border" type="text" placeholder="Enter Username"
+						<input llp="enterusername" id="aUserName" class="w3-input w3-border" type="text" placeholder="Enter Username"
 							required minlength="4">
 					</p>
 
-					<p><label>Your Email</label>
-						<input id="aUserEmail" class="w3-input w3-border" type="email" placeholder="Enter Email"
+					<p><label ll="email">Email</label>
+						<input llp="enteremail" id="aUserEmail" class="w3-input w3-border" type="email" placeholder="Enter Email"
 							disabled>
 					</p>
 					<!-- later: required  -->
 
-					<p><button type="submit" class="w3-button w3-green">Save Changes</button> </p>
+					<p><button ll='save' type="submit" class="w3-button w3-green">Save</button> </p>
 				</form>
 			</div>
 		</div>
@@ -218,63 +218,63 @@
 				<span class="w3-button w3-display-topright w3-light-gray"
 					onclick="modal_close('modalEditDevice')"><b>X</b></span>
 
-				<h2>Device Server-Setup</h2>
+				<h2 ll="devserversettings">Device Server-Setup</h2>
 				<p><b>MAC:&nbsp;<span id="edMAC"></span><br>
-						Name:&nbsp;'<span id="edDeviceName">x</span>'</b></p>
+						<span ll="devname">Name</span>:&nbsp;'<span id="edDeviceName">x</span>'</b></p>
 
-				<div id="edInfo" class="w3-border-bottom">Info</div>
+				<div id="edInfo" class="w3-border-bottom" ll="infos">Info</div>
 
 				<form id="editDeviceForm">
 					<!-- = Callback-->
 
 					<div>
-						<label>UTC Offset (s)</label>
+						<label ll="utcoffset">UTC Offset (s)</label>
 						<input id="edUTCOffset" class="w3-input w3-border" style="width: 6em" type="number" min="-43200"
 							max="43200">
-						<label>Timeout (h) for Warning 'No Contact' ('0' if unused, for minimum value see
+						<label ll="timeoutwarning">Timeout (h) for Warning 'No Contact' ('0' if unused, for minimum value see
 							Manual)</label>
 						<input id="edTimeoutWarn" class="w3-input w3-border" style="width: 8em" type="number" min="0"
 							max="2678400">
-						<label>Timeout (h) for Error 'No Contact' ('0' if unused, for minimum value see Manual)</label>
+						<label ll="timeouterror">Timeout (h) for Error 'No Contact' ('0' if unused, for minimum value see Manual)</label>
 						<input id="edTimeoutErr" class="w3-input w3-border" style="width: 8em" type="number" min="0"
 							max="2678400">
-						<label>Alarms for HK-Values: Battery and/or Humidty</label><br>
+						<label ll="alerthk">Alarms for HK-Values: Battery and/or Humidty</label><br>
 						<select id="selBatt" class="w3-select w3-green w3-padding-small"
 							style="width: 18em"></select><br>
-						<input id="edCheckHum" class='w3-check' type='checkbox'>Internal Humidity &gt; 80%<br>
+						<input id="edCheckHum" class='w3-check' type='checkbox'><span ll="internalhum"> Internal Humidity &gt; 80%</span><br>
 
 					</div>
 					<br>
 					<div class="w3-bar w3-border-top">
-						<p><label>Rights for Guests and Token #0</label>
+						<p><label ll="tokenrights">Rights for Guests and Token #0</label>
 						<div id="divRole0" class="w3-border"></div>
 						<input id="edToken0" class="w3-input w3-border" type="text" pattern="^[0-9a-fA-F]{16}$"
-							placeholder="(None)" disabled style="width: 16em">
-						<button onclick="edCopyTokenToClipboard(0)" class="w3-button w3-green w3-padding-small">Token to
+							llp="notoken" placeholder="(None)" disabled style="width: 16em">
+						<button onclick="edCopyTokenToClipboard(0)" class="w3-button w3-green w3-padding-small" ll="tokenclipboard">Token to
 							Clipboard</button>
 						<button id="edGenToken0" onclick="edGenerateNewToken(0)"
-							class="w3-button w3-green w3-padding-small">New Token</button>
+							class="w3-button w3-green w3-padding-small" ll="newtoken">New Token</button>
 						</p>
 					</div>
 					<!-- Space for 3 more Role/Tokens -->
 					<div class="w3-bar w3-border-top">
 						<p>
-							<label>Contact #0 (Mail or Number, see Manual)</label>
-							<input id="edDeviceMail0" class="w3-input w3-border" type="text"
+							<label ll="contactmail">Contact #0 (Mail or Number, see Manual)</label>
+							<input llp="entercontact" id="edDeviceMail0" class="w3-input w3-border" type="text"
 								placeholder="Enter Contact">
-							<span class="w3-right">Last sent: <span id="edLastSent0">(Never)</span>
+							<span class="w3-right"><span ll="lastsent">Last sent</span>: <span ll="never" id="edLastSent0">(Never)</span>
 								<span onclick="edResetCond0()" class="w3-button w3-green w3-padding-small"><span
-										id="edBadge0" class="w3-badge">0</span> Reset</span>
-								<span onclick="edMailTest0()" class="w3-button w3-green w3-padding-small">Test
+										id="edBadge0" class="w3-badge">0</span> <span  ll="reset">Reset</span></span>
+								<span onclick="edMailTest0()" ll="testcontact" class="w3-button w3-green w3-padding-small">Test
 									Contact</span></span>
-							<br><label>Condition (see Manual)</label>
-							<input id="edMailCond0" class="w3-input w3-border" type="text"
+							<br><label ll="condition">Condition (see Manual)</label>
+							<input id="edMailCond0" llp="entercondition" class="w3-input w3-border" type="text"
 								placeholder="Enter Condition">
 						</p>
 					</div>
 					<!-- Space for 3 more Conds -->
 
-					<p><button type="submit" class="w3-button w3-green">Save Changes</button> </p>
+					<p><button ll="save" type="submit" class="w3-button w3-green">Save Changes</button> </p>
 
 				</form>
 			</div>
@@ -289,22 +289,22 @@
 			<div class="w3-panel w3-display-container w3-white w3-card-4">
 				<span class="w3-button w3-display-topright w3-light-gray"
 					onclick="modal_close('modalEditParameter')"><b>X</b></span>
-				<h2>Device Hardware-Parameter</h2>
+				<h2 ll="loggersettings">Device Hardware-Parameter</h2>
 				<p>
-					<b>MAC:&nbsp;<span id="parMAC">ABC</span><br>Name:&nbsp;'<span id="parDeviceName">x</span>'</b>
-				<div id="parInfo">Info</div>
+					<b>MAC:&nbsp;<span id="parMAC">ABC</span><br><span id="devname">Name</span>:&nbsp;'<span id="parDeviceName">x</span>'</b>
+				<div ll="infos" id="parInfo">Info</div>
 				</p>
 
 				<form id="editParameterForm">
 					<!-- = Callback-->
 
 					<div class="w3-bar w3-border-top">
-						<b>Main Parameter </b>
+						<b ll="mainparameter">Main Parameter </b>
 						<span class="w3-right  w3-button w3-small w3-light-gray" onclick="expandMainParameter()"><i
 								class="fas fa-ellipsis-v"></i></span>
 
 						<div class="w3-bar">
-							<label>Name (First 11 Chars: BLE Advertising Name)</label><input id="parName"
+							<label ll="nameble">Name (First 11 Chars: BLE Advertising Name)</label><input id="parName"
 								class="w3-input w3-border" type="text" placeholder="Name of Device" minlength="1"
 								maxlength="41"> <!-- 11: Max. BLE AdvLength -->
 						</div>
@@ -312,70 +312,70 @@
 						<div id="parMainDetails" style="display:none">
 							<div class="w3-bar">
 
-								<label>Measurement Period</label>
+								<label ll="measurementperiod">Measurement Period</label>
 								<div>
 									<input id="parPeriodMeasure" class="w3-input w3-border w3-third" style="width: 6em"
 										type="number">
 									<select id="unitPeriodMeasure" class="w3-select w3-green" style="width: 4em">
-										<option>sec</option>
-										<option>min</option>
-										<option>hr</option>
+										<option ll="sec">sec</option>
+										<option ll="min">min</option>
+										<option ll="hr">hr</option>
 									</select>
 								</div>
 							</div>
 							<div class="w3-bar jo-parsec">
-								<label>Period offset </label>
+								<label ll="periodoffset">Period offset </label>
 								<div>
 									<input id="parPeriodOffset" class="w3-input w3-border w3-third" style="width: 6em"
 										type="number">
 									<select id="unitPeriodOffset" class="w3-select w3-green" style="width: 4em">
-										<option>sec</option>
-										<option>min</option>
-										<option>hr</option>
+										<option ll="sec">sec</option>
+										<option ll="min">min</option>
+										<option ll="hr">hr</option>
 									</select>
 								</div>
 							</div>
 							<div class="w3-bar">
-								<label>Alarm Period ('0' if unused)</label>
+								<label ll="alarmperiod">Alarm Period ('0' if unused)</label>
 								<div>
 									<input id="parPeriodAlarm" class="w3-input w3-border w3-third" style="width: 6em"
 										type="number">
 									<select id="unitPeriodAlarm" class="w3-select w3-green" style="width: 4em">
-										<option>sec</option>
-										<option>min</option>
-										<option>hr</option>
+										<option ll="sec">sec</option>
+										<option ll="min">min</option>
+										<option ll="hr">hr</option>
 									</select>
 								</div>
 							</div>
 
 							<div class="w3-bar">
-								<label>Internet Period</label>
+								<label ll="internetperiod">Internet Period</label>
 								<div>
 									<input id="parPeriodInternet" class="w3-input w3-border w3-third" style="width: 6em"
 										type="number">
 									<select id="unitPeriodInternet" class="w3-select w3-green" style="width: 4em">
-										<option>sec</option>
-										<option>min</option>
-										<option>hr</option>
+										<option ll="sec">sec</option>
+										<option ll="min">min</option>
+										<option ll="hr">hr</option>
 									</select>
 								</div>
 							</div>
 
 							<div class="w3-bar">
-								<label>Internet Alarm Period ('0' if unused)</label>
+								<label ll="internetalarmperiod">Internet Alarm Period ('0' if unused)</label>
 								<div>
 									<input id="parPeriodInternetAlarm" class="w3-input w3-border w3-third"
 										style="width: 6em" type="number">
 									<select id="unitPeriodInternetAlarm" class="w3-select w3-green" style="width: 4em">
-										<option>sec</option>
-										<option>min</option>
-										<option>hr</option>
+										<option ll="sec">sec</option>
+										<option ll="min">min</option>
+										<option ll="hr">hr</option>
 									</select>
 								</div>
 							</div>
 
 							<div class="w3-bar jo-parsec">
-								<label>UTC Offset (sec)</label><input id="parUTCOffset" class="w3-input w3-border"
+								<label ll="utcoffset">UTC Offset (sec)</label><input id="parUTCOffset" class="w3-input w3-border"
 									style="width: 6em" type="number" min="-43200" max="43200">
 							</div>
 
@@ -387,7 +387,7 @@
 							</div>
 
 							<div class="w3-bar jo-parsec">
-								<label>Configuration Command (79 Chars)</label><input id="parCmdConfig"
+								<label ll="configcommand">Configuration Command (79 Chars)</label><input id="parCmdConfig"
 									class="w3-input w3-border" type="text" maxlength="79">
 							</div>
 
@@ -415,7 +415,7 @@
 
 							</div>
 							<div class="w3-bar jo-parsec">
-								<label>Minimum Internet Temperature (&deg;C)</label><input id="parMinTemp"
+								<label ll="mintemperature">Minimum Internet Temperature (&deg;C)</label><input id="parMinTemp"
 									class="w3-input w3-border" style="width: 6em" type="number" min="-40" max="0">
 							</div>
 						</div>
@@ -424,7 +424,7 @@
 					<br>
 
 					<div class="w3-bar w3-border-bottom w3-border-top">
-						<b>Channel #<span id="parChannel">33</span></b>
+						<b><span ll="channelnr">Channel #</span><span id="parChannel">33</span></b>
 						<button id="parAktDec" class="w3-button w3-light-gray w3-small" onclick="edParamChanDown()"><i
 								class="fas fa-chevron-left"></i></button>&nbsp;
 						<button id="parAktInc" class="w3-button w3-light-gray w3-small" onclick="edParamChanUp()"><i
@@ -434,7 +434,7 @@
 
 						<div id="parChanDetails" style="display:none">
 							<div class="w3-bar">
-								<label>Channel Flags</label>
+								<label ll="channelflags">Channel Flags</label>
 								<div id="divActionFlags" class="w3-border"></div>
 							</div>
 
@@ -448,7 +448,7 @@
 									class="w3-input w3-border" style="width: 6em" type="number" min="0" max="255">
 							</div>
 							<div class="w3-bar">
-								<label>Unit (String)</label><input id="parUnit" class="w3-input w3-border" type="text">
+								<label ll="unit">Unit (String)</label><input id="parUnit" class="w3-input w3-border" type="text">
 							</div>
 							<div class="w3-bar jo-parsec">
 								<label>Memory Format (Data) (8Bit Numberm, 0: Default)</label><input
@@ -460,19 +460,19 @@
 									class="w3-input w3-border" style="width: 12em" type="number" min="0" max="65535">
 							</div>
 							<div class="w3-bar">
-								<label>Offset (Formula: VALUE = (MEASURED * Multi) - Offset )(Float)</label><input
+								<label ll="measoffset">Offset (Formula: VALUE = (MEASURED * Multi) - Offset )(Float)</label><input
 									id="parOffset" class="w3-input w3-border" style="width: 12em" type="text">
 							</div>
 							<div class="w3-bar">
-								<label>Multi (Formula: VALUE = (MEASURED * Multi) - Offset )(Float)</label><input
+								<label ll="measmulti">Multi (Formula: VALUE = (MEASURED * Multi) - Offset )(Float)</label><input
 									id="parMulti" class="w3-input w3-border" style="width: 12em" type="text">
 							</div>
 							<div class="w3-bar">
-								<label>Alarm High (Alarm if VALUE &gt;= High)(Float)</label><input id="parAlarmHigh"
+								<label ll="measalerthigh">Alarm High (Alarm if VALUE &gt;= High)(Float)</label><input id="parAlarmHigh"
 									class="w3-input w3-border" style="width: 12em" type="text">
 							</div>
 							<div class="w3-bar">
-								<label>Alarm Low (Alarm if VALUE &lt;= Low)(Float)</label> <input id="parAlarmLow"
+								<label ll="measalertlow">Alarm Low (Alarm if VALUE &lt;= Low)(Float)</label> <input id="parAlarmLow"
 									class="w3-input w3-border" style="width: 12em" type="text">
 							</div>
 							<div class="w3-bar jo-parsec">
@@ -485,10 +485,10 @@
 							</div>
 						</div>
 					</div>
-					<div><input onclick="showSecondary()" id="showSecPar" type="checkbox" class="w3-check">Show with
-						<span class="w3-pale-yellow">Secondary Parameters</span>
+					<div><input onclick="showSecondary()" id="showSecPar" type="checkbox" class="w3-check"><span  ll="showwith">Show with</span>
+						<span ll="secondaryparams" class="w3-pale-yellow">Secondary Parameters</Secondary parametersspan>
 					</div>
-					<p><button type="submit" class="w3-button w3-green">Save Changes</button> </p>
+					<p><button ll="save" type="submit" class="w3-button w3-green">Save Changes</button> </p>
 				</form>
 			</div>
 		</div>
@@ -501,46 +501,46 @@
 			<div class="w3-panel w3-display-container w3-white w3-card-4">
 				<span class="w3-button w3-display-topright w3-light-gray"
 					onclick="modal_close('modalEditInfo')"><b>X</b></span>
-				<h2>Device Details</h2>
+				<h2 ll="infos">Device Details</h2>
 				<p>
-					<b>MAC:&nbsp;<span id="infoMAC">ABC</span><br>Name:&nbsp;'<span id="infoDeviceName">x</span>'</b>
+					<b>MAC:&nbsp;<span id="infoMAC">ABC</span><br><span ll="devname">Name</span>:&nbsp;'<span id="infoDeviceName">x</span>'</b>
 				<div id="infoInfo">Info</div>
-				<div>Last Signal:
+				<div><span ll="lastsignal">Last Signal</span>:
 					<span id="infoLastCell">?</span>
 				</div>
 				</p>
 
 				<div class="w3-bar w3-border-top w3-border-bottom">
-					<b>Cell/GNSS Position</b>
+					<b ll="cellposition">Cell/GNSS Position</b>
 					<span class="w3-right  w3-button w3-small w3-light-gray" onclick="expandPositionInfo()"><i
 							class="fas fa-ellipsis-v"></i></span>
 					<div style="display:none" id="infoPositionContent">
-						<div><label>Automatic Cell Position Update (GNSS Update always)</label></div>
+						<div><label ll="celllabel">Automatic Cell Position Update (GNSS Update always)</label></div>
 						<div>
 							<select id="infoPosUpdate" onchange="infoPosUpdateSelect()"
 								class="w3-select w3-green w3-padding-small" style="width: 8em">
-								<option>Never (manual only)</option>
-								<option>Each Week</option>
-								<option>Each Day</option>
-								<option>Each Hour</option>
-								<option>Each Transmission</option>
+								<option ll="positionoptnever">Never (manual only)</option>
+								<option ll="positionoptweek">Each Week</option>
+								<option ll="positionoptday">Each Day</option>
+								<option ll="positionopthour">Each Hour</option>
+								<option ll="positionopttransmission">Each Transmission</option>
 							</select>
-							&nbsp;<button onclick="infoEstimatePos()"
+							&nbsp;<button ll="positionestimate" onclick="infoEstimatePos()"
 								class="w3-button w3-green w3-padding-small">Estimate Position</button>
 						</div>
 
 						<div id="infoCellular"></div>
 
-						<div><label>Latitude (&deg;)(Float)</label><input id="infoLat"
+						<div><label ll="latitude">Latitude (&deg;)(Float)</label><input id="infoLat"
 								class="w3-input w3-border w3-padding-small" style="width: 16em" type="text"></div>
-						<div><label>Longitude (&deg;)(Float)</label><input id="infoLon"
+						<div><label ll="longtitude">Longitude (&deg;)(Float)</label><input id="infoLon"
 								class="w3-input w3-border w3-padding-small" style="width: 16em" type="text"></div>
-						<div><label>Accuracy (m)('0' if not available)(Float)</label><input id="infoAccuracy"
+						<div><label ll="accuracy">Accuracy (m)('0' if not available)(Float)</label><input id="infoAccuracy"
 								class="w3-input w3-border w3-padding-small" style="width: 16em" type="text"></div>
 						<div>
-							<button onclick="infoSavePos()" class="w3-button w3-green w3-padding-small">Set</button>
-							<button onclick="infoClearPos()" class="w3-button w3-green w3-padding-small">Clear</button>
-							&nbsp;<button onclick="infoShowPos()" class="w3-button w3-green w3-padding-small">Show on
+							<button ll="set" onclick="infoSavePos()" class="w3-button w3-green w3-padding-small">Set</button>
+							<button ll="clear" onclick="infoClearPos()" class="w3-button w3-green w3-padding-small">Clear</button>
+							&nbsp;<button ll="showonmap" onclick="infoShowPos()" class="w3-button w3-green w3-padding-small">Show on
 								Map</button>
 						</div>
 						<br>
@@ -548,7 +548,7 @@
 				</div>
 
 				<div class="w3-bar w3-border-bottom">
-					<b>Log Files</b>
+					<b ll="logfiles">Log files</b>
 					<span class="w3-right  w3-button w3-small w3-light-gray" onclick="expandLogInfo()"><i
 							class="fas fa-ellipsis-v"></i></span>
 					<div style="display:none" class="w3-small" id="infoLogAllContent">
@@ -561,8 +561,8 @@
 								class="w3-button w3-green w3-padding-small">&gt;</button>&nbsp;&nbsp;
 							<select id="infoLogType" onchange="infoLogTypeSelect()"
 								class="w3-select w3-green w3-padding-small" style="width: 10em">
-								<option selected>Main Log</option>
-								<option>Connections</option>
+								<option ll="mainlog" selected>Main Log</option>
+								<option ll="connections">Connections</option>
 							</select>
 						</div>
 						<div id="infoLogContent" class="w3-responsive">
@@ -574,10 +574,10 @@
 
 
 				<div class="w3-bar w3-border-bottom">
-					<b>System Info</b>
+					<b ll="systeminfo">System Info</b>
 					<span class="w3-right  w3-button w3-small w3-light-gray" onclick="expandDetailsInfo()"><i
 							class="fas fa-ellipsis-v"></i></span>
-					<div style="display:none" id="infoDetailsContent">Info</div>
+					<div ll="infos" style="display:none" id="infoDetailsContent">Info</div>
 				</div>
 
 				<p><button onclick="modal_close('modalEditInfo')" class="w3-button w3-green">OK</button></p>
@@ -594,12 +594,12 @@
 				<span class="w3-button w3-display-topright w3-light-gray"
 					onclick="modal_close('modalClearDevice')"><b>X</b></span>
 
-				<h2>Clear Data?</h2>
+				<h2 ll="cleardataquestion">Clear Data?</h2>
 				<form id="clearDeviceForm">
 					<input onclick="clearDeviceDataEnable()" id="edCheckClear" class='w3-check'
-						type='checkbox'>Sure?<br>
-					<p>This will clear all Data in Database</p>
-					<p><button id="edCheckSubmit" type="submit" class="w3-button w3-green">Clear Data</button> </p>
+						type='checkbox'><span  ll="surequestion">Sure?</span><br>
+					<p ll="cleardatadatabase">This will clear all Data in Database</p>
+					<p><button ll="cleardata" id="edCheckSubmit" type="submit" class="w3-button w3-green">Clear Data</button> </p>
 				</form>
 
 			</div>
@@ -614,8 +614,8 @@
 				<span class="w3-button w3-display-topright w3-light-gray"
 					onclick="modal_close('modalShowWEA')"><b>X</b></span>
 
-				<h2>Notes</h2>
-				<p><b>(Warnings, Errors, Alarms)</b></p>
+				<h2 ll="messages">Notes</h2>
+				<p><b><span ll="warnerralarm">(Warnings, Errors, Alarms)</span></b></p>
 				<div class="w3-small">
 					<div>
 						<button id="showWEAHome" onclick="showWEAPos(-99999)"
@@ -643,7 +643,7 @@
 		<div class="w3-container" style="padding-top:22px">
 			<header>
 				<h5><b><i class="fas fa-info-circle fa-fw"></i> <span ll="infos">Infos</span></b>
-					<span class="w3-right w3-button w3-small" title="Remove all Infos"
+					<span llt="removeallinfos" class="w3-right w3-button w3-small" title="Remove all Infos"
 						onclick="$('#loglist').empty()"><b>X</b></span>
 				</h5>
 			</header>
