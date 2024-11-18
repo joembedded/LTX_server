@@ -21,7 +21,7 @@ LTX Microcloud adapts maximum upload size for files with Autosync (e.g. logger d
 For are transmission intervals at high logging intervals it should be increased to get always all data. 
 Please note: using SSL encryption if slow connections are enabled (LTE-NB) might work, but is not recommended.
 
-New in V.23: By default all devices use the same D_API_KEY. This OK for small or closed systems. Optionally new devices can use individual keys (attached to MAC and checked via external API) for larger systems.
+New in V2.23: By default all devices use the same D_API_KEY. This OK for small or closed systems. Optionally new devices can use individual keys (attached to MAC and checked via external API) for larger systems.
 
 
 ![LTX Gdraw tool](./docs_raw2edit/G-Draw.jpg "LTX Gdraw tool")
@@ -82,5 +82,6 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.30 17.04.2024 Cosmetics
 - V2.31 13.05.2024 Drivers for SWARM (product shut down) and ASTROCAST removed
 - V2.32 24.05.2024 Added drivers form ORBCOMM IGWS2 (INMARSAT)
-- V2.33 09.09.2024 Selectable sec/min/hr and startet internationalisation in UI
+- V2.33 09.09.2024 Selectable sec/min/hr and started internationalisation in UI
 - V2.50 11.10.2024 Added German/Englisch translations for 'intern_main.html'
+- V2.51 18.11.2024 Added EcoWitt/Wunderground data upload (for wheather stations)
