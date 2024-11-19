@@ -203,7 +203,7 @@
 					</p>
 					<!-- later: required  -->
 
-					<p><button ll='save' type="submit" class="w3-button w3-green">Save</button> </p>
+					<p><button ll="save" type="submit" class="w3-button w3-green">Save</button> </p>
 				</form>
 			</div>
 		</div>
@@ -241,7 +241,7 @@
 						<label ll="alerthk">Alarms for HK-Values: Battery and/or Humidty</label><br>
 						<select id="selBatt" class="w3-select w3-green w3-padding-small"
 							style="width: 18em"></select><br>
-						<input id="edCheckHum" class='w3-check' type='checkbox'><span ll="internalhum"> Internal Humidity &gt; 80%</span><br>
+						<input id="edCheckHum" class="w3-check" type="checkbox"><span ll="internalhum"> Internal Humidity &gt; 80%</span><br>
 
 					</div>
 					<br>
@@ -250,9 +250,10 @@
 						<div id="divRole0" class="w3-border"></div>
 						<input id="edToken0" class="w3-input w3-border" type="text" pattern="^[0-9a-fA-F]{16}$"
 							llp="notoken" placeholder="(None)" disabled style="width: 16em">
-						<button onclick="edCopyTokenToClipboard(0)" class="w3-button w3-green w3-padding-small" ll="tokenclipboard">Token to
+							<!-- Spezial: type="button" verhindert FormClose -->
+							<button type="button" onclick="edCopyTokenToClipboard(0)" class="w3-button w3-green w3-padding-small" ll="tokenclipboard">Token to
 							Clipboard</button>
-						<button id="edGenToken0" onclick="edGenerateNewToken(0)"
+						<button type="button" id="edGenToken0" onclick="edGenerateNewToken(0)"
 							class="w3-button w3-green w3-padding-small" ll="newtoken">New Token</button>
 						</p>
 					</div>
@@ -486,7 +487,7 @@
 						</div>
 					</div>
 					<div><input onclick="showSecondary()" id="showSecPar" type="checkbox" class="w3-check"><span  ll="showwith">Show with</span>
-						<span ll="secondaryparams" class="w3-pale-yellow">Secondary Parameters</Secondary parametersspan>
+						<span ll="secondaryparams" class="w3-pale-yellow">Secondary Parameters</span>
 					</div>
 					<p><button ll="save" type="submit" class="w3-button w3-green">Save Changes</button> </p>
 				</form>
@@ -596,8 +597,8 @@
 
 				<h2 ll="cleardataquestion">Clear Data?</h2>
 				<form id="clearDeviceForm">
-					<input onclick="clearDeviceDataEnable()" id="edCheckClear" class='w3-check'
-						type='checkbox'><span  ll="surequestion">Sure?</span><br>
+					<input onclick="clearDeviceDataEnable()" id="edCheckClear" class="w3-check"
+						type="checkbox"><span  ll="surequestion">Sure?</span><br>
 					<p ll="cleardatadatabase">This will clear all Data in Database</p>
 					<p><button ll="cleardata" id="edCheckSubmit" type="submit" class="w3-button w3-green">Clear Data</button> </p>
 				</form>
@@ -661,8 +662,9 @@
 					<b><i class="fas fa-file-alt fa-fw"></i> <span ll="devices">Devices</span> <span
 							id="noOfDevices">(?)</span>
 					</b> <span class="w3-small">Sync:&nbsp;<span id="sync"></span></span>
-					<span class="w3-right w3-button w3-small" title="Unfold/Fold all Devices" onclick="expandDevices()">
-						<i class="fas fa-ellipsis-v"></i></span></b>
+					<b><span class="w3-right w3-button w3-small" title="Unfold/Fold all Devices" onclick="expandDevices()">
+						<i class="fas fa-ellipsis-v"></i></span>
+					</b>
 				</h5>
 			</header>
 			<ul id="deviceList" class="w3-ul w3-border w3-small">
