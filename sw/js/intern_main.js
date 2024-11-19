@@ -10,7 +10,7 @@
 "use strict";
 
 // ------- Globals --------------
-var prgVersion = "V0.68 (11.10.2024)";
+var prgVersion = "V0.70 (19.11.2024)";
 var prgName = "LTX - MicroCloud" + prgVersion;
 var prgShortName = "LTX";
 
@@ -1114,7 +1114,7 @@ function clearDeviceDataEnable() {
 	document.getElementById("edCheckSubmit").disabled = !document.getElementById("edCheckClear").checked;
 }
 
-function clearDeviceSubmit() {
+function clearDeviceSubmit(event) {
 	var clearMAC = deviceWList[clearIdx].mac;
 
 	event.preventDefault();
@@ -1438,13 +1438,13 @@ function editDeviceParameter(idx) { // Show
 	//console.log("Get Parameter "+editMAC );
 }
 
-function edParamChanUp() {
+function edParamChanUp(event) {
 	var ok2save = editParamChannelGet();
 	if (ok2save == true) edParamChanUpDownloc(1);
 	event.preventDefault();
 }
 
-function edParamChanDown() {
+function edParamChanDown(event) {
 	var ok2save = editParamChannelGet();
 	if (ok2save == true) edParamChanUpDownloc(-1);
 	event.preventDefault();
@@ -1756,7 +1756,7 @@ function editParamCheck2Org() { // Check against Original - return No of changes
 	return chgcnt; // No. of Changes
 }
 
-function editParameterSubmit() {
+function editParameterSubmit(event) {
 	var ok2save = editParamMainGet(); // First Get MAIN Parameter
 	var changes;
 	event.preventDefault();
@@ -1916,7 +1916,7 @@ function editDeviceCallback() {
 	modal_show("modalEditDevice");
 }
 
-function editDeviceSubmit() {
+function editDeviceSubmit(event) {
 	var ok2save = true; // Add. verification
 	var changecnt = 0;
 	var newutc = parseInt($("#edUTCOffset").val());
@@ -1964,7 +1964,7 @@ function editDeviceSubmit() {
 	} // Name unchanged;
 }
 
-// Sub-Functions foe Edit Device
+// Sub-Functions for Edit Device
 function edGenerateNewToken(idx) {
 	var newtok = "",
 		dtok;
@@ -1985,6 +1985,7 @@ function edCopyTokenToClipboard(idx) {
 	navigator.clipboard.writeText(cpytxt)
 	if (clb.length != 16) ownAlert(ll('errorcap')+":", "Token #" + idx + ": "+ ll('notoken'));
 	else ownAlert(ll('copied'), "<b>MAC:" + editDeviceData.mac + " <br>TOK" + idx + ":" + clb + "</b><br><br>("+ll('dontforgettoken')+")");
+
 }
 
 function checkSaved() { // true if all changed
@@ -2002,7 +2003,7 @@ function checkSaved() { // true if all changed
 	return true;
 }
 
-function edMailTest0() {
+function edMailTest0(event) {
 	var newcontact0 = $("#edDeviceMail0").val();
 	if (checkSaved() != true || newcontact0.length < 5) { // Might later be something else than Mail
 		ownAlert(ll('errorcap')+":", ll('errcontactinvalid'));
@@ -2025,7 +2026,7 @@ function edMailTest0() {
 	event.preventDefault();
 }
 
-function edResetCond0() {
+function edResetCond0(event) {
 	event.preventDefault();
 
 	if (checkSaved() != true) { // Might later be something else than Mail
@@ -2042,7 +2043,7 @@ function edResetCond0() {
 // --- Edit Device Details End -----
 
 // ---- Edit User (only possible: Change user Name) -------
-function editUserSubmit() {
+function editUserSubmit(event) {
 	var newname = $("#aUserName").val();
 	event.preventDefault();
 	modal_close("modalEditUser");
