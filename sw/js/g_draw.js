@@ -54,7 +54,7 @@ var colTab = [ // Contains. 16+x Colors (Standard Colors)
   '#9696FF', // 7: lightblue
   '#FFC0CB', // 8: pink
   '#A52A2A', // 9: maroon
-  '#FFF000', // 10: yellow
+  '#F0F000', // 10: yellow 
   '#A020F0', // 11: purple
   '#7FFFD4', // 12: aquamarin
   '#DCC8FF', // 13: lavender
