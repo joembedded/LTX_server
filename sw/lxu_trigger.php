@@ -277,7 +277,7 @@ function decodeB64($ostr)
 			$xlog .= "('$fname' ignored)";
 
 			// echo "ignore '$fname'";		
-			if (!$dbg) @unlink("$dpath/$fname");
+			if ($dbg<2) @unlink("$dpath/$fname");
 			continue;	// ONLY Files
 		}
 
@@ -289,7 +289,7 @@ function decodeB64($ostr)
 			$warn_new++;	// Warning: EMPTY FILE (Warning not visible)
 			$xlog .= "(WARNING: File '$fname' is empty)";
 			$info_wea[] = "WARNING: File '$fname' is empty";
-			if (!$dbg) @unlink("$dpath/$fname");	// Strange...
+			if ($dbg<2) @unlink("$dpath/$fname");	// Strange...
 			continue;	// ONLY Files
 		}
 
@@ -409,9 +409,7 @@ function decodeB64($ostr)
 			}
 			$line_cnt++;
 		}
-
-		if ($dbg) echo "*File '$fname'\n"; // *** With DBG set: multiple imports in DB ***
-		else @unlink("$dpath/$fname");	// Unlinked processed File
+		if ($dbg<2) @unlink("$dpath/$fname");	// Unlinked processed File
 	}
 
 	// Synthesize last values line
