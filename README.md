@@ -71,7 +71,7 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.10 19.10.2023 Decoding of compressed lines (starting with '$'+Base64) added
 - V2.20	02.11.2023 Legacy CSView UTF-8 cosmetics and removed in Database 'token/mail/cond..1-3' (see ...sql_docu.txt)
 - V2.21	04.11.2023 Added Network Details (2G/4G/..) 
-- V2.22 05.11.2023 Max. upload limit depending on Network, set defines(MAXM_xx) in 'api_key.inc.php!
+- V2.22 05.11.2023 Max. upload limit depending on Network, set defines('MAXM_xx') in 'api_key.inc.php!
 - V2.23 25.11.2023 If DAPIKEY_SERVER defined: indivdual external D_API_KEY check for each NEW device  (only once)
 - V2.24 28.11.2023 Additional FTP-Export formats (sw/vpnf/ipush.php)
 - V2.25 11.12.2023 Added 'quotaget/quotachange' in sw/php/w_rad.php 
@@ -85,3 +85,4 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.33 09.09.2024 Selectable sec/min/hr and started internationalisation in UI
 - V2.50 11.10.2024 Added German/Englisch translations for 'intern_main.html'
 - V2.51 18.11.2024 Added EcoWitt/Wunderground data upload (for wheather stations)
+- V2.52 05.12.2024 Added optional define('MXGET_MEM') (extends defines('MAXM_xx') from V2.22)

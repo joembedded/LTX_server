@@ -2,7 +2,7 @@
 
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 24.05.2024
+ * 05.12.2024
  *
  * ------------------------------------------------------
  * INFO: call periodically (e.g. via CRON or Sheduler) 
@@ -255,7 +255,7 @@ function check_devices($rep)
 		$anz_devices++;
 		$mark = "";
 		$mac = $row['mac'];
-
+		$macdir = "../" . S_DATA . "/$mac";
 		$qres = $pdo->query("SHOW TABLES LIKE 'm$mac'")->rowCount();
 		if ($qres === 0) {	// No Table for this Device 
 			$lines = "?";
@@ -270,7 +270,7 @@ function check_devices($rep)
 		}
 
 		$age_d = round(($now - $row['x']) / 86400, 2);
-		$quota = @file("../" . S_DATA . "/$mac/quota_days.dat");
+		$quota = @file("$macdir/quota_days.dat");
 		$quota_days = intval(@$quota[0]);
 		if ($quota_days < 1) $quota_days = $qday;	// 1 Day minimum
 		if ($fmaxd > 0) $quota_days = $fmaxd; // Force remove
@@ -296,6 +296,22 @@ function check_devices($rep)
 					$calltrigger = 1024;
 				}
 			}
+
+			// Check not-imported Files in /in_new
+			$flist = @scandir("$macdir/in_new", SCANDIR_SORT_DESCENDING);
+			if ($flist) {
+				foreach($flist as $fname){
+					$ffname="$macdir/in_new/$fname";
+					if(is_file($ffname)){
+						$age = $now - filemtime($ffname);
+						if($age>600){
+							$calltrigger|=1;	// Intern
+							break;
+						}
+					}
+				}
+			}
+
 			if ($calltrigger) {
 				$trigger_cnt++;
 				$mark .= "(CallTrigger:$calltrigger)";
@@ -375,8 +391,7 @@ function check_legacy($rep)
 	$list = scandir($dir);
 	$anz = 0;
 	foreach ($list as $file) {
-		if ($file == '.' || $file == '..') continue;
-		if ($file == 'log' || $file == 'stemp') continue;	// log and stemp not listed
+		if(!ctype_xdigit($file)) continue; // ignore '.', '..', 'log', 'stemp', 'orbcomm',..
 		if (!is_dir("./$dir/$file")) continue;	// Should not be, but..
 		$mac = $file;
 		$mark = "";
