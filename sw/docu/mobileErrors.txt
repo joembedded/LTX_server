@@ -1,0 +1,94 @@
+Datei: ltx\sw\docu\mobileErrors.txt - Häufige Mobilfehler
+Stand: 30.07.2024
+
+Modem Basic:
+-20xx Creg:
+-2005: Roming denied
+-2006: Net denied
+-2007, -2017: APN
+-2011: PowerDown-Fehler: Modem antwortet nicht
+-2012: PowerDown-Fehler: Modem bestaetigt nicht PowerDown-Cmd
+-2013: PowerDown-Fehler: Modem-Abmelden schlug fehl)
+-2018: APN-Timeout
+(-2030 3 Denied Net)
+-2031 4 Unknown Net
+(-2032 5 Roaming Error Net (wenn nicht erlaubt))
+- 2033,2034,2035,2036: No Net (Creg=6..8, solte nie vorkommen)
+-2000, -1001: KeineAntwort vom Modem
+-240x: DNS Failure
+-2303 Server nicht erreichbar (gprs_transfer.c)
+
+UDP:
+- 2190 Open/DNS
+- 2191 SendUPD
+-  2192 NoReply
+- 2199 Close
+
+HTTP:
+-2208: initial Timeout beim Content (ca. 20 Sekunden sollten reichen!)
+-2209: Timeout im Content z:b Not Found/
+-2303: Server nicht erreichbar oder VIEL zu langsam
+-2304: Modem antwortet nicht, evtl. Sleep oder Batterie low?
+-2300,-2301, -2302, ..(max 2310): u-Blox Socket Setup Failure
+-231x: SSL-Setup
+-3000+HTTP-Code (z.B. -3301 bei permanently moved)
+-2100: Connection to Server failed (Open failure)
+-2101: Quectel CLose failed
+-2201,-2202,-2203: Send Header
+-2205: Send Trailer
+ 
+Content:
+-1002: Kann auch passieren, wenn Server z spaet antwortet und Daten "400 Bad Gateway" etc. als Content gesehen wird
+-4000: Notepad voll!
+-4001: Unbekanntes Kommando im Notepad
+-4002: fnamelen <1 oder >FNAMELEN bei GET
+-4003: fnamelen <1 oder >FNAMELEN bei SET
+-4004: unbekannter Block (CMD an Device). Evtl. Ueberspringen
+-4005: Notepad voll
+(-4006: Disk available zu wenig) (koennte trotzdem passen..)
+-4007: Falsche Filename-Len
+-4008: Illegale Zeichen im Filename
+-4009: CRC2 bei File-Block falsch (Pendant: -1004 bei normalen Bloecken)
+-4010: Interface
+-4011: User does not want to receive this file
+
+-4998: Interface not set
+(-4999: Internet disabled (reserved for peridcally called user_content_exit()) <t.b.d>)
+-5000+: Content-Fehler unterliegender Layer SEND (+0..255)
+-5300+: Content-Fehler unterliegender Layer Get (+0..255)
+ -5546: Timeout z.B.
+-5600+: Read Contentlen (radio_task)
+ 
+ GPRS_TRANSFER:
+ -2208: initial Timeout beim Content (ca. 20 Sekunden sollten reichen!)
+ -2209: Timeout im Content z:b Not Found/
+ -2303: Server nicht erreichbar oder VIEL zu langsam
+ -2300,-2301*, -2302*, ..(max 2310*): u-Blox Socket Setup: *:keine Wdh!
+ -231x: SSL-Setup
+ -3000+HTTP-Code (z.B. -3301 bei permanently moved)
+ (-3000 bis -3999)
+ -2100: Connection to Server failed (DNS failure)
+ -2101: Quectel CLose failed
+ -2201,-2202,-2203: Send Header
+ -2205: Send Trailer
+ 
+ LFTP:
+ -2500: No Reply from Modem (might be Sleeping/OFF)
+ -2501: Protokoll not LFTP (Legacy FTP (direct, NO ENCRYPTION))
+ -2502: Format unknown
+ -2503: NTP-Server not found
+ -2504: FTP Hostname missing
+ -2505: FTP Port  missing
+ -2506: FTP User missing
+ -2507: FTP Password  missing
+ -2508: Unknown/incorrect CMD
+ -2550: Connect Server - Context
+ -2551: Connect Server - Filetype
+ -2552: Connect Server - User/PW refused
+ -2553: Connect Server - Connection refused(A)
+ -2554: Connect Server - Connection refused(B)
+ -2555: Open File on FTP Server
+ -2556: Close File on FTP Server Error
+ -2557: Send Filecontent to FTP Server failed
+  
+ ****
