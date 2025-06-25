@@ -86,3 +86,4 @@ LTX API (only DE): ['LTX PushPull-API (DE)'](./docs_raw2edit/LTX_PushPull.pdf "L
 - V2.50 11.10.2024 Added German/Englisch translations for 'intern_main.html'
 - V2.51 18.11.2024 Added EcoWitt/Wunderground data upload (for wheather stations)
 - V2.52 05.12.2024 Added optional define('MXGET_MEM') (extends defines('MAXM_xx') from V2.22)
+- V2.53 25.06.2025 Added LoRaWAN support for ChirpStack V4 and TTN V3 ('lxu_ltxlora_v1.php')
