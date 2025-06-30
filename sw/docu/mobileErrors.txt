@@ -1,5 +1,5 @@
 Datei: ltx\sw\docu\mobileErrors.txt - Häufige Mobilfehler
-Stand: 30.07.2024
+Stand: 30.06.2025
 
 Modem Basic:
 -20xx Creg:
@@ -10,6 +10,7 @@ Modem Basic:
 -2012: PowerDown-Fehler: Modem bestaetigt nicht PowerDown-Cmd
 -2013: PowerDown-Fehler: Modem-Abmelden schlug fehl)
 -2018: APN-Timeout
+-2029: NoNetFound (creg=2)
 (-2030 3 Denied Net)
 -2031 4 Unknown Net
 (-2032 5 Roaming Error Net (wenn nicht erlaubt))
