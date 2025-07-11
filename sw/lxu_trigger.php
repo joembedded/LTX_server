@@ -1,9 +1,9 @@
 <?php
 
 /*************************************************************
- * trigger for LTrax V1.34-SQL
+ * trigger for LTrax V1.35-SQL
  *
- * 12.06.2024 - (C)JoEmbedded.com
+ * 11.07.2025 - (C)JoEmbedded.com
  *
  * This is database version for a trigger that accepts 
  * all incomming data and insertes it into a SQL database.
@@ -66,99 +66,99 @@ try {
 		return $res; // OK: true
 	}
 
-// -- $B64-Functions / Decompress -
-// Only allowed token 111 and tokens 0..89
-// HK-Values etc. in plain!
-function get_u16($valstr)
-{
-	$ui16 = unpack('n', $valstr)[1];
-	return $ui16;
-}
+	// -- $B64-Functions / Decompress -
+	// Only allowed token 111 and tokens 0..89
+	// HK-Values etc. in plain!
+	function get_u16($valstr)
+	{
+		$ui16 = unpack('n', $valstr)[1];
+		return $ui16;
+	}
 
-function get_ef32($valstr)
-{
-	$hval = intval(unpack('N', $valstr)[1]);
-	if (($hval >> 24) == 0xFD) {
-		$errno = $hval & 0xFFFFFF;
-		return get_errstr($errno);
-	}
-	return round(decode_f32($hval), 8); // Float max. 8 Digits
-}
-function get_errstr($errno)
-{ // wie measure.c
-	switch ($errno) {
-		case 1:
-			return 'NoValue';
-		case 2:
-			return 'NoReply';
-		case 3:
-			return 'OldValue';
-			// 4,5
-		case 6:
-			return 'ErrorCRC';
-		case 7:
-			return 'DataError';
-		case 8:
-			return 'NoCachedValue';
-		default:
-			return "Err$errno";
-	}
-}
-function decode_f32($bin) // U32 -> Float IEEE 754
-{
-	$sign = ($bin & 0x80000000) > 0 ? -1 : 1;
-	$exp = (($bin & 0x7F800000) >> 23);
-	$mantis = ($bin & 0x7FFFFF);
-
-	if ($mantis == 0 && $exp == 0) {
-		return 0;
-	}
-	if ($exp == 255) {
-		if ($mantis == 0) return INF;
-		if ($mantis != 0) return NAN;
-	}
-	if ($exp == 0) { // denormalisierte Zahl
-		$mantis /= 0x800000;
-		return $sign * pow(2, -126) * $mantis;
-	} else {
-		$mantis |= 0x800000;
-		$mantis /= 0x800000;
-		return $sign * pow(2, $exp - 127) * $mantis;
-	}
-}
-
-$deltatime = 0; // Zeilenuebergreifend
-function decodeB64($ostr)
-{ // ENTRY - On Error return false
-	global $deltatime;
-	$dwbytes = base64_decode($ostr); // Bytes decodiert
-	$dwlen = strlen($dwbytes);
-	$tok = ord($dwbytes[0]);
-	if($tok>=132) return "<XDATA '".$ostr."'>"; // Embedded Data
-	$odstr = "";	// Ausgabestring - LTX-Konform
-	$idx = 0;
-	while ($dwlen-- > 0) {
-		$tok = ord($dwbytes[$idx++]);
-		if ($tok == 111) { // Deltatime am Anf un dnur merken
-			if ($dwlen < 2) break;
-			$deltatime = get_u16(substr($dwbytes, $idx, 2));
-			$idx += 2;
-			$dwlen -= 2;
-			continue;
+	function get_ef32($valstr)
+	{
+		$hval = intval(unpack('N', $valstr)[1]);
+		if (($hval >> 24) == 0xFD) {
+			$errno = $hval & 0xFFFFFF;
+			return get_errstr($errno);
 		}
-		if (!strlen($odstr)) $odstr = "+$deltatime";
-		if ($tok <= 89) { // 0-89 F32 Kanaele
-			if ($dwlen < 4) break;
-			$vals = get_ef32(substr($dwbytes, $idx, 4));
-			$idx += 4;
-			$dwlen -= 4;
-			$odstr .= " $tok:$vals";
-		} else break;
+		return round(decode_f32($hval), 8); // Float max. 8 Digits
 	}
-	if ($dwlen > 0) return false; // Something left?
-	// echo "('$ostr' => '$odstr')\n"; // Dbg
-	return '!'.$odstr;
-}
+	function get_errstr($errno)
+	{ // wie measure.c
+		switch ($errno) {
+			case 1:
+				return 'NoValue';
+			case 2:
+				return 'NoReply';
+			case 3:
+				return 'OldValue';
+				// 4,5
+			case 6:
+				return 'ErrorCRC';
+			case 7:
+				return 'DataError';
+			case 8:
+				return 'NoCachedValue';
+			default:
+				return "Err$errno";
+		}
+	}
+	function decode_f32($bin) // U32 -> Float IEEE 754
+	{
+		$sign = ($bin & 0x80000000) > 0 ? -1 : 1;
+		$exp = (($bin & 0x7F800000) >> 23);
+		$mantis = ($bin & 0x7FFFFF);
+
+		if ($mantis == 0 && $exp == 0) {
+			return 0;
+		}
+		if ($exp == 255) {
+			if ($mantis == 0) return INF;
+			if ($mantis != 0) return NAN;
+		}
+		if ($exp == 0) { // denormalisierte Zahl
+			$mantis /= 0x800000;
+			return $sign * pow(2, -126) * $mantis;
+		} else {
+			$mantis |= 0x800000;
+			$mantis /= 0x800000;
+			return $sign * pow(2, $exp - 127) * $mantis;
+		}
+	}
+
+	$deltatime = 0; // Zeilenuebergreifend
+	function decodeB64($ostr)
+	{ // ENTRY - On Error return false
+		global $deltatime;
+		$dwbytes = base64_decode($ostr); // Bytes decodiert
+		$dwlen = strlen($dwbytes);
+		$tok = ord($dwbytes[0]);
+		if ($tok >= 132) return "<XDATA '" . $ostr . "'>"; // Embedded Data
+		$odstr = "";	// Ausgabestring - LTX-Konform
+		$idx = 0;
+		while ($dwlen-- > 0) {
+			$tok = ord($dwbytes[$idx++]);
+			if ($tok == 111) { // Deltatime am Anf un dnur merken
+				if ($dwlen < 2) break;
+				$deltatime = get_u16(substr($dwbytes, $idx, 2));
+				$idx += 2;
+				$dwlen -= 2;
+				continue;
+			}
+			if (!strlen($odstr)) $odstr = "+$deltatime";
+			if ($tok <= 89) { // 0-89 F32 Kanaele
+				if ($dwlen < 4) break;
+				$vals = get_ef32(substr($dwbytes, $idx, 4));
+				$idx += 4;
+				$dwlen -= 4;
+				$odstr .= " $tok:$vals";
+			} else break;
+		}
+		if ($dwlen > 0) return false; // Something left?
+		// echo "('$ostr' => '$odstr')\n"; // Dbg
+		return '!' . $odstr;
+	}
 
 	// ----------------MAIN----------------
 	$dbg = 0;	// Debug-Level if >0, see docu
@@ -247,8 +247,10 @@ function decodeB64($ostr)
 		foreach ($tmpa as $tmp) {
 			$ds = explode(':', $tmp); // As Key/Val
 			$key = $ds[0];
-			$val = @$ds[1];
-			$lvala[$key] = $val;
+			if ($key !== '') {
+				$val = @$ds[1];
+				$lvala[$key] = $val;
+			}
 		}
 		ksort($lvala);
 	}
@@ -277,7 +279,7 @@ function decodeB64($ostr)
 			$xlog .= "('$fname' ignored)";
 
 			// echo "ignore '$fname'";		
-			if ($dbg<2) @unlink("$dpath/$fname");
+			if ($dbg < 2) @unlink("$dpath/$fname");
 			continue;	// ONLY Files
 		}
 
@@ -289,7 +291,7 @@ function decodeB64($ostr)
 			$warn_new++;	// Warning: EMPTY FILE (Warning not visible)
 			$xlog .= "(WARNING: File '$fname' is empty)";
 			$info_wea[] = "WARNING: File '$fname' is empty";
-			if ($dbg<2) @unlink("$dpath/$fname");	// Strange...
+			if ($dbg < 2) @unlink("$dpath/$fname");	// Strange...
 			continue;	// ONLY Files
 		}
 
@@ -340,7 +342,7 @@ function decodeB64($ostr)
 						if (strlen($xlog) < 128) $xlog .= "(WARNING: Unknown Time)";
 						if (count($info_wea) < 20) $info_wea[] = "WARNING: Unknown Time";
 						$uxtstr = "T:$unixt";
-					}else $uxtstr = gmdate("d.m.y H:i:s",$unixt);
+					} else $uxtstr = gmdate("d.m.y H:i:s", $unixt);
 					// Check Values
 					$anz = count($tmp);
 					for ($i = 1; $i < $anz; $i++) {
@@ -387,8 +389,8 @@ function decodeB64($ostr)
 							$info_wea[] = "ERROR: Cookie($cookie)";
 							$err_new++;
 						}
-					} else if(!strncmp($line, "<GNSS ", 6)){ // Rare Device Position (poss: no time, no data)
-						$tmp = explode(' ',$line);
+					} else if (!strncmp($line, "<GNSS ", 6)) { // Rare Device Position (poss: no time, no data)
+						$tmp = explode(' ', $line);
 						$device_lat = floatval($tmp[2]);
 						$device_lng = floatval($tmp[3]);
 						$device_nrad = 0;	// Unknown
@@ -409,7 +411,7 @@ function decodeB64($ostr)
 			}
 			$line_cnt++;
 		}
-		if ($dbg<2) @unlink("$dpath/$fname");	// Unlinked processed File
+		if ($dbg < 2) @unlink("$dpath/$fname");	// Unlinked processed File
 	}
 
 	// Synthesize last values line
@@ -420,7 +422,6 @@ function decodeB64($ostr)
 		$laval .= "$key:$val";
 	}
 	$laval = strtr($laval, "'\"<>", "____");
-
 	// Remove '!U ' from units if found
 	if (strlen($units)) $units = strtr(substr($units, 3), "'\"<>", "____");	// Remove strange chars
 
@@ -543,17 +544,17 @@ function decodeB64($ostr)
 			}
 		}
 
-		if(isset($device_lat) && $device_lat != 0 && $device_lng != 0){ // Set by GNSS(Device) or CELLOC(Server)
+		if (isset($device_lat) && $device_lat != 0 && $device_lng != 0) { // Set by GNSS(Device) or CELLOC(Server)
 			$insert_sql .= "lat = $device_lat, lng = $device_lng, rad = $device_nrad, last_gps=NOW(),";
 			$xlog .= "(Automatic Pos. $device_lat,$device_lng,$device_nrad)";
 			$trigger_fb .= "#C $device_lat $device_lng $device_nrad\n"; // If fast enough Feedback Pos. to lxu_v1.php
 		}
 
 		$las = $deva['las']; //
-		if (isset($las)) $ageh = round(($now - $las) / 3600,2);
+		if (isset($las)) $ageh = round(($now - $las) / 3600, 2);
 		else $ageh = 0;	// Never seen..
 		$toalarm = $deva['timeout_alarm'];
-		if ($toalarm > 0 &&  $ageh > $toalarm ) {
+		if ($toalarm > 0 &&  $ageh > $toalarm) {
 			$alarm_new++;
 			$info_wea[] = "ALARM: Device last seen $ageh h ago!";
 		} else {
@@ -661,8 +662,8 @@ function decodeB64($ostr)
 					if ($err_tot) $cont .= "- Errors (new/total): $err_new/$err_tot\n";
 					if ($warn_tot) $cont .= "- Warnings (new/total): $warn_new/$warn_tot\n";
 
-					if(count($info_wea)){
-						$cont .= "\n".implode("\n",$info_wea)."\n";
+					if (count($info_wea)) {
+						$cont .= "\n" . implode("\n", $info_wea) . "\n";
 					}
 
 					if (send_alarm_mail($mail_dest, $cont, $subj, $from) == true) {
@@ -751,17 +752,17 @@ function decodeB64($ostr)
 	}
 
 	// 4a. 'v' pushes ALWAYS to vpnf/ipush.php
-	if(isset($vpnf)){ // Testfile schreiben
-		if(isset($quota[2]) && strlen($quota[2])){
+	if (isset($vpnf)) { // Testfile schreiben
+		if (isset($quota[2]) && strlen($quota[2])) {
 			$xlog .= "(Quota-Push set, ConfigCmd ignored')";
-		}else{
+		} else {
 			$script = $_SERVER['PHP_SELF'];	// /xxx.php
 			$lp = strpos($script, "sw"); // Path
 			$sroot = substr($script, 0, $lp - 1);
 			if (HTTPS_SERVER != null) $sec = "https://" . HTTPS_SERVER;
 			else $sec = "http://" . $_SERVER['HTTP_HOST'];
-			$urlt = $sec . $sroot. "/sw/vpnf/ipush.php ".S_API_KEY;
-			$quota=array('','',$urlt); // 0,1 nicht mehr benoetigt
+			$urlt = $sec . $sroot . "/sw/vpnf/ipush.php " . S_API_KEY;
+			$quota = array('', '', $urlt); // 0,1 nicht mehr benoetigt
 		}
 	}
 

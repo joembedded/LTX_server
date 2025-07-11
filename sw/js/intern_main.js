@@ -833,6 +833,7 @@ function generateDetails(idx) {
 			var kv = vals[ii].split(":");
 			var kvn = parseInt(kv[0]); // ChannelNo
 			var unit = "???"; // Find Unit, assume unknown
+
 			if (!isNaN(kvn) && kvn >= 0 && kvn < 200 && kv.length == 2 && kv[1].length >= 1 && units != undefined) {
 				for (var i = 0; i < units.length; i++)
 					if (parseInt(units[i]) == kvn) {
