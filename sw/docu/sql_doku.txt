@@ -1,5 +1,5 @@
 * Anmerkungen zu den SQL Rows *
-* 14.02.2024 JoEmbedded.de 
+* 14.07.2025 JoEmbedded.de 
 * New: -- x removed (only 1 ROLE/TOKEN used, Rest (1-3): spare!)
 
 *********** Globals ***********************************
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `last_change` timestamp DEFAULT CURRENT_TIMESTAMP,	Letzte Aenderung an der Tabelle
 
   `name` varchar(255) COLLATE utf8_unicode_ci,			Aktueller Name Eingetragen von TRIGGER
-  `units` varchar(255) COLLATE utf8_unicode_ci,			Einheitenfeld als Zeile 0 (letzte Einheiten)
-  `vals` varchar(255) COLLATE utf8_unicode_ci,			Wertefeld (letzte Werte, inkl HK)
+  `units` varchar(8191) COLLATE utf8_unicode_ci,			Einheitenfeld als Zeile 0 (letzte Einheiten)
+  `vals` varchar(8191) COLLATE utf8_unicode_ci,			Wertefeld (letzte Werte, inkl HK)
   `cookie` int unsigned DEFAULT NULL,					Aktueller Cookie der Parameter (entnommen aus edt-File)
 
   `utc_offset` int DEFAULT 3600,						Offset in H zu UTC (= Winterzeit). Evtl. nur nach Bedarf an User
