@@ -422,6 +422,7 @@ try {
 		$laval .= "$key:$val";
 	}
 	$laval = strtr($laval, "'\"<>", "____");
+
 	// Remove '!U ' from units if found
 	if (strlen($units)) $units = strtr(substr($units, 3), "'\"<>", "____");	// Remove strange chars
 

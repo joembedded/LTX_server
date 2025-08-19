@@ -231,9 +231,9 @@ function generate_checks(tdiv, tsrc, tist, tmask, tdis) {
 			cbs += "><input class='w3-check' type='checkbox' value='" + tm + "'";
 			if (tist & tm) cbs += " checked";
 			if (tdis & tm) cbs += " disabled";
-			if (tsrc[i].ll !== undefined){
+			if (tsrc[i].ll !== undefined) {
 				cbs += ">&nbsp;" + ll(tsrc[i].ll) + "<br></span>";
-			}else{
+			} else {
 				cbs += ">&nbsp;" + tsrc[i].typ + "<br></span>";
 			}
 		}
@@ -256,9 +256,9 @@ function generate_drops(tdiv, tsrc, tist) {
 	var sel = document.getElementById(tdiv);
 	var cbs = "";
 	for (var i = 0; i < tsrc.length; i++) {
-		if (tsrc[i].ll !== undefined){
+		if (tsrc[i].ll !== undefined) {
 			cbs += "<option value='" + i + "'>" + ll(tsrc[i].ll) + "</option>";
-		}else{
+		} else {
 			cbs += "<option value='" + i + "'>" + tsrc[i].opt + "</option>";
 		}
 	}
@@ -376,7 +376,7 @@ function ownAlertAutoClose() {
 function ownAlert(title, text, link, timeout) {
 	if (text == undefined) {
 		text = title;
-		title = ll('infocap')+":";
+		title = ll('infocap') + ":";
 	}
 	modalCloseRedir = link;
 	var cont = "<h2>" + title + "</h2>" + text;
@@ -575,7 +575,7 @@ function user_poll(jcmd) {
 				}
 				rel += "?a=login"; // With Login
 			}
-			ownAlert(ll('errorcap')+":", data.status + " (" + autoID + ")", rel);
+			ownAlert(ll('errorcap') + ":", data.status + " (" + autoID + ")", rel);
 			return;
 		}
 		var latency = parseFloat(data.status.substr(data.status.indexOf("(") + 1));
@@ -594,10 +594,10 @@ function user_poll(jcmd) {
 				userID = data.user_id;
 				var info = document.getElementById("welcomeInfo");
 				if (!(userRole & 32768)) { // Demo
-					info.innerHTML = "<b>&nbsp;* "+ll('limitedrights')+" *&nbsp;</b>";
+					info.innerHTML = "<b>&nbsp;* " + ll('limitedrights') + " *&nbsp;</b>";
 					info.style.background = 'yellow';
 				} else if (userRole & 65536) { // ADMIN
-					info.innerHTML = "<b>&nbsp;* "+ll('adminrights')+"*&nbsp;</b>";
+					info.innerHTML = "<b>&nbsp;* " + ll('adminrights') + "*&nbsp;</b>";
 					info.style.background = 'red';
 					$(".cadmin").css("display", "none"); // Disable Normal user items
 					$(".sadmin").css("display", "block"); // Only Main User
@@ -611,7 +611,7 @@ function user_poll(jcmd) {
 			if (data.anz_devices != userAnzDevices) { // Check Number of Devices
 				userAnzDevices = data.anz_devices;
 				if (anzW != userAnzDevices) {
-					ownAlert(ll('errorcap')+":", ll('errordevnumber'));
+					ownAlert(ll('errorcap') + ":", ll('errordevnumber'));
 					lastSeenTimestamp = 0;
 					return;
 				}
@@ -647,29 +647,29 @@ function user_poll(jcmd) {
 					hstr += "</b></a>";
 
 					if (userRole & 65536) {
-						if (adev.owner_id != null) hstr += " ("+ll('user')+":'" + adev.real_owner_id + "')"; // Just for info
-						else hstr += " ("+ll('user')+": "+ll('notoken')+")";
+						if (adev.owner_id != null) hstr += " (" + ll('user') + ":'" + adev.real_owner_id + "')"; // Just for info
+						else hstr += " (" + ll('user') + ": " + ll('notoken') + ")";
 					}
 					var gpsinfo = "";
 
 					if ((adev.units !== null && adev.units.includes(":Lat") && adev.units.includes(":Lng")) || (adev.posflags > 0)) {
 						if (isguest) { // Access with token
 							gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000&k=" + adev.token +
-								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; "+ll('positionview')+"</b></a>";
+								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-orange'></i>&nbsp; " + ll('positionview') + "</b></a>";
 						} else {
 							gpsinfo = "<br><a class='jo-mac' href='gps_view.html?s=" + adev.mac + "&lim=1000" +
-								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; "+ll('positionview')+"</b></a>";
+								"' target='_blank'><b><i class='fas fa-map-marker-alt w3-text-green'></i>&nbsp; " + ll('positionview') + "</b></a>";
 						}
 					}
 					if (userRole & 65536) {
 						if (gpsinfo == "") gpsinfo += "<br>"
 						gpsinfo += "<a class='jo-mac' href='w_php/w_gdraw_db.php?s=" + adev.mac + "&lim=10000000&mk" +
-							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; "+ll('rawdata')+"</b></a>";
+							"' target='_blank'><b><i class='fas fa-database w3-text-blue'></i>&nbsp; " + ll('rawdata') + "</b></a>";
 						gpsinfo += "<a class='jo-mac' href='../legacy/device_lx.php?s=" + adev.mac +
-							"' target='_blank'><b><i class='fas fa-file w3-text-blue'></i>&nbsp; "+ll('legacydata')+"</b></a>";
+							"' target='_blank'><b><i class='fas fa-file w3-text-blue'></i>&nbsp; " + ll('legacydata') + "</b></a>";
 					}
 
-					hstr += " "+ll('age')+":&nbsp;<span id='devLiCon" + i + "'></span>" +
+					hstr += " " + ll('age') + ":&nbsp;<span id='devLiCon" + i + "'></span>" +
 						'<span onclick="macShowDetails(' + i +
 						')" class="w3-button w3-display-topright w3-light-gray"><i class="fas fa-ellipsis-v"></i></span>' + gpsinfo +
 						'</div><div style="display: none" id="devLiDet' +
@@ -718,18 +718,18 @@ function user_poll(jcmd) {
 						cont += " '" + adev.name + "'";
 					}
 
-					cont += ": "+ll('newmult')+"&nbsp;"+ll('linesdata')+":&nbsp;" + nlc;
+					cont += ": " + ll('newmult') + "&nbsp;" + ll('linesdata') + ":&nbsp;" + nlc;
 					var ccol = "w3-white"; // Default white
 					if (adev.warnings_cnt) {
-						cont += ", "+ll('warnings')+":&nbsp;" + adev.warnings_cnt;
+						cont += ", " + ll('warnings') + ":&nbsp;" + adev.warnings_cnt;
 						ccol = "w3-yellow";
 					}
 					if (adev.err_cnt) {
-						cont += ", "+ll('errors')+":&nbsp;" + adev.err_cnt;
+						cont += ", " + ll('errors') + ":&nbsp;" + adev.err_cnt;
 						ccol = "w3-red";
 					}
 					if (adev.alarms_cnt) {
-						cont += ", "+ll('alerts')+":&nbsp;" + adev.alarms_cnt;
+						cont += ", " + ll('alerts') + ":&nbsp;" + adev.alarms_cnt;
 						ccol = "w3-purple";
 					}
 					log_info(cont, ccol);
@@ -752,7 +752,7 @@ function user_poll(jcmd) {
 		} else if (data.locinfo !== undefined) {
 			var cinfo;
 			if (!data.locinfo.startsWith("OK")) {
-				cinfo = "<span class='w3-red'>"+ll('information')+": '" + data.locinfo + "'</span>";
+				cinfo = "<span class='w3-red'>" + ll('information') + ": '" + data.locinfo + "'</span>";
 				document.getElementById("infoCellular").innerHTML = cinfo;
 				/*
 							}else{
@@ -790,10 +790,10 @@ function user_poll(jcmd) {
 			// 1 Channel V1.0 Min 33 Lines
 			if (editDeviceParam.length < 33) {
 				console.log(data.iparam);
-				ownAlert(ll('errorcap') + ":", ll('invalidparam')+" (L:" + editDeviceParam.length + ")");
+				ownAlert(ll('errorcap') + ":", ll('invalidparam') + " (L:" + editDeviceParam.length + ")");
 			} else if (editDeviceParam[0].startsWith("@100") == false) {
 				console.log(data.iparam);
-				ownAlert(ll('errorcap') + ":", ll('invalidparam')+" ('#0:" + editDeviceParam[0] + ")");
+				ownAlert(ll('errorcap') + ":", ll('invalidparam') + " ('#0:" + editDeviceParam[0] + ")");
 			} else {
 				editParPending = data.par_pending;
 				editSCookie = data.scookie; // Text
@@ -903,37 +903,37 @@ function generateDetails(idx) {
 	var lalarm = adev.alarms_cnt;
 
 	//var hdr="<span>"+adev.lines_cnt+"&nbsp;Total&nbsp;Lines&nbsp;Data</span>&nbsp;";
-	var hdr = "<span>" + adev.anz_lines + "&nbsp;"+ll('linesdata')+"</span>&nbsp;";
+	var hdr = "<span>" + adev.anz_lines + "&nbsp;" + ll('linesdata') + "</span>&nbsp;";
 
 	if (lwarn) {
-		if (adev.role & 2) hdr += " <button onclick='removeWarnings(" + idx + ")' class='w3-button w3-padding-small'>"+ll('warnings')+":<span class='w3-yellow w3-badge'>" + lwarn + "</span></button>";
-		else hdr += " <span class='w3-padding-small'>"+ll('warnings')+":<span class='w3-yellow w3-badge'>" + lwarn + "</span></span>";
+		if (adev.role & 2) hdr += " <button onclick='removeWarnings(" + idx + ")' class='w3-button w3-padding-small'>" + ll('warnings') + ":<span class='w3-yellow w3-badge'>" + lwarn + "</span></button>";
+		else hdr += " <span class='w3-padding-small'>" + ll('warnings') + ":<span class='w3-yellow w3-badge'>" + lwarn + "</span></span>";
 	}
 	if (lerr) {
-		if (adev.role & 4) hdr += " <button onclick='removeErrors(" + idx + ")' class='w3-button w3-padding-small'>"+ll('errors')+":<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></button>";
-		else hdr += " <span class='w3-padding-small'>"+ll('errors')+":<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></span>";
+		if (adev.role & 4) hdr += " <button onclick='removeErrors(" + idx + ")' class='w3-button w3-padding-small'>" + ll('errors') + ":<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></button>";
+		else hdr += " <span class='w3-padding-small'>" + ll('errors') + ":<span class='w3-red w3-badge jo-blink'>" + lerr + "</span></span>";
 	}
 	if (lalarm) {
-		if (adev.role & 1) hdr += " <button onclick='removeAlarms(" + idx + ")' class='w3-button w3-padding-small'>"+ll('alerts')+":<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></button>";
-		else hdr += " <span class='w3-padding-small'>"+ll('alerts')+":<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></span>";
+		if (adev.role & 1) hdr += " <button onclick='removeAlarms(" + idx + ")' class='w3-button w3-padding-small'>" + ll('alerts') + ":<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></button>";
+		else hdr += " <span class='w3-padding-small'>" + ll('alerts') + ":<span class='w3-purple w3-badge jo-blink'>" + lalarm + "</span></span>";
 	}
 
 	var footer = "";
 	if (adev.lat != null && adev.lng != null) {
 		var gpslink = mapUrl + "&q=" + adev.lat + "," + adev.lng + "&z=12";
 		var gdate = new Date(Date.parse(adev.last_gps + " GMT")); // UTC
-		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> "+ll('cellposition')+" " + gdate.toLocaleString().replace(" ", "&nbsp;");
+		footer = "<div><a href='" + gpslink + "' target='_blank'><i class='fas fa-map-marker-alt w3-text-orange'></i><b> " + ll('cellposition') + " " + gdate.toLocaleString().replace(" ", "&nbsp;");
 		if (adev.rad > 0) footer += ", Accuracy: " + adev.rad + "m";
 		footer += "</b></a></div>";
 	}
 
-	if (deviceXList[idx].isguest) hdr += " <span class='w3-text-orange'>("+ll('guestdevice')+")</span>";
+	if (deviceXList[idx].isguest) hdr += " <span class='w3-text-orange'>(" + ll('guestdevice') + ")</span>";
 
-	if (adev.role & 1024) footer += "<div><button onclick='editDeviceDetails(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-globe fa-fw w3-text-green'></i>"+ll('serversettings')+"</button>";
-	if (adev.role & 512) footer += "<button onclick='editDeviceParameter(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-cog fa-fw w3-text-blue'></i>"+ll('loggersettings')+"</button>";
-	if (adev.role & 256) footer += "<button onclick='editDeviceInfo(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-info-circle w3-text-teal'></i>"+ll('information')+"</button>";
-	if (adev.role & (7 + 256)) footer += "<button onclick='showDeviceWEA(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-bell fa-fw w3-text-red'></i>"+ll('messages')+"</button>";
-	if (adev.role & 8) footer += "<button onclick='clearDeviceData(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-trash-alt fa-fw'></i>"+ll('cleardata')+"</button>";
+	if (adev.role & 1024) footer += "<div><button onclick='editDeviceDetails(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-globe fa-fw w3-text-green'></i>" + ll('serversettings') + "</button>";
+	if (adev.role & 512) footer += "<button onclick='editDeviceParameter(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-cog fa-fw w3-text-blue'></i>" + ll('loggersettings') + "</button>";
+	if (adev.role & 256) footer += "<button onclick='editDeviceInfo(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-info-circle w3-text-teal'></i>" + ll('information') + "</button>";
+	if (adev.role & (7 + 256)) footer += "<button onclick='showDeviceWEA(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-bell fa-fw w3-text-red'></i>" + ll('messages') + "</button>";
+	if (adev.role & 8) footer += "<button onclick='clearDeviceData(" + idx + ")' class='w3-button w3-padding-small'><i class='fas fa-trash-alt fa-fw'></i>" + ll('cleardata') + "</button>";
 
 	footer += "</div>";
 	return "<div class='w3-border-bottom'>" + hdr + "</div>" + cont + footer;
@@ -1029,7 +1029,7 @@ function editDeviceInfo(idx) {
 	document.getElementById("infoLon").value = h;
 
 	h = "";
-	if (deviceWList[idx].last_gps) h = ll('lastupdated')+": <b>" + deviceWList[idx].last_gps.replace(" ", "&nbsp;") + "</b>";
+	if (deviceWList[idx].last_gps) h = ll('lastupdated') + ": <b>" + deviceWList[idx].last_gps.replace(" ", "&nbsp;") + "</b>";
 	document.getElementById("infoCellular").innerHTML = h;
 
 	editMAC = deviceWList[idx].mac;
@@ -1057,7 +1057,7 @@ function showWEAPos(dir) {
 
 function showWEAFill() {
 	var hltab = "<table class='w3-table-all'>";
-	hltab += "<tr><th>"+ll('messages')+" " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
+	hltab += "<tr><th>" + ll('messages') + " " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
 
 	for (var i = 0; i < logRaw.length; i++) {
 		var line = logRaw[i];
@@ -1204,9 +1204,9 @@ function edInfoFill() {
 	else if (infoObj.reason & 32) reas += "<span class='w3-purple w3-badge'> (old) ALARM </span>";
 
 	var infoInfo = "<div>" +
-		"<div>"+ll('lastcontact')+": <b>" + deltaToTimeString(lage) + "</b> ago</div>";
-	if (infoObj.expmore > 0) infoInfo += "<div><span class='w3-yellow'><i class='fas fa-exclamation-circle'></i> "+ll('lastcontactpending')+"&nbsp;</span></div>";
-	infoInfo += "<div>"+ll('reason')+": <b>" + reas + "</b></div>";
+		"<div>" + ll('lastcontact') + ": <b>" + deltaToTimeString(lage) + "</b> ago</div>";
+	if (infoObj.expmore > 0) infoInfo += "<div><span class='w3-yellow'><i class='fas fa-exclamation-circle'></i> " + ll('lastcontactpending') + "&nbsp;</span></div>";
+	infoInfo += "<div>" + ll('reason') + ": <b>" + reas + "</b></div>";
 	infoInfo += "</div>";
 
 	// GeooPos
@@ -1248,13 +1248,13 @@ function edInfoFill() {
 	// Collapsed Info
 	if (infoObj !== undefined) {
 		var infoStr = "<div>" +
-			"<div>"+ll('devicetype')+": <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
-			"<div>"+ll('activedays')+": <b>" + activeDays + "</b></div>" +
-			"<div>"+ll('totaldata')+": <b>" + (infoObj.total_in / 1024).toFixed(1) + "/" + (infoObj.total_out / 1024).toFixed(1) + "</b></div>";
-		if (activeDays > 0) infoStr += "<div"+ll('averagedata')+": <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
-		infoStr += "<div>"+ll('todaybytes')+": <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
-		infoStr += "<div>"+ll('connectionstotal')+": <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
-		infoStr += "<div>"+ll('quotadays')+": <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b>, "+ll('push')+": <b>"
+			"<div>" + ll('devicetype') + ": <b>" + infoObj.typ + "</b></div>" + // same as HW-Param
+			"<div>" + ll('activedays') + ": <b>" + activeDays + "</b></div>" +
+			"<div>" + ll('totaldata') + ": <b>" + (infoObj.total_in / 1024).toFixed(1) + "/" + (infoObj.total_out / 1024).toFixed(1) + "</b></div>";
+		if (activeDays > 0) infoStr += "<div" + ll('averagedata') + ": <b>" + (infoObj.total_in / activeDays / 1024).toFixed(1) + "/" + (infoObj.total_out / activeDays / 1024).toFixed(1) + "</b></div>";
+		infoStr += "<div>" + ll('todaybytes') + ": <b>" + infoObj.quota_in + "/" + infoObj.quota_out + "</b></div>";
+		infoStr += "<div>" + ll('connectionstotal') + ": <b>" + infoObj.trans + "/" + infoObj.conns + "</b></div>";
+		infoStr += "<div>" + ll('quotadays') + ": <b>" + infoObj.quotad + "/" + infoObj.quotal + "</b>, " + ll('push') + ": <b>"
 		if (infoObj.quotap !== undefined && infoObj.quotap.length > 0) infoStr += "'" + infoObj.quotap + "'"
 		else infoStr += +ll('notset')
 		infoStr += "</b></div>";
@@ -1268,8 +1268,8 @@ function edInfoFill() {
 				var fwcs = new Date(fw_csec * 1000)
 				fw_cookieStr = "ID: " + fw_csec.toString(16).toUpperCase() + " (" + fwcs.toUTCString() + ")"
 			}
-			infoStr += "<div>"+ll('firmware')+": <b>V" + infoObj.fw_ver / 10 + " " + fw_cookieStr + "</b></div>"; // if undefined: NaN
-			infoStr += "<div>"+ll('disksize')+": <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
+			infoStr += "<div>" + ll('firmware') + ": <b>V" + infoObj.fw_ver / 10 + " " + fw_cookieStr + "</b></div>"; // if undefined: NaN
+			infoStr += "<div>" + ll('disksize') + ": <b>" + infoObj.dsize + "/" + infoObj.davail + "</b></div>";
 
 			infoStr += "<div style='font-size: 7px'>&nbsp;</div>";
 			infoStr += "<div>SIM ICCID: <b>" + infoObj.imsi + "</b></div>";
@@ -1341,8 +1341,8 @@ function infoShowLogPos(dir) {
 
 function editInfFillLog() {
 	var hltab = "<table class='w3-table-all'>";
-	if (!logId) hltab += "<tr><th>"+ll('mainlogfile')+" " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
-	else if (logId == 1) hltab += "<tr><th>"+ll('connectionlogfile')+" " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
+	if (!logId) hltab += "<tr><th>" + ll('mainlogfile') + " " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
+	else if (logId == 1) hltab += "<tr><th>" + ll('connectionlogfile') + " " + logLstart + " - " + (logLstart + logLanz - 1) + "</th></tr>";
 
 	for (var i = 0; i < logRaw.length; i++) {
 		hltab += "<tr><td>" + logRaw[i] + "</td></tr>";
@@ -1378,7 +1378,7 @@ function getPosCoords() { // and Check
 			return true;
 		}
 	}
-	ownAlert(ll('errorcap')+": ", ll('invalidlatlon'));
+	ownAlert(ll('errorcap') + ": ", ll('invalidlatlon'));
 	return false;
 }
 
@@ -1400,7 +1400,7 @@ function infoSavePos() {
 		if (editName.length > 0) chstr += " '" + editName + "'";
 		chstr += ": " + ll('saveposition');
 		log_info(chstr, "w3-pale-blue");
-		document.getElementById("infoCellular").innerHTML = ll('lastupdated')+": <b>"+ll('nowsaved')+"</b>";
+		document.getElementById("infoCellular").innerHTML = ll('lastupdated') + ": <b>" + ll('nowsaved') + "</b>";
 		user_poll({
 			cmd: "savePos",
 			mac: editMAC,
@@ -1412,9 +1412,9 @@ function infoSavePos() {
 function infoClearPos() {
 	var chstr = "MAC:	" + editMAC;
 	if (editName.length > 0) chstr += " '" + editName + "'";
-	chstr += ": "+ll('clearposition');
+	chstr += ": " + ll('clearposition');
 	log_info(chstr, "w3-pale-blue");
-	document.getElementById("infoCellular").innerHTML = ll('lastupdated')+": <b>"+ll('nowcleared')+"</b>";
+	document.getElementById("infoCellular").innerHTML = ll('lastupdated') + ": <b>" + ll('nowcleared') + "</b>";
 	user_poll({
 		cmd: "clearPos",
 		mac: editMAC
@@ -1494,7 +1494,7 @@ function edParamChanUpDownloc(dir) {
 		editAktChan = 0;
 		idx0 = editDeviceParam.findIndex(edParamIdxFind); // Mit C0: Idx K0
 		if (idx0 < 19) { // V1.0
-			ownAlert(ll('fatalerrorcap')+":", ll('parameterinvalid'));
+			ownAlert(ll('fatalerrorcap') + ":", ll('parameterinvalid'));
 		}
 		editAktChan = 1;
 		idx1 = editDeviceParam.findIndex(edParamIdxFind); // Mit C1: Idx k1
@@ -1503,7 +1503,7 @@ function edParamChanUpDownloc(dir) {
 		}
 		editAktChan = oakc;
 		editAktIdx = oakc * (idx1 - idx0) + idx0; // Calculate Index
-		ownAlert(ll('info')+"", ll('addnewchannel') +" #" + editAktChan);
+		ownAlert(ll('info') + "", ll('addnewchannel') + " #" + editAktChan);
 	}
 	showSecondary(0);
 }
@@ -1544,7 +1544,7 @@ function edParamFormFill() { // Fill Parameters with act. chan
 	setPeriodUnit("parPeriodMeasure", "unitPeriodMeasure", editDeviceParam[6])	// Neu
 	setPeriodUnit("parPeriodOffset", "unitPeriodOffset", editDeviceParam[7])
 	setPeriodUnit("parPeriodAlarm", "unitPeriodAlarm", editDeviceParam[8])
-	setPeriodUnit("parPeriodInternet" ,"unitPeriodInternet", editDeviceParam[9])
+	setPeriodUnit("parPeriodInternet", "unitPeriodInternet", editDeviceParam[9])
 	setPeriodUnit("parPeriodInternetAlarm", "unitPeriodInternetAlarm", editDeviceParam[10])
 
 	document.getElementById("parUTCOffset").value = editDeviceParam[11];
@@ -1620,7 +1620,7 @@ function editParamMainGet() {
 		ownAlert(ll('errorcap') + ":", ll('erralarmperiodmax'));
 		return false;
 	} else if (getv != 0 && getv > parseInt(editDeviceParam[9])) {
-		ownAlert(ll('errorcap') + ":",  ll('erralarmperiodmin'));
+		ownAlert(ll('errorcap') + ":", ll('erralarmperiodmin'));
 		return false;
 	} else if (getv > 0 && getv < 1800) {
 		ownAlert(ll('info') + ":", ll('infofastalertperiod1') + getv + ll('infofastalertperiod1'));
@@ -1868,17 +1868,17 @@ function edDeviceFormFill() { // And initialise NULL elements
 	if (editDeviceData.last_change == null) editDeviceData.last_change = ll('never');
 
 	var devinf = "<div>" +
-		"<div>"+ll('totaltransfers')+": <b>" + editDeviceData.transfer_cnt + "</b></div>" +
-		"<div>"+ll('totallines')+": <b>" + editDeviceData.lines_cnt + "</b></div>" +
-		"<div>"+ll('linesindatabase')+": <b>" + editDeviceData.available_cnt + "</b></div>" +
-		"<div>"+ll('lastseen')+": <b>" + editDeviceData.last_seen.replace(" ", "&nbsp;") + "</b></div>" +
-		"<div>"+ll('lastchange')+": <b>" + editDeviceData.last_change.replace(" ", "&nbsp;") + "</b></div>" +
-		"<div>"+ll('firstseen')+": <b>" + editDeviceData.first_seen.replace(" ", "&nbsp;") + "</b></div>" +
-		"<div>"+ll('parameteronserver')+": <b>" + editDeviceData.sCookie.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>" + ll('totaltransfers') + ": <b>" + editDeviceData.transfer_cnt + "</b></div>" +
+		"<div>" + ll('totallines') + ": <b>" + editDeviceData.lines_cnt + "</b></div>" +
+		"<div>" + ll('linesindatabase') + ": <b>" + editDeviceData.available_cnt + "</b></div>" +
+		"<div>" + ll('lastseen') + ": <b>" + editDeviceData.last_seen.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>" + ll('lastchange') + ": <b>" + editDeviceData.last_change.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>" + ll('firstseen') + ": <b>" + editDeviceData.first_seen.replace(" ", "&nbsp;") + "</b></div>" +
+		"<div>" + ll('parameteronserver') + ": <b>" + editDeviceData.sCookie.replace(" ", "&nbsp;") + "</b></div>" +
 		"</div>";
 
 	if (isguest) {
-		devinf = "<div class='w3-text-orange'>("+ll('guestdevice')+")</div>" + devinf;
+		devinf = "<div class='w3-text-orange'>(" + ll('guestdevice') + ")</div>" + devinf;
 	}
 	document.getElementById("edInfo").innerHTML = devinf;
 
@@ -1946,7 +1946,7 @@ function editDeviceSubmit(event) {
 		lastSeenTimestamp = 0; // Get ALL
 		userAnzDevices = 0; // Neu zeichnen!
 		var chstr = "MAC:	" + editDeviceData.mac;
-		chstr += ": "+ll('serverchanges')+" (" + changecnt + ") "+ll('saved');
+		chstr += ": " + ll('serverchanges') + " (" + changecnt + ") " + ll('saved');
 		log_info(chstr, "w3-pale-green");
 		user_poll({
 			cmd: "changeDevice",
@@ -1984,8 +1984,8 @@ function edCopyTokenToClipboard(idx) {
 	var cpytxt = `MAC:${editDeviceData.mac}\nTOK${idx}:${clb}`
 	dtok.disabled = true;
 	navigator.clipboard.writeText(cpytxt)
-	if (clb.length != 16) ownAlert(ll('errorcap')+":", "Token #" + idx + ": "+ ll('notoken'));
-	else ownAlert(ll('copied'), "<b>MAC:" + editDeviceData.mac + " <br>TOK" + idx + ":" + clb + "</b><br><br>("+ll('dontforgettoken')+")");
+	if (clb.length != 16) ownAlert(ll('errorcap') + ":", "Token #" + idx + ": " + ll('notoken'));
+	else ownAlert(ll('copied'), "<b>MAC:" + editDeviceData.mac + " <br>TOK" + idx + ":" + clb + "</b><br><br>(" + ll('dontforgettoken') + ")");
 
 }
 
@@ -2007,7 +2007,7 @@ function checkSaved() { // true if all changed
 function edMailTest0(event) {
 	var newcontact0 = $("#edDeviceMail0").val();
 	if (checkSaved() != true || newcontact0.length < 5) { // Might later be something else than Mail
-		ownAlert(ll('errorcap')+":", ll('errcontactinvalid'));
+		ownAlert(ll('errorcap') + ":", ll('errcontactinvalid'));
 	} else {
 		ownAlert(ll('testcontact'), ll('testmessagesent') + ": '" + editDeviceData.email0 + "'");
 		var mcont = ll('testcontactnr0') + " '" + userName + "'";
@@ -2081,17 +2081,17 @@ function legacyMainShow() { // SpringInLLegacy
 }
 
 // Language changed lng2l holds 2-letter Code 
-function changedLanguage(){
+function changedLanguage() {
 	const langsel = document.getElementById("idLang")
 	const lng2l = langsel.options[langsel.selectedIndex].text;
-	setCookie("UILanguage", lng2l, 10000) 
+	setCookie("UILanguage", lng2l, 10000)
 	i18localize(lng2l)
 }
 // Set Languag in 2 letter code. Not existing languages are ignored
-function setLanguage(lng2l){
+function setLanguage(lng2l) {
 	const langsel = document.getElementById("idLang")
-	for (var i = 0; i < langsel.options.length; i++){
-		if(langsel.options[i].text == lng2l) langsel.options[i].selected = true
+	for (var i = 0; i < langsel.options.length; i++) {
+		if (langsel.options[i].text == lng2l) langsel.options[i].selected = true
 	}
 	i18localize(lng2l)
 }
@@ -2100,23 +2100,23 @@ function setLanguage(lng2l){
 // name = value fuer exdays tage
 function setCookie(cname, cvalue, exdays) {
 	const d = new Date();
-	d.setTime(d.getTime() + (exdays*24*60*60*1000));
-	let expires = "expires="+ d.toUTCString();
+	d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+	let expires = "expires=" + d.toUTCString();
 	document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/"; // 'path' required
 }
 // Get Cookie value for cname. If noz found: undefined, else String
-function getCookie(cname){
+function getCookie(cname) {
 	let name = cname + "=";
 	let decodedCookie = decodeURIComponent(document.cookie);
 	let ca = decodedCookie.split(';');
-	for(let i = 0; i <ca.length; i++) {
-	  let c = ca[i];
-	  while (c.charAt(0) == ' ') {
-		c = c.substring(1);
-	  }
-	  if (c.indexOf(name) == 0) {
-		return c.substring(name.length, c.length);
-	  }
+	for (let i = 0; i < ca.length; i++) {
+		let c = ca[i];
+		while (c.charAt(0) == ' ') {
+			c = c.substring(1);
+		}
+		if (c.indexOf(name) == 0) {
+			return c.substring(name.length, c.length);
+		}
 	}
 	return undefined;
 }
@@ -2143,7 +2143,7 @@ function initScripts() {
 
 	// Default Language set from cookie
 	const uiLang = getCookie("UILanguage")
-	if(uiLang != undefined) setLanguage(uiLang)
+	if (uiLang != undefined) setLanguage(uiLang)
 
 	$.ajaxSetup({
 		type: 'POST',

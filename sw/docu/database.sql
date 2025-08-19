@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `last_change` timestamp DEFAULT CURRENT_TIMESTAMP,
 
   `name` varchar(255) COLLATE utf8_unicode_ci,
-  `units` varchar(255) COLLATE utf8_unicode_ci,
-  `vals` varchar(255) COLLATE utf8_unicode_ci,
+  `units` varchar(8191) COLLATE utf8_unicode_ci,
+  `vals` varchar(8191) COLLATE utf8_unicode_ci,
   `cookie` int unsigned DEFAULT NULL,
 
   `utc_offset` int DEFAULT 3600,
