@@ -10,7 +10,7 @@
 'use strict'
 
 // ------------------ Globals ----------------------
-var prgVersion = 'V1.54 (17.04.2024)'
+var prgVersion = 'V1.55 (12.11.2025)'
 var prgName = 'G-Draw EDT-Viewer ' + prgVersion
 var prgShortName = 'G-Draw'
 
@@ -54,7 +54,7 @@ var colTab = [ // Contains. 16+x Colors (Standard Colors)
   '#9696FF', // 7: lightblue
   '#FFC0CB', // 8: pink
   '#A52A2A', // 9: maroon
-  '#F0F000', // 10: yellow 
+  '#D0D000', // 10: darkeryellow 
   '#A020F0', // 11: purple
   '#7FFFD4', // 12: aquamarin
   '#DCC8FF', // 13: lavender
@@ -1546,7 +1546,7 @@ function scanRawDataToVisibleData() {
   //for(let idx=0;idx<dataLinesRaw.length;idx++) console.log(dataLinesRaw[idx]) // Check
 
   // errmsg be displayed, else return 'undefinde'
-  if (strangeTimesCnt && errmsg.length < 500) errmsg += 'WARNING: Unknown Times (' + strangeTimesCnt + ') Lines'
+  if (strangeTimesCnt && errmsg.length < 500) errmsg += 'WARNING: Unknown/Strange Times or Gaps (' + strangeTimesCnt + ' Lines)'
   if (errmsg.length >= 500) errmsg += '...' // More errors
   if (errmsg.length) return errmsg
 }
