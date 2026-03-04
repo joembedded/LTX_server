@@ -1,5 +1,5 @@
 Datei: ltx\sw\docu\mobileErrors.txt - Häufige Mobilfehler
-Stand: 30.06.2025
+Stand: 22.02.2026
 
 Modem Basic:
 -20xx Creg:
@@ -35,6 +35,10 @@ HTTP:
 -3000+HTTP-Code (z.B. -3301 bei permanently moved)
 -2100: Connection to Server failed (Open failure)
 -2101: Quectel CLose failed
+-2102: GPS: GPS init failure
+-2103: GPS: GPS exit failure
+-2104: GPS: GPS init2 failure
+-2105: GPS: No Reply from Modem
 -2201,-2202,-2203: Send Header
 -2205: Send Trailer
  
