@@ -431,8 +431,8 @@ $dbg = 0;	// Debug-Level if >0, see docu
 
 session_start();
 if (isset($_REQUEST['k'])) {
-	$api_key = $_REQUEST['k']; // max. 41 Chars KEY
-	$_SESSION['key'] = L_KEY;
+	$api_key = is_string($_REQUEST['k']) ? $_REQUEST['k'] : ''; // max. 41 Chars KEY
+	if (hash_equals(L_KEY, $api_key)) $_SESSION['key'] = L_KEY;
 } else $api_key = @$_SESSION['key'];
 if (!isset($api_key)) $api_key = "";
 
