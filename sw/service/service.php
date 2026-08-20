@@ -2,7 +2,7 @@
 
 /*************************************************************
  * SERVICE.PHP db_service for LTrax V1.xx
- * 05.12.2024
+ * 20.08.2026
  *
  * ------------------------------------------------------
  * INFO: call periodically (e.g. via CRON or Sheduler) 
@@ -190,6 +190,8 @@ function check_users($rep)
 			$mark .= "(Demo)";
 		}
 		$uid = $row['id'];
+		$lsts = $row['x'];
+		$lsage = $now - $lsts;
 		$crypt = $row['password'];
 		$plain = simple_crypt($crypt, 1); // 1:Decrypt
 
@@ -201,11 +203,15 @@ function check_users($rep)
 		$guestcnt = $statement2->fetch()['x'];
 
 		$age_d = round(($now - $row['x']) / 86400, 2);
-		if ($owncnt == 0 && $guestcnt == 0 && $age_d > 1 && !($role & 65536)) { // Only keep ADMIN
-			$mark .= "(NoDevs/Timeout)"; // <-- Remove this User
-			if ($rep) {
-				$pdo->query("DELETE FROM users WHERE id = '$uid'");
-				$xlog .= "(Del.User:Id:$uid mail:" . $row['email'] . ")";
+		if ($lsage < (90 * 86400)) {
+			$mark .= "(LastSeenAge:$lsage sec, 90d-Protected)"; // Users always stys at least 90 days in DB, even if no devices!
+		} else {
+			if ($owncnt == 0 && $guestcnt == 0 && $age_d > 1 && !($role & 65536)) { // Only keep ADMIN
+				$mark .= "(NoDevs/Timeout)"; // <-- Remove this User
+				if ($rep) {
+					$pdo->query("DELETE FROM users WHERE id = '$uid'");
+					$xlog .= "(Del.User:Id:$uid mail:" . $row['email'] . ")";
+				}
 			}
 		}
 
@@ -260,7 +266,9 @@ function check_devices($rep)
 		if ($qres === 0) {	// No Table for this Device 
 			$lines = "?";
 			$mark = "(TableMissing)"; // <--- Delete Entry in Devices
-			if ($rep) {
+			$lcage = $now - $row['x'];
+			if ($lcage < (86400*90)) $mark .= "(LastChangeAge:$lcage sec, 90d-Protected)"; // Protect new devices for 90 days
+			else if ($rep) {
 				$pdo->query("DELETE FROM devices WHERE mac = '$mac'");
 				$pdo->query("DELETE FROM guest_devices WHERE mac = '$mac'");
 				$xlog .= "(NoTable:Del. MAC:$mac)";
@@ -300,12 +308,12 @@ function check_devices($rep)
 			// Check not-imported Files in /in_new
 			$flist = @scandir("$macdir/in_new", SCANDIR_SORT_DESCENDING);
 			if ($flist) {
-				foreach($flist as $fname){
-					$ffname="$macdir/in_new/$fname";
-					if(is_file($ffname)){
+				foreach ($flist as $fname) {
+					$ffname = "$macdir/in_new/$fname";
+					if (is_file($ffname)) {
 						$age = $now - filemtime($ffname);
-						if($age>600){
-							$calltrigger|=1;	// Intern
+						if ($age > 600) {
+							$calltrigger |= 1;	// Intern
 							break;
 						}
 					}
@@ -391,7 +399,7 @@ function check_legacy($rep)
 	$list = scandir($dir);
 	$anz = 0;
 	foreach ($list as $file) {
-		if(!ctype_xdigit($file)) continue; // ignore '.', '..', 'log', 'stemp', 'orbcomm',..
+		if (!ctype_xdigit($file)) continue; // ignore '.', '..', 'log', 'stemp', 'orbcomm',..
 		if (!is_dir("./$dir/$file")) continue;	// Should not be, but..
 		$mac = $file;
 		$mark = "";
