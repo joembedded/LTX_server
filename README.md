@@ -89,3 +89,4 @@ More documentation is available in the media browser:
 - V2.51 18.11.2024 Added EcoWitt/Wunderground data upload for weather stations
 - V2.52 05.12.2024 Added optional `MXGET_MEM` (extends `MAXM_xx` from V2.22)
 - V2.53 25.06.2025 Added LoRaWAN support for ChirpStack V4 and TTN V3 (`lxu_ltxlora_v1.php`)
+- V2.54	20.08.2026 Protected new Users/MACs for 90d (in service)
